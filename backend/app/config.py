@@ -39,10 +39,24 @@ class Config:
     DOUBAO_API_URL = os.environ.get('DOUBAO_API_URL') or 'http://api.example.com/api/doubao'
     XIAOTIAN_API_URL = os.environ.get('XIAOTIAN_API_URL') or 'http://api.example.com/api/xiaotian'
     SCORE_API_URL = os.environ.get('SCORE_API_URL') or 'http://api.example.com/api/score'
-    
+
+    # API密钥配置
+    CLASSIFY_API_KEY = os.environ.get('CLASSIFY_API_KEY') or 'classify-dev-key'
+    DOUBAO_API_KEY = os.environ.get('DOUBAO_API_KEY') or 'doubao-dev-key'
+    XIAOTIAN_API_KEY = os.environ.get('XIAOTIAN_API_KEY') or 'xiaotian-dev-key'
+    SCORE_API_KEY = os.environ.get('SCORE_API_KEY') or 'score-dev-key'
+
     # API超时配置（秒）
     API_TIMEOUT = 30
     API_RETRY_TIMES = 3
+
+    # API请求配置
+    API_RETRY_DELAY = 1.0  # 重试延迟（秒）
+    API_RETRY_BACKOFF_FACTOR = 2.0  # 退避因子
+    API_REQUEST_HEADERS = {
+        'Content-Type': 'application/json',
+        'User-Agent': 'AI-QA-Platform/1.0'
+    }
     
     # 定时任务配置
     SYNC_INTERVAL_MINUTES = 30  # 数据同步间隔
