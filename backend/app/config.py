@@ -1,0 +1,90 @@
+"""
+配置文件
+包含数据库连接、API配置、定时任务配置等
+"""
+import os
+from datetime import timedelta
+
+class Config:
+    """基础配置类"""
+    # 基础配置
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    DEBUG = False
+    TESTING = False
+    
+    # 数据库配置
+    DATABASE_URL = os.environ.get('DATABASE_URL') or 'postgresql://postgres:l69jjd9n@test-huiliu-postgresql.ns-q8rah3y5.svc:5432/ai_qa_platform'
+    SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ECHO = False
+    
+    # API配置
+    API_TITLE = 'AI问答回流数据处理平台 API'
+    API_VERSION = 'v1.0'
+    API_DESCRIPTION = '提供数据同步、处理、分析和评估等功能的RESTful API'
+    
+    # CORS配置
+    CORS_ORIGINS = ['http://localhost:3000', 'http://localhost:5173']
+    
+    # JWT配置
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'jwt-secret-key-change-in-production'
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
+    
+    # 分页配置
+    DEFAULT_PAGE_SIZE = 20
+    MAX_PAGE_SIZE = 100
+    
+    # 外部API配置
+    CLASSIFY_API_URL = os.environ.get('CLASSIFY_API_URL') or 'http://api.example.com/api/classify'
+    DOUBAO_API_URL = os.environ.get('DOUBAO_API_URL') or 'http://api.example.com/api/doubao'
+    XIAOTIAN_API_URL = os.environ.get('XIAOTIAN_API_URL') or 'http://api.example.com/api/xiaotian'
+    SCORE_API_URL = os.environ.get('SCORE_API_URL') or 'http://api.example.com/api/score'
+    
+    # API超时配置（秒）
+    API_TIMEOUT = 30
+    API_RETRY_TIMES = 3
+    
+    # 定时任务配置
+    SYNC_INTERVAL_MINUTES = 30  # 数据同步间隔
+    CLEAN_INTERVAL_HOURS = 1    # 数据清洗间隔
+    
+    # 批处理配置
+    BATCH_SIZE = 100  # 批处理大小
+    
+    # 日志配置
+    LOG_LEVEL = 'INFO'
+    LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    LOG_FILE = 'app.log'
+
+class DevelopmentConfig(Config):
+    """开发环境配置"""
+    DEBUG = True
+    SQLALCHEMY_ECHO = True
+    LOG_LEVEL = 'DEBUG'
+
+class ProductionConfig(Config):
+    """生产环境配置"""
+    DEBUG = False
+    LOG_LEVEL = 'WARNING'
+
+class TestingConfig(Config):
+    """测试环境配置"""
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    WTF_CSRF_ENABLED = False
+
+class LocalTestConfig(Config):
+    """本地测试配置（使用SQLite）"""
+    DEBUG = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///ai_qa_platform.db'
+    SQLALCHEMY_ECHO = True
+    LOG_LEVEL = 'DEBUG'
+
+# 配置字典
+config = {
+    'development': DevelopmentConfig,
+    'production': ProductionConfig,
+    'testing': TestingConfig,
+    'local': LocalTestConfig,  # 新增本地测试配置
+    'default': DevelopmentConfig
+} 
