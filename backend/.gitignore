@@ -1,0 +1,64 @@
+# 🔐 安全配置：敏感文件排除列表
+
+# 环境变量文件（包含API密钥等敏感信息）
+.env
+.env.local
+.env.production
+.env.staging
+# 注意：.env.example 是模板文件，应该提交到版本控制
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 日志文件（可能包含敏感信息）
+*.log
+logs/
+
+# Python缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 虚拟环境
+venv/
+env/
+ENV/
+.venv/
+
+# IDE配置文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.temp
+
+# 密钥和证书文件
+*.pem
+*.key
+*.crt
+*.p12
+id_rsa*
+*.ppk
+
+# 配置文件备份
+config.backup
+settings.backup
+
+# 测试覆盖率报告
+htmlcov/
+.coverage
+.pytest_cache/
+
+# 部署相关
+docker-compose.override.yml
+k8s-secrets.yml 

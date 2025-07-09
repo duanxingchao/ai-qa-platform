@@ -1,16 +1,17 @@
 """
-数据同步服务
-负责从table1增量同步数据到questions表
+数据同步服务（支持questions和answers表分离同步）
+负责从table1同步数据到questions表和answers表，在SQL查询阶段过滤掉query为空的记录
 """
 import logging
 import hashlib
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from sqlalchemy import text, func
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.utils.database import db
 from app.models.question import Question
+from app.models.answer import Answer
 
 class SyncService:
     """数据同步服务类"""
@@ -26,15 +27,17 @@ class SyncService:
     
     def get_sync_status(self) -> Dict:
         """获取同步状态"""
-        # 获取最后同步时间（从数据库中获取）
         try:
             last_question = db.session.query(Question).order_by(Question.created_at.desc()).first()
             if last_question:
                 self.sync_status['last_sync_time'] = last_question.created_at.isoformat()
             
             # 获取总同步数量
-            total_count = db.session.query(func.count(Question.id)).scalar()
-            self.sync_status['total_synced'] = total_count
+            questions_count = db.session.query(func.count(Question.id)).scalar()
+            answers_count = db.session.query(func.count(Answer.id)).scalar()
+            self.sync_status['total_synced'] = questions_count
+            self.sync_status['questions_count'] = questions_count
+            self.sync_status['answers_count'] = answers_count
             
         except Exception as e:
             self.logger.error(f"获取同步状态失败: {str(e)}")
@@ -51,15 +54,16 @@ class SyncService:
             return None
     
     def fetch_new_data_from_table1(self, since_time: Optional[datetime] = None) -> List[Dict]:
-        """从table1获取新数据并生成business_id"""
+        """从table1获取新数据，包括answer字段"""
         try:
-            # 构建查询SQL - 根据table1的实际字段结构
+            # 构建查询SQL - 获取所有字段，包括answer字段
             base_sql = """
                 SELECT 
                     pageid,
                     devicetypename,
                     sendmessagetime,
                     query,
+                    answer,
                     serviceid,
                     qatype,
                     intent,
@@ -67,12 +71,15 @@ class SyncService:
                     iskeyboardinput,
                     isstopanswer
                 FROM table1
-                {where}
+                WHERE query IS NOT NULL 
+                AND query != '' 
+                AND TRIM(query) != ''
+                {time_filter}
                 ORDER BY sendmessagetime ASC
             """
             
-            where_clause = "WHERE sendmessagetime > :since_time" if since_time else ""
-            sql = text(base_sql.format(where=where_clause))
+            time_filter = "AND sendmessagetime > :since_time" if since_time else ""
+            sql = text(base_sql.format(time_filter=time_filter))
             result = db.session.execute(sql, {'since_time': since_time} if since_time else {})
             
             # 转换为字典列表并生成business_id
@@ -83,6 +90,7 @@ class SyncService:
                     devicetypename,
                     send_time,
                     query_text,
+                    answer_text,
                     serviceid,
                     qatype,
                     intent,
@@ -100,6 +108,7 @@ class SyncService:
                     'pageid': pageid,
                     'devicetypename': devicetypename,
                     'query': query_text,
+                    'answer': answer_text,
                     'sendmessagetime': send_time,
                     'classification': classification,
                     'serviceid': serviceid,
@@ -109,7 +118,7 @@ class SyncService:
                     'isstopanswer': isstopanswer
                 })
             
-            self.logger.info(f"从table1获取到 {len(data)} 条新数据")
+            self.logger.info(f"从table1获取到 {len(data)} 条有效数据（已过滤空query记录）")
             return data
             
         except Exception as e:
@@ -117,7 +126,7 @@ class SyncService:
             raise
     
     def sync_to_questions(self, data: List[Dict]) -> int:
-        """将数据同步到questions表"""
+        """将问题相关数据同步到questions表"""
         synced_count = 0
         
         try:
@@ -129,12 +138,19 @@ class SyncService:
                 
                 if existing:
                     # 更新现有记录
-                    for key, value in item.items():
-                        if hasattr(existing, key) and key != 'business_id':
-                            setattr(existing, key, value)
+                    existing.pageid = item['pageid']
+                    existing.devicetypename = item['devicetypename']
+                    existing.query = item['query']
+                    existing.sendmessagetime = item['sendmessagetime']
+                    existing.classification = item['classification']
+                    existing.serviceid = item['serviceid']
+                    existing.qatype = item['qatype']
+                    existing.intent = item['intent']
+                    existing.iskeyboardinput = item['iskeyboardinput']
+                    existing.isstopanswer = item['isstopanswer']
                     existing.updated_at = datetime.utcnow()
                 else:
-                    # 创建新记录 - 字段映射到Question模型
+                    # 创建新记录 - 只包含questions表相关字段
                     question = Question(
                         business_id=item['business_id'],
                         pageid=item['pageid'],
@@ -152,18 +168,56 @@ class SyncService:
                 
                 synced_count += 1
             
-            # 提交事务
-            db.session.commit()
-            self.logger.info(f"成功同步 {synced_count} 条数据到questions表")
+            self.logger.info(f"准备同步 {synced_count} 条数据到questions表")
             return synced_count
             
         except Exception as e:
-            db.session.rollback()
             self.logger.error(f"同步数据到questions表失败: {str(e)}")
             raise
     
+    def sync_to_answers(self, data: List[Dict]) -> int:
+        """将答案数据同步到answers表"""
+        synced_count = 0
+        
+        try:
+            for item in data:
+                # 检查answer字段是否有内容
+                answer_text = item.get('answer')
+                if not answer_text or answer_text.strip() == '':
+                    continue
+                
+                # 检查是否已存在（基于business_id和assistant_type）
+                existing = db.session.query(Answer).filter_by(
+                    question_business_id=item['business_id'],
+                    assistant_type='original'
+                ).first()
+                
+                if existing:
+                    # 更新现有记录
+                    existing.answer_text = answer_text
+                    existing.answer_time = item['sendmessagetime']
+                    existing.updated_at = datetime.utcnow()
+                else:
+                    # 创建新记录
+                    answer = Answer(
+                        question_business_id=item['business_id'],
+                        answer_text=answer_text,
+                        assistant_type='original',  # 标识为原始答案
+                        answer_time=item['sendmessagetime']
+                    )
+                    db.session.add(answer)
+                
+                synced_count += 1
+            
+            self.logger.info(f"准备同步 {synced_count} 条答案到answers表")
+            return synced_count
+            
+        except Exception as e:
+            self.logger.error(f"同步数据到answers表失败: {str(e)}")
+            raise
+    
     def perform_sync(self, force_full_sync: bool = False) -> Dict:
-        """执行数据同步"""
+        """执行数据同步（同时处理questions和answers表）"""
         try:
             self.sync_status['status'] = 'running'
             self.sync_status['error_message'] = None
@@ -182,20 +236,28 @@ class SyncService:
                 return {
                     'success': True,
                     'message': '没有新数据需要同步',
-                    'synced_count': 0
+                    'synced_questions': 0,
+                    'synced_answers': 0
                 }
             
-            # 同步数据
-            synced_count = self.sync_to_questions(new_data)
+            # 同步数据到questions表
+            questions_count = self.sync_to_questions(new_data)
+            
+            # 同步数据到answers表
+            answers_count = self.sync_to_answers(new_data)
+            
+            # 提交事务
+            db.session.commit()
             
             # 更新状态
             self.sync_status['status'] = 'idle'
-            self.sync_status['total_synced'] += synced_count
+            self.sync_status['total_synced'] += questions_count
             
             result = {
                 'success': True,
-                'message': f'成功同步 {synced_count} 条数据',
-                'synced_count': synced_count,
+                'message': f'成功同步 {questions_count} 条问题和 {answers_count} 条答案',
+                'synced_questions': questions_count,
+                'synced_answers': answers_count,
                 'total_synced': self.sync_status['total_synced']
             }
             
@@ -203,6 +265,7 @@ class SyncService:
             return result
             
         except Exception as e:
+            db.session.rollback()
             self.sync_status['status'] = 'error'
             self.sync_status['error_message'] = str(e)
             
@@ -212,7 +275,8 @@ class SyncService:
             return {
                 'success': False,
                 'message': error_msg,
-                'synced_count': 0
+                'synced_questions': 0,
+                'synced_answers': 0
             }
     
     def get_sync_statistics(self) -> Dict:
@@ -221,9 +285,16 @@ class SyncService:
             # 获取questions表统计
             questions_count = db.session.query(func.count(Question.id)).scalar()
             
+            # 获取answers表统计
+            answers_count = db.session.query(func.count(Answer.id)).scalar()
+            original_answers_count = db.session.query(func.count(Answer.id)).filter_by(assistant_type='original').scalar()
+            
             # 获取table1表统计
-            table1_query = text("SELECT COUNT(*) FROM table1")
-            table1_count = db.session.execute(table1_query).scalar()
+            table1_total_query = text("SELECT COUNT(*) FROM table1")
+            table1_total_count = db.session.execute(table1_total_query).scalar()
+            
+            table1_with_answer_query = text("SELECT COUNT(*) FROM table1 WHERE answer IS NOT NULL AND answer != '' AND TRIM(answer) != ''")
+            table1_with_answer_count = db.session.execute(table1_with_answer_query).scalar()
             
             # 获取最新记录时间
             latest_question = db.session.query(Question).order_by(
@@ -235,8 +306,12 @@ class SyncService:
             
             return {
                 'questions_count': questions_count,
-                'table1_count': table1_count,
-                'sync_rate': f"{(questions_count/table1_count*100):.1f}%" if table1_count > 0 else "0%",
+                'answers_count': answers_count,
+                'original_answers_count': original_answers_count,
+                'table1_total_count': table1_total_count,
+                'table1_with_answer_count': table1_with_answer_count,
+                'questions_sync_rate': f"{(questions_count/table1_total_count*100):.1f}%" if table1_total_count > 0 else "0%",
+                'answers_sync_rate': f"{(original_answers_count/table1_with_answer_count*100):.1f}%" if table1_with_answer_count > 0 else "0%",
                 'latest_question_time': latest_question.sendmessagetime.isoformat() if latest_question else None,
                 'latest_table1_time': latest_table1_time.isoformat() if latest_table1_time else None,
                 'sync_status': self.sync_status['status']
@@ -244,10 +319,8 @@ class SyncService:
             
         except Exception as e:
             self.logger.error(f"获取同步统计失败: {str(e)}")
-            return {
-                'error': str(e)
-            }
-    
+            return {'error': str(e)}
+
 
 # 创建全局同步服务实例
 sync_service = SyncService()

@@ -35,7 +35,7 @@ class Config:
     MAX_PAGE_SIZE = 100
     
     # 外部API配置
-    CLASSIFY_API_URL = os.environ.get('CLASSIFY_API_URL') or 'http://api.example.com/api/classify'
+    CLASSIFY_API_URL = os.environ.get('CLASSIFY_API_URL') or 'http://localhost:8001'
     DOUBAO_API_URL = os.environ.get('DOUBAO_API_URL') or 'http://api.example.com/api/doubao'
     XIAOTIAN_API_URL = os.environ.get('XIAOTIAN_API_URL') or 'http://api.example.com/api/xiaotian'
     SCORE_API_URL = os.environ.get('SCORE_API_URL') or 'http://api.example.com/api/score'
