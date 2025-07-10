@@ -6,7 +6,6 @@ import logging
 from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
-from apscheduler.schedulers.background import BackgroundScheduler
 
 from app.config import config
 from app.utils.database import db, init_db
@@ -33,7 +32,7 @@ def create_app(config_name=None):
     with app.app_context():
         init_db(app)
     
-    # 启动定时任务
+    # 启动定时任务调度器
     if not app.testing:
         init_scheduler(app)
     
@@ -60,11 +59,13 @@ def init_extensions(app):
 def register_blueprints(app):
     """注册蓝图"""
     from app.api import sync_bp, question_bp, process_bp, review_bp
+    from app.api.scheduler_api import scheduler_bp
     
     app.register_blueprint(sync_bp, url_prefix='/api/sync')
     app.register_blueprint(question_bp, url_prefix='/api/questions')
     app.register_blueprint(process_bp, url_prefix='/api/process')
     app.register_blueprint(review_bp, url_prefix='/api/review')
+    app.register_blueprint(scheduler_bp, url_prefix='/api/scheduler')
 
 
 def configure_logging(app):
@@ -84,23 +85,11 @@ def configure_logging(app):
 
 
 def init_scheduler(app):
-    """初始化定时任务"""
-    scheduler = BackgroundScheduler()
-    
-    # 导入任务
-    from app.services.sync_service import sync_data_task
-    
-    # 添加定时任务
-    scheduler.add_job(
-        func=lambda: sync_data_task(app),
-        trigger='interval',
-        minutes=app.config['SYNC_INTERVAL_MINUTES'],
-        id='sync_data_job',
-        replace_existing=True
-    )
-    
-    scheduler.start()
-    
-    # 确保程序退出时关闭调度器
-    import atexit
-    atexit.register(lambda: scheduler.shutdown()) 
+    """初始化定时任务调度器"""
+    try:
+        from app.services.scheduler_service import scheduler_service
+        scheduler_service.initialize(app)
+        app.logger.info("定时任务调度器初始化完成")
+    except Exception as e:
+        app.logger.error(f"定时任务调度器初始化失败: {str(e)}")
+        # 不抛出异常，允许应用继续运行 
