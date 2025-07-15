@@ -4,6 +4,8 @@ Flask-SQLAlchemy==3.0.5
 Flask-CORS==4.0.0
 Flask-RESTful==0.3.10
 flask-restx==1.1.0
+# 修复werkzeug版本兼容性问题
+werkzeug==2.3.7
 
 # 数据库
 psycopg2-binary==2.9.7

@@ -173,7 +173,7 @@ def health_check():
 
 @app.route('/classify', methods=['POST'])
 def classify():
-    """问题分类接口"""
+    """问题分类接口 - 符合用户的API格式"""
     try:
         # 模拟API延迟
         time.sleep(random.uniform(0.1, 0.5))
@@ -184,15 +184,30 @@ def classify():
                 'error': 'Invalid JSON data'
             }), 400
         
-        # 检查必需字段
-        question = data.get('question')
+        # 检查用户的API格式
+        inputs = data.get('inputs')
+        if not inputs:
+            return jsonify({
+                'error': 'Missing required field: inputs'
+            }), 400
+        
+        question = inputs.get('QUERY')
         if not question:
             return jsonify({
-                'error': 'Missing required field: question'
+                'error': 'Missing required field: inputs.QUERY'
             }), 400
         
         # 答案字段是可选的
-        answer = data.get('answer')
+        answer = inputs.get('ANSWER', '')
+        
+        # 检查其他必需字段
+        response_mode = data.get('response_mode')
+        user = data.get('user')
+        
+        if response_mode != 'blocking':
+            return jsonify({
+                'error': 'Only blocking response mode is supported'
+            }), 400
         
         # 验证API密钥
         auth_header = request.headers.get('Authorization', '')
@@ -217,18 +232,28 @@ def classify():
         
         # 执行分类
         start_time = time.time()
-        result = classify_question_and_answer(question, answer)
+        classification_result = classify_question_and_answer(question, answer)
         processing_time = (time.time() - start_time) * 1000
         
-        # 添加处理时间和请求信息
-        result['processing_time'] = round(processing_time, 2)
-        result['request_info'] = {
-            'question_length': len(question),
-            'answer_length': len(answer) if answer else 0,
-            'has_answer': bool(answer)
+        # 按照用户的API响应格式返回
+        response_data = {
+            "data": {
+                "outputs": {
+                    "text": classification_result['category']  # 只返回分类名称
+                }
+            },
+            "metadata": {
+                "processing_time": round(processing_time, 2),
+                "user": user,
+                "request_info": {
+                    'question_length': len(question),
+                    'answer_length': len(answer) if answer else 0,
+                    'has_answer': bool(answer)
+                }
+            }
         }
         
-        return jsonify(result)
+        return jsonify(response_data)
         
     except Exception as e:
         return jsonify({
@@ -288,3 +313,55 @@ if __name__ == '__main__':
     print("-" * 50)
     
     app.run(host='0.0.0.0', port=8001, debug=True) 
+    import socket
+    
+    # 命令行参数解析
+    parser = argparse.ArgumentParser(description='Mock分类API服务器')
+    parser.add_argument('--port', type=int, default=8001, help='指定端口号（默认8001）')
+    parser.add_argument('--auto-port', action='store_true', help='自动查找可用端口')
+    args = parser.parse_args()
+    
+    # 确定使用的端口
+    if args.auto_port:
+        try:
+            port = find_available_port(args.port)
+            print(f"🔍 自动找到可用端口: {port}")
+        except RuntimeError as e:
+            print(f"❌ {e}")
+            exit(1)
+    else:
+        port = args.port
+        # 检查端口是否可用
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(('localhost', port))
+        except OSError:
+            print(f"❌ 端口 {port} 已被占用")
+            print("💡 解决方案:")
+            print(f"   1. 使用其他端口: python {__file__} --port 8002")
+            print(f"   2. 自动查找端口: python {__file__} --auto-port")
+            print(f"   3. 停止占用程序: sudo lsof -i :{port}")
+            exit(1)
+    
+    print("🤖 启动Mock分类API服务器...")
+    print(f"📍 地址: http://localhost:{port}")
+    print(f"🔗 健康检查: http://localhost:{port}/health") 
+    print(f"🔗 分类接口: POST http://localhost:{port}/classify")
+    print(f"📊 统计接口: http://localhost:{port}/stats")
+    print(f"📋 分类列表: http://localhost:{port}/categories")
+    print("-" * 50)
+    print("📝 按照您的API格式 POST数据:")
+    print("""   {
+       "inputs": {
+           "QUERY": "用户问题文本",
+           "ANSWER": "AI回答文本（可选）"
+       },
+       "response_mode": "blocking",
+       "user": "00031559"
+   }""")
+    print("-" * 50)
+    
+    try:
+        app.run(host='0.0.0.0', port=port, debug=True)
+    except KeyboardInterrupt:
+        print(f"\n🛑 Mock分类API服务器已停止") 

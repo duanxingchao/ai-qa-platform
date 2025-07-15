@@ -361,16 +361,9 @@ class SchedulerService:
         self.logger.info(f"开始执行评分处理阶段 [workflow: {workflow_id}]")
         
         try:
-            # TODO: 创建AI处理服务后取消注释
-            # from app.services.ai_processing_service import ai_processing_service
-            # result = ai_processing_service.process_scoring_batch()
-            
-            # 临时返回成功结果
-            result = {
-                'success': True, 
-                'message': '评分处理阶段完成（待实现具体逻辑）',
-                'processed_count': 0
-            }
+            from app.services.ai_processing_service import AIProcessingService
+            ai_service = AIProcessingService()
+            result = ai_service.process_scoring_batch()
             return result
             
         except Exception as e:

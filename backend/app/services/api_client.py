@@ -434,48 +434,112 @@ class ClassificationAPIClient(BaseAPIClient):
     def classify_question(
         self, 
         question: str, 
-        context: Optional[str] = None,
-        categories: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+        answer: Optional[str] = None,
+        user_id: str = "00031559"
+    ) -> str:
         """
-        对问题进行分类
+        对问题进行分类 - 符合用户的外部API格式
         
         Args:
             question: 要分类的问题文本
-            context: 问题上下文
-            categories: 可选的分类类别列表
+            answer: AI回答内容（可选）
+            user_id: 用户ID（默认: 00031559）
             
         Returns:
-            包含分类结果的字典
-            {
-                'category': str,           # 分类结果
-                'confidence': float,       # 置信度 (0-1)
-                'subcategory': str,        # 子分类（可选）
-                'tags': List[str],         # 相关标签
-                'processing_time': float   # 处理时间（毫秒）
-            }
+            str: 分类结果文本
         """
-        payload = {
-            'question': question,
-            'context': context,
-            'categories': categories
+        # 按照用户的API格式构建请求体
+        body = {
+            "inputs": {
+                "QUERY": question,
+                "ANSWER": answer or ""
+            },
+            "response_mode": "blocking",
+            "user": user_id
         }
         
         self.logger.info(f"开始问题分类: {question[:50]}...")
         
         try:
-            result = self.post('/classify', data=payload)
+            # 直接使用requests.post调用，符合用户的方式
+            response = self._make_classification_request(body)
             
-            self.logger.info(
-                f"分类完成: {result.get('category', 'unknown')} "
-                f"(置信度: {result.get('confidence', 0):.2f})"
-            )
-            
-            return result
+            if response.status_code == 200:
+                response_json = response.json()
+                res = response_json["data"]["outputs"]["text"]
+                
+                self.logger.info(f"分类完成: {res}")
+                return res
+            else:
+                raise APIException(
+                    f"分类API请求失败，状态码: {response.status_code}",
+                    status_code=response.status_code
+                )
             
         except APIException as e:
             self.logger.error(f"问题分类失败: {str(e)}")
             raise
+    
+    def _make_classification_request(self, body: Dict[str, Any]) -> requests.Response:
+        """
+        执行分类API请求 - 完全按照用户的格式
+        """
+        request_id = self._generate_request_id()
+        
+        # 构建请求头
+        headers = self._get_auth_headers()
+        headers.update({
+            'Content-Type': 'application/json'
+        })
+        
+        # 更新统计
+        self.request_stats['total_requests'] += 1
+        
+        # 记录请求日志
+        self.logger.info(f"[{request_id}] 发起分类API请求")
+        self.logger.debug(f"[{request_id}] 请求体: {body}")
+        
+        start_time = time.time()
+        
+        try:
+            # 完全按照用户的方式调用
+            response = requests.post(
+                f"{self.base_url}/classify",
+                json=body,
+                headers=headers,
+                timeout=15
+            )
+            
+            duration = time.time() - start_time
+            self.request_stats['total_response_time'] += duration
+            
+            # 记录响应日志
+            self.logger.info(
+                f"[{request_id}] 分类API响应: {response.status_code} "
+                f"({duration:.3f}s)"
+            )
+            
+            if response.status_code == 200:
+                self.request_stats['successful_requests'] += 1
+            else:
+                self.request_stats['failed_requests'] += 1
+            
+            return response
+            
+        except requests.exceptions.Timeout as e:
+            self.request_stats['failed_requests'] += 1
+            self.logger.error(f"[{request_id}] 分类API请求超时: {str(e)}")
+            raise APITimeoutException(f"分类API请求超时: {str(e)}", timeout=15)
+            
+        except requests.exceptions.ConnectionError as e:
+            self.request_stats['failed_requests'] += 1
+            self.logger.error(f"[{request_id}] 分类API连接失败: {str(e)}")
+            raise APIConnectionException(f"分类API连接失败: {str(e)}")
+            
+        except Exception as e:
+            self.request_stats['failed_requests'] += 1
+            self.logger.error(f"[{request_id}] 分类API请求异常: {str(e)}")
+            raise APIException(f"分类API请求异常: {str(e)}")
 
 
 class DoubaoAPIClient(BaseAPIClient):
@@ -639,64 +703,140 @@ class ScoreAPIClient(BaseAPIClient):
             'Content-Type': 'application/json'
         }
     
-    def score_answer(
+    def score_multiple_answers(
         self,
         question: str,
-        answer: str,
-        reference_answer: Optional[str] = None,
-        criteria: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+        our_answer: str,
+        doubao_answer: str,
+        xiaotian_answer: str,
+        classification: str
+    ) -> List[Dict[str, Any]]:
         """
-        对答案进行五维评分
+        对多个AI模型的答案进行评分 - 符合用户的API格式
         
         Args:
             question: 原始问题
-            answer: 待评分的答案
-            reference_answer: 参考答案（可选）
-            criteria: 评分标准列表（可选）
+            our_answer: 原始模型答案
+            doubao_answer: 豆包模型答案  
+            xiaotian_answer: 小天模型答案
+            classification: 问题分类
             
         Returns:
-            包含评分结果的字典
-            {
-                'overall_score': float,     # 总体评分 (0-100)
-                'dimension_scores': {       # 各维度评分
-                    'accuracy': float,      # 准确性 (0-100)
-                    'completeness': float,  # 完整性 (0-100)
-                    'clarity': float,       # 清晰度 (0-100)
-                    'relevance': float,     # 相关性 (0-100)
-                    'helpfulness': float    # 有用性 (0-100)
+            List[Dict]: 包含3个模型评分结果的列表
+            [
+                {
+                    "模型名称": "原始模型",
+                    "准确性": 4,
+                    "完整性": 3,
+                    "清晰度": 4,
+                    "相关性": 3,
+                    "有用性": 4,
+                    "理由": "评分理由"
                 },
-                'feedback': str,            # 评分反馈
-                'suggestions': List[str],   # 改进建议
-                'processing_time': float    # 处理时间（毫秒）
-            }
-        """
-        payload = {
-            'question': question,
-            'answer': answer,
-            'reference_answer': reference_answer,
-            'criteria': criteria or [
-                'accuracy',      # 准确性
-                'completeness',  # 完整性
-                'clarity',       # 清晰度
-                'relevance',     # 相关性
-                'helpfulness'    # 有用性
+                ...
             ]
+        """
+        # 按照用户的API格式构建请求体
+        inputs = {
+            'question': question,
+            'our_answer': our_answer,
+            'doubao_answer': doubao_answer,
+            'xiaotian_answer': xiaotian_answer,
+            'classification': classification
         }
         
-        self.logger.info(f"开始答案评分: {question[:50]}...")
+        self.logger.info(f"开始多模型答案评分: {question[:50]}...")
         
         try:
-            result = self.post('/score', data=payload)
+            # 直接使用requests.post调用，符合用户的方式
+            response = self._make_score_request(inputs)
             
-            overall_score = result.get('overall_score', 0)
-            self.logger.info(f"答案评分完成: 总分{overall_score:.1f}")
-            
-            return result
+            if response.status_code == 200:
+                response_json = response.json()
+                # 按照用户指定的格式解析
+                text_result = response_json["data"]["outputs"]["text"]
+                
+                # 解析JSON格式的评分结果
+                import json
+                score_results = json.loads(text_result)
+                
+                self.logger.info(f"多模型评分完成: 获得{len(score_results)}个模型的评分")
+                return score_results
+            else:
+                raise APIException(
+                    f"评分API请求失败，状态码: {response.status_code}",
+                    status_code=response.status_code
+                )
             
         except APIException as e:
-            self.logger.error(f"答案评分失败: {str(e)}")
+            self.logger.error(f"多模型答案评分失败: {str(e)}")
             raise
+    
+    def _make_score_request(self, inputs: Dict[str, Any]) -> requests.Response:
+        """
+        执行评分API请求 - 完全按照用户的格式
+        """
+        request_id = self._generate_request_id()
+        
+        # 构建请求体
+        body = {
+            'inputs': inputs
+        }
+        
+        # 构建请求头
+        headers = self._get_auth_headers()
+        headers.update({
+            'Content-Type': 'application/json'
+        })
+        
+        # 更新统计
+        self.request_stats['total_requests'] += 1
+        
+        # 记录请求日志
+        self.logger.info(f"[{request_id}] 发起评分API请求")
+        self.logger.debug(f"[{request_id}] 请求体: {body}")
+        
+        start_time = time.time()
+        
+        try:
+            # 完全按照用户的方式调用
+            response = requests.post(
+                f"{self.base_url}/score",
+                json=body,
+                headers=headers,
+                timeout=30
+            )
+            
+            duration = time.time() - start_time
+            self.request_stats['total_response_time'] += duration
+            
+            # 记录响应日志
+            self.logger.info(
+                f"[{request_id}] 评分API响应: {response.status_code} "
+                f"({duration:.3f}s)"
+            )
+            
+            if response.status_code == 200:
+                self.request_stats['successful_requests'] += 1
+            else:
+                self.request_stats['failed_requests'] += 1
+            
+            return response
+            
+        except requests.exceptions.Timeout as e:
+            self.request_stats['failed_requests'] += 1
+            self.logger.error(f"[{request_id}] 评分API请求超时: {str(e)}")
+            raise APITimeoutException(f"评分API请求超时: {str(e)}", timeout=30)
+            
+        except requests.exceptions.ConnectionError as e:
+            self.request_stats['failed_requests'] += 1
+            self.logger.error(f"[{request_id}] 评分API连接失败: {str(e)}")
+            raise APIConnectionException(f"评分API连接失败: {str(e)}")
+            
+        except Exception as e:
+            self.request_stats['failed_requests'] += 1
+            self.logger.error(f"[{request_id}] 评分API请求异常: {str(e)}")
+            raise APIException(f"评分API请求异常: {str(e)}")
 
 
 # ============================================================================
