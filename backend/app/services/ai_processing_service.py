@@ -503,10 +503,10 @@ class AIProcessingService:
                     doubao_answer = answers.get('doubao', {}).get('answer_text', '') if 'doubao' in answers else ''
                     xiaotian_answer = answers.get('xiaotian', {}).get('answer_text', '') if 'xiaotian' in answers else ''
                     classification = question.classification or ''
-                    
-                    # 调用评分API
+                        
+                        # 调用评分API
                     score_results = score_client.score_multiple_answers(
-                        question=question.query,
+                            question=question.query,
                         our_answer=our_answer,
                         doubao_answer=doubao_answer,
                         xiaotian_answer=xiaotian_answer,
@@ -529,7 +529,7 @@ class AIProcessingService:
                             answer_obj = answers[assistant_type]
                             
                             # 创建评分记录
-                            score = Score(
+                        score = Score(
                                 answer_id=answer_obj['id'],
                                 score_1=score_result.get('准确性', 3),
                                 score_2=score_result.get('完整性', 3),
@@ -537,28 +537,28 @@ class AIProcessingService:
                                 score_4=score_result.get('相关性', 3),
                                 score_5=score_result.get('有用性', 3),
                                 comment=score_result.get('理由', ''),
-                                rated_at=datetime.utcnow()
-                            )
-                            
-                            # 计算平均分
-                            scores = [score.score_1, score.score_2, score.score_3, score.score_4, score.score_5]
-                            valid_scores = [s for s in scores if s is not None]
-                            if valid_scores:
-                                score.average_score = sum(valid_scores) / len(valid_scores)
-                            
-                            db.session.add(score)
-                            
-                            # 更新答案状态
+                            rated_at=datetime.utcnow()
+                        )
+                        
+                        # 计算平均分
+                        scores = [score.score_1, score.score_2, score.score_3, score.score_4, score.score_5]
+                        valid_scores = [s for s in scores if s is not None]
+                        if valid_scores:
+                            score.average_score = sum(valid_scores) / len(valid_scores)
+                        
+                        db.session.add(score)
+                        
+                        # 更新答案状态
                             answer_record = db.session.query(Answer).filter_by(id=answer_obj['id']).first()
                             if answer_record:
                                 answer_record.is_scored = True
                                 answer_record.updated_at = datetime.utcnow()
                             
                             saved_scores += 1
-                    
+                        
                     success_count += saved_scores
                     processed_questions += 1
-                    
+                        
                     # 提交当前问题的评分
                     try:
                         db.session.commit()
