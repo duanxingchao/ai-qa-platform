@@ -549,10 +549,10 @@ class AIProcessingService:
                         db.session.add(score)
                         
                         # 更新答案状态
-                            answer_record = db.session.query(Answer).filter_by(id=answer_obj['id']).first()
-                            if answer_record:
-                                answer_record.is_scored = True
-                                answer_record.updated_at = datetime.utcnow()
+                        answer_record = db.session.query(Answer).filter_by(id=answer_obj['id']).first()
+                        if answer_record:
+                            answer_record.is_scored = True
+                            answer_record.updated_at = datetime.utcnow()
                             
                             saved_scores += 1
                         

@@ -5,6 +5,34 @@
       <p class="page-description">系统整体运行状态和数据统计</p>
     </div>
 
+    <!-- 时间筛选器 -->
+    <el-row class="filter-row">
+      <el-col :span="24">
+        <el-card class="filter-card" shadow="never">
+          <div class="time-filter">
+            <span class="filter-label">时间范围：</span>
+            <el-radio-group v-model="timeRange" @change="handleTimeRangeChange">
+              <el-radio-button label="today">本日</el-radio-button>
+              <el-radio-button label="week">本周</el-radio-button>
+              <el-radio-button label="month">本月</el-radio-button>
+              <el-radio-button label="year">本年</el-radio-button>
+              <el-radio-button label="all">总计</el-radio-button>
+            </el-radio-group>
+            <el-button 
+              type="primary" 
+              size="small" 
+              @click="refreshStats" 
+              :loading="loading"
+              style="margin-left: 20px;"
+            >
+              <el-icon><Refresh /></el-icon>
+              刷新数据
+            </el-button>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
     <!-- 统计卡片 -->
     <el-row :gutter="20" class="stats-row">
       <el-col :span="6" v-for="stat in stats" :key="stat.key">
@@ -18,6 +46,9 @@
             <div class="stat-info">
               <div class="stat-value">{{ stat.value }}</div>
               <div class="stat-label">{{ stat.label }}</div>
+              <div class="stat-description" v-if="stat.description">
+                {{ stat.description }}
+              </div>
             </div>
           </div>
           <div class="stat-trend" v-if="stat.trend">
@@ -107,40 +138,45 @@ export default {
     const loading = ref(false)
     const trendChart = ref(null)
     const modelChart = ref(null)
+    const timeRange = ref('all')  // 默认选择总计
     
     // 统计数据
     const stats = ref([
       {
-        key: 'questions',
+        key: 'total_questions',
         label: '总问题数',
         value: 0,
         icon: 'ChatDotRound',
         color: '#409EFF',
-        trend: null
+        trend: null,
+        description: '指定时间范围内的问题总数'
       },
       {
-        key: 'answers',
-        label: '总答案数',
+        key: 'classified_questions',
+        label: '已分类问题数',
         value: 0,
-        icon: 'Document',
+        icon: 'Flag',
         color: '#67C23A',
-        trend: null
+        trend: null,
+        description: '已完成自动分类的问题数量'
       },
       {
-        key: 'scores',
+        key: 'ai_answers_completion',
+        label: '竞品批跑答案数',
+        value: '0/0',
+        icon: 'Robot',
+        color: '#E6A23C',
+        trend: null,
+        description: '三个AI模型的答案完成情况'
+      },
+      {
+        key: 'scored_answers',
         label: '评分完成数',
         value: 0,
         icon: 'Star',
-        color: '#E6A23C',
-        trend: null
-      },
-      {
-        key: 'sync_rate',
-        label: '同步成功率',
-        value: '0%',
-        icon: 'Refresh',
         color: '#F56C6C',
-        trend: null
+        trend: null,
+        description: '已完成评分的答案数量'
       }
     ])
 
@@ -182,24 +218,83 @@ export default {
     let trendChartInstance = null
     let modelChartInstance = null
 
+    // 获取时间范围参数
+    const getTimeRangeParams = () => {
+      const now = new Date()
+      const params = { time_range: timeRange.value }
+      
+      switch (timeRange.value) {
+        case 'today':
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+          params.start_time = today.toISOString()
+          params.end_time = new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString()
+          break
+        case 'week':
+          const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+          params.start_time = weekStart.toISOString()
+          params.end_time = now.toISOString()
+          break
+        case 'month':
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+          params.start_time = monthStart.toISOString()
+          params.end_time = now.toISOString()
+          break
+        case 'year':
+          const yearStart = new Date(now.getFullYear(), 0, 1)
+          params.start_time = yearStart.toISOString()
+          params.end_time = now.toISOString()
+          break
+        case 'all':
+        default:
+          // 不传时间参数，获取全部数据
+          break
+      }
+      
+      return params
+    }
+
     // 加载统计数据
     const loadStats = async () => {
       try {
         loading.value = true
-        const res = await getStats()
+        const params = getTimeRangeParams()
+        const res = await getStats(params)
         
         if (res.success && res.data) {
           const data = res.data
-          stats.value[0].value = data.questions_count || 0
-          stats.value[1].value = data.answers_count || 0
-          stats.value[2].value = data.scored_answers_count || 0
-          stats.value[3].value = data.questions_sync_rate || '0%'
+          
+          // 计算已分类问题数（classification不为null且不为空的问题）
+          const classifiedCount = data.classification_distribution ? 
+            Object.values(data.classification_distribution).reduce((sum, count) => sum + count, 0) : 0
+          
+          // 计算竞品批跑答案数（三个AI模型的答案完成情况）
+          let totalExpectedAnswers = (data.summary?.total_questions || 0) * 3  // 每个问题期望3个答案
+          let actualAnswers = data.summary?.total_answers || 0
+          let aiCompletionRate = totalExpectedAnswers > 0 ? ((actualAnswers / totalExpectedAnswers) * 100).toFixed(1) : 0
+          
+          // 更新统计数据
+          stats.value[0].value = data.summary?.total_questions || 0
+          stats.value[1].value = classifiedCount
+          stats.value[2].value = `${actualAnswers}/${totalExpectedAnswers} (${aiCompletionRate}%)`
+          stats.value[3].value = data.summary?.scored_answers || 0
         }
       } catch (error) {
         console.error('加载统计数据失败:', error)
+        ElMessage.error('加载统计数据失败')
       } finally {
         loading.value = false
       }
+    }
+
+    // 时间范围变更处理
+    const handleTimeRangeChange = (value) => {
+      timeRange.value = value
+      loadStats()
+    }
+
+    // 刷新统计数据
+    const refreshStats = () => {
+      loadStats()
     }
 
     // 初始化趋势图表
@@ -340,11 +435,14 @@ export default {
 
     return {
       loading,
+      timeRange,
       stats,
       systemStatus,
       services,
       trendChart,
       modelChart,
+      handleTimeRangeChange,
+      refreshStats,
       refreshTrends
     }
   }
@@ -353,6 +451,26 @@ export default {
 
 <style lang="scss" scoped>
 .dashboard {
+  .filter-row {
+    margin-bottom: 20px;
+  }
+
+  .filter-card {
+    border: none;
+    
+    .time-filter {
+      display: flex;
+      align-items: center;
+      
+      .filter-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: #303133;
+        margin-right: 15px;
+      }
+    }
+  }
+
   .stats-row {
     margin-bottom: 20px;
   }
@@ -388,6 +506,13 @@ export default {
           font-size: 14px;
           color: #909399;
           margin-top: 4px;
+        }
+
+        .stat-description {
+          font-size: 12px;
+          color: #c0c4cc;
+          margin-top: 2px;
+          line-height: 1.2;
         }
       }
     }

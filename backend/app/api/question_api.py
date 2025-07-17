@@ -14,7 +14,7 @@ def get_questions():
     """获取问题列表"""
     try:
         # 获取查询参数
-    page = request.args.get('page', 1, type=int)
+        page = request.args.get('page', 1, type=int)
         page_size = min(request.args.get('page_size', 20, type=int), 100)
         keyword = request.args.get('keyword', '')
         classification = request.args.get('classification', '')
@@ -23,38 +23,38 @@ def get_questions():
         end_time = request.args.get('end_time', '')
         
         # 构建查询
-        query = Question.query
+        question_query = db.session.query(Question)
         
         # 关键词搜索
         if keyword:
-            query = query.filter(Question.query.ilike(f'%{keyword}%'))
+            question_query = question_query.filter(Question.query.ilike(f'%{keyword}%'))
         
         # 分类筛选
         if classification:
-            query = query.filter(Question.classification == classification)
+            question_query = question_query.filter(Question.classification == classification)
         
         # 状态筛选
         if status:
-            query = query.filter(Question.processing_status == status)
+            question_query = question_query.filter(Question.processing_status == status)
         
         # 时间范围筛选
         if start_time:
             start_dt = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
-            query = query.filter(Question.sendmessagetime >= start_dt)
+            question_query = question_query.filter(Question.sendmessagetime >= start_dt)
         
         if end_time:
             end_dt = datetime.strptime(end_time, '%Y-%m-%d %H:%M:%S')
-            query = query.filter(Question.sendmessagetime <= end_dt)
+            question_query = question_query.filter(Question.sendmessagetime <= end_dt)
         
         # 排序和分页
-        query = query.order_by(Question.created_at.desc())
+        question_query = question_query.order_by(Question.created_at.desc())
         
         # 获取总数
-        total = query.count()
+        total = question_query.count()
         
         # 分页查询
         offset = (page - 1) * page_size
-        questions = query.offset(offset).limit(page_size).all()
+        questions = question_query.offset(offset).limit(page_size).all()
         
         # 序列化数据
         data = []
@@ -72,7 +72,7 @@ def get_questions():
                 'updated_at': question.updated_at.isoformat() if question.updated_at else None
             })
     
-    return jsonify({
+        return jsonify({
             'success': True,
             'data': data,
             'total': total,
@@ -85,6 +85,73 @@ def get_questions():
         return jsonify({
             'success': False,
             'message': f'获取问题列表失败: {str(e)}'
+        }), 500
+
+@question_bp.route('/statistics', methods=['GET'])
+def get_question_statistics():
+    """获取问题统计数据"""
+    try:
+        # 总问题数
+        total_questions = db.session.query(Question).count()
+        
+        # 按处理状态统计
+        status_stats = db.session.query(
+            Question.processing_status,
+            func.count(Question.id)
+        ).group_by(Question.processing_status).all()
+        
+        # 按分类统计
+        classification_stats = db.session.query(
+            Question.classification,
+            func.count(Question.id)
+        ).filter(Question.classification.isnot(None)).group_by(Question.classification).all()
+        
+        # 按设备类型统计
+        device_stats = db.session.query(
+            Question.devicetypename,
+            func.count(Question.id)
+        ).group_by(Question.devicetypename).all()
+        
+        # 最近7天问题趋势
+        from datetime import datetime, timedelta
+        week_ago = datetime.utcnow() - timedelta(days=7)
+        recent_questions = db.session.query(
+            func.date(Question.created_at).label('date'),
+            func.count(Question.id).label('count')
+        ).filter(
+            Question.created_at >= week_ago
+        ).group_by(func.date(Question.created_at)).all()
+        
+        # 组织返回数据
+        data = {
+            'total_questions': total_questions,
+            'status_distribution': {
+                status or 'unknown': count for status, count in status_stats
+            },
+            'classification_distribution': {
+                classification: count for classification, count in classification_stats
+            },
+            'device_distribution': {
+                device or 'unknown': count for device, count in device_stats
+            },
+            'recent_trend': [
+                {
+                    'date': str(date),
+                    'count': count
+                } for date, count in recent_questions
+            ]
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': data,
+            'message': '获取问题统计成功'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'获取问题统计失败: {str(e)}'
         }), 500
 
 @question_bp.route('/<int:question_id>', methods=['GET'])
@@ -254,7 +321,7 @@ def batch_update_questions():
             
             db.session.commit()
             
-    return jsonify({
+            return jsonify({
                 'success': True,
                 'message': f'成功标记 {len(questions)} 个问题进行重新分类'
             })
@@ -270,4 +337,4 @@ def batch_update_questions():
         return jsonify({
             'success': False,
             'message': f'批量操作失败: {str(e)}'
-        }), 500 
+        }), 500

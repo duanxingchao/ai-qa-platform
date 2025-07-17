@@ -1,17 +1,18 @@
 import request from './index'
 
-// 获取统计数据
-export function getStats() {
+// 获取仪表板汇总数据
+export function getStats(params) {
   return request({
-    url: '/sync/statistics',
-    method: 'get'
+    url: '/dashboard',
+    method: 'get',
+    params
   })
 }
 
 // 获取系统健康状态
 export function getSystemHealth() {
   return request({
-    url: '/sync/health',
+    url: '/scheduler/status',
     method: 'get'
   })
 }
@@ -24,19 +25,19 @@ export function getSyncStatus() {
   })
 }
 
-// 获取趋势数据
+// 获取问题统计数据
 export function getTrends(params) {
   return request({
-    url: '/dashboard/trends',
+    url: '/questions/statistics',
     method: 'get',
     params
   })
 }
 
-// 获取模型性能对比数据
+// 获取处理统计数据
 export function getModelComparison() {
   return request({
-    url: '/dashboard/model-comparison',
+    url: '/process/statistics',
     method: 'get'
   })
 } 
