@@ -71,7 +71,7 @@ def get_questions():
                 'created_at': question.created_at.isoformat() if question.created_at else None,
                 'updated_at': question.updated_at.isoformat() if question.updated_at else None
             })
-    
+        
         return jsonify({
             'success': True,
             'data': data,
@@ -80,7 +80,6 @@ def get_questions():
             'page_size': page_size,
             'message': '获取问题列表成功'
         })
-        
     except Exception as e:
         return jsonify({
             'success': False,
@@ -337,4 +336,4 @@ def batch_update_questions():
         return jsonify({
             'success': False,
             'message': f'批量操作失败: {str(e)}'
-        }), 500
+        }), 500 

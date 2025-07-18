@@ -24,13 +24,51 @@ def get_dashboard_data():
         
         # 构建时间过滤条件
         time_filter = []
-        if start_time and end_time:
+        
+        # 处理time_range参数
+        if time_range and time_range != 'all':
+            now = datetime.utcnow()
+            if time_range == 'today':
+                # 今日：从今天0点到明天0点
+                start_dt = datetime(now.year, now.month, now.day)
+                end_dt = start_dt + timedelta(days=1)
+                time_filter = [
+                    Question.sendmessagetime >= start_dt,
+                    Question.sendmessagetime < end_dt
+                ]
+            elif time_range == 'week':
+                # 本周：最近7天
+                start_dt = now - timedelta(days=7)
+                end_dt = now
+                time_filter = [
+                    Question.sendmessagetime >= start_dt,
+                    Question.sendmessagetime <= end_dt
+                ]
+            elif time_range == 'month':
+                # 本月：从本月1号到现在
+                start_dt = datetime(now.year, now.month, 1)
+                end_dt = now
+                time_filter = [
+                    Question.sendmessagetime >= start_dt,
+                    Question.sendmessagetime <= end_dt
+                ]
+            elif time_range == 'year':
+                # 本年：从今年1月1号到现在
+                start_dt = datetime(now.year, 1, 1)
+                end_dt = now
+                time_filter = [
+                    Question.sendmessagetime >= start_dt,
+                    Question.sendmessagetime <= end_dt
+                ]
+        
+        # 如果time_range没有匹配，则使用start_time和end_time参数
+        elif start_time and end_time:
             try:
                 start_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
                 end_dt = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
                 time_filter = [
-                    Question.created_at >= start_dt,
-                    Question.created_at <= end_dt
+                    Question.sendmessagetime >= start_dt,
+                    Question.sendmessagetime <= end_dt
                 ]
             except ValueError:
                 # 如果时间格式错误，忽略时间筛选
@@ -53,6 +91,11 @@ def get_dashboard_data():
         scored_answers = answer_query.filter(Answer.is_scored == True).count()
         total_scores = db.session.query(Score).count()
         
+        # 竞品答案统计（豆包和小天）
+        doubao_answers = answer_query.filter(Answer.assistant_type == 'doubao').count()
+        xiaotian_answers = answer_query.filter(Answer.assistant_type == 'xiaotian').count()
+        competitor_answers = doubao_answers + xiaotian_answers
+        
         # 计算完成率
         completion_rate = (scored_answers / total_answers * 100) if total_answers > 0 else 0
         
@@ -62,16 +105,50 @@ def get_dashboard_data():
         # 最近7天趋势数据
         week_ago = datetime.utcnow() - timedelta(days=7)
         
-        # 问题趋势 - 简化版本
-        trend_query = db.session.query(
-            func.date(Question.created_at).label('date'),
+        # 生成最近7天的日期列表
+        date_list = []
+        for i in range(7):
+            date = (datetime.utcnow() - timedelta(days=6-i)).date()
+            date_list.append(date)
+        
+        # 查询最近7天的问题趋势
+        question_trend_query = db.session.query(
+            func.date(Question.sendmessagetime).label('date'),
             func.count(Question.id).label('questions')
-        ).filter(Question.created_at >= week_ago)
+        ).filter(Question.sendmessagetime >= week_ago)
         
         if time_filter:
-            trend_query = trend_query.filter(and_(*time_filter))
+            question_trend_query = question_trend_query.filter(and_(*time_filter))
             
-        question_trend = trend_query.group_by(func.date(Question.created_at)).all()
+        question_trend = question_trend_query.group_by(func.date(Question.sendmessagetime)).all()
+        question_trend_dict = {str(item.date): item.questions for item in question_trend}
+        
+        # 查询最近7天的分类趋势
+        classification_trend_query = db.session.query(
+            func.date(Question.sendmessagetime).label('date'),
+            func.count(Question.id).label('classifications')
+        ).filter(
+            and_(
+                Question.sendmessagetime >= week_ago,
+                Question.classification.isnot(None),
+                Question.classification != ''
+            )
+        )
+        
+        if time_filter:
+            classification_trend_query = classification_trend_query.filter(and_(*time_filter))
+            
+        classification_trend = classification_trend_query.group_by(func.date(Question.sendmessagetime)).all()
+        classification_trend_dict = {str(item.date): item.classifications for item in classification_trend}
+        
+        # 查询最近7天的评分趋势
+        score_trend_query = db.session.query(
+            func.date(Score.rated_at).label('date'),
+            func.count(Score.id).label('scores')
+        ).filter(Score.rated_at >= week_ago)
+        
+        score_trend = score_trend_query.group_by(func.date(Score.rated_at)).all()
+        score_trend_dict = {str(item.date): item.scores for item in score_trend}
         
         # 按分类统计
         classification_query = question_query.filter(Question.classification.isnot(None))
@@ -112,16 +189,21 @@ def get_dashboard_data():
                 'total_questions': total_questions,
                 'total_answers': total_answers,
                 'scored_answers': scored_answers,
-                'completion_rate': f"{completion_rate:.1f}%"
+                'completion_rate': f"{completion_rate:.1f}%",
+                'competitor_answers': {
+                    'doubao': doubao_answers,
+                    'xiaotian': xiaotian_answers,
+                    'total': competitor_answers
+                }
             },
             'sync_status': sync_stats,
             'trend_data': [
                 {
-                    'date': str(item.date),
-                    'questions': item.questions or 0,
-                    'answers': 0,
-                    'scores': 0
-                } for item in question_trend
+                    'date': str(date),
+                    'questions': question_trend_dict.get(str(date), 0),
+                    'classifications': classification_trend_dict.get(str(date), 0),
+                    'scores': score_trend_dict.get(str(date), 0)
+                } for date in date_list
             ],
             'classification_distribution': {
                 classification: count for classification, count in classification_stats

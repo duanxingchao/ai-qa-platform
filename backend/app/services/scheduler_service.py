@@ -132,25 +132,23 @@ class SchedulerService:
     
     def _register_default_jobs(self, app):
         """注册默认的定时任务"""
-        # 主工作流任务 - 每天凌晨2点执行
-        self.add_cron_job(
-            job_id='daily_workflow',
-            job_name='每日AI处理工作流',
+        # 主工作流任务 - 每两分钟执行一次
+        self.add_interval_job(
+            job_id='frequent_workflow',
+            job_name='频繁AI处理工作流',
             func=lambda: self.execute_full_workflow(app),
-            hour=2,
-            minute=0,
-            description='每日自动执行完整的AI数据处理工作流',
+            minutes=2,
+            description='每两分钟自动执行完整的AI数据处理工作流',
             enabled=True
         )
         
         # 数据同步任务 - 可独立执行
-        self.add_cron_job(
-            job_id='daily_data_sync',
-            job_name='每日数据同步',
+        self.add_interval_job(
+            job_id='frequent_data_sync',
+            job_name='频繁数据同步',
             func=lambda: self.execute_workflow_phase(app, WorkflowPhase.DATA_SYNC),
-            hour=1,
-            minute=30,
-            description='每日自动同步数据（可独立执行）',
+            minutes=2,
+            description='每两分钟自动同步数据（可独立执行）',
             enabled=False  # 默认禁用，由主工作流控制
         )
     
@@ -516,6 +514,85 @@ class SchedulerService:
             
         except Exception as e:
             self.logger.error(f"添加定时任务失败: {str(e)}")
+            return False
+    
+    def add_interval_job(
+        self,
+        job_id: str,
+        job_name: str,
+        func: Callable,
+        seconds: Optional[int] = None,
+        minutes: Optional[int] = None,
+        hours: Optional[int] = None,
+        days: Optional[int] = None,
+        description: str = "",
+        enabled: bool = True
+    ) -> bool:
+        """添加间隔执行的任务"""
+        try:
+            if not enabled:
+                self.logger.info(f"任务 {job_name} 被禁用，跳过添加")
+                return False
+            
+            if IntervalTrigger is None:
+                self.logger.error("APScheduler未安装，无法添加间隔任务")
+                return False
+                
+            trigger = IntervalTrigger(
+                seconds=seconds,
+                minutes=minutes,
+                hours=hours,
+                days=days,
+                timezone='Asia/Shanghai'
+            )
+            
+            if self.scheduler is None:
+                self.logger.error("调度器未初始化")
+                return False
+                
+            self.scheduler.add_job(
+                func=func,
+                trigger=trigger,
+                id=job_id,
+                name=job_name,
+                replace_existing=True
+            )
+            
+            # 记录任务状态
+            with self._lock:
+                self.tasks_status[job_id] = {
+                    'name': job_name,
+                    'type': 'interval',
+                    'description': description,
+                    'enabled': enabled,
+                    'created_at': datetime.now().isoformat(),
+                    'last_execution': None,
+                    'execution_count': 0,
+                    'success_count': 0,
+                    'error_count': 0,
+                    'config': {
+                        'seconds': seconds,
+                        'minutes': minutes,
+                        'hours': hours,
+                        'days': days
+                    }
+                }
+            
+            interval_str = ""
+            if days:
+                interval_str += f"{days}天"
+            if hours:
+                interval_str += f"{hours}小时"
+            if minutes:
+                interval_str += f"{minutes}分钟"
+            if seconds:
+                interval_str += f"{seconds}秒"
+            
+            self.logger.info(f"添加间隔任务成功: {job_name} (间隔: {interval_str})")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"添加间隔任务失败: {str(e)}")
             return False
     
     def pause_job(self, job_id: str) -> bool:

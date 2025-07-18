@@ -553,8 +553,8 @@ class AIProcessingService:
                         if answer_record:
                             answer_record.is_scored = True
                             answer_record.updated_at = datetime.utcnow()
-                            
-                            saved_scores += 1
+                        
+                        saved_scores += 1
                         
                     success_count += saved_scores
                     processed_questions += 1

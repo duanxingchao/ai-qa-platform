@@ -36,7 +36,7 @@
     <!-- 统计卡片 -->
     <el-row :gutter="20" class="stats-row">
       <el-col :span="6" v-for="stat in stats" :key="stat.key">
-        <el-card class="stat-card" shadow="hover">
+        <el-card class="stat-card" shadow="hover" :body-style="{ height: '100%', display: 'flex', flexDirection: 'column' }">
           <div class="stat-content">
             <div class="stat-icon" :style="{ backgroundColor: stat.color }">
               <el-icon :size="24">
@@ -162,12 +162,12 @@ export default {
       },
       {
         key: 'ai_answers_completion',
-        label: '竞品批跑答案数',
+        label: '竞品跑测完成度',
         value: '0/0',
         icon: 'Robot',
         color: '#E6A23C',
         trend: null,
-        description: '三个AI模型的答案完成情况'
+        description: '豆包/小天竞品答案完成情况'
       },
       {
         key: 'scored_answers',
@@ -267,16 +267,29 @@ export default {
           const classifiedCount = data.classification_distribution ? 
             Object.values(data.classification_distribution).reduce((sum, count) => sum + count, 0) : 0
           
-          // 计算竞品批跑答案数（三个AI模型的答案完成情况）
-          let totalExpectedAnswers = (data.summary?.total_questions || 0) * 3  // 每个问题期望3个答案
-          let actualAnswers = data.summary?.total_answers || 0
-          let aiCompletionRate = totalExpectedAnswers > 0 ? ((actualAnswers / totalExpectedAnswers) * 100).toFixed(1) : 0
+          // 计算竞品跑测完成度（豆包/小天两个竞品的答案完成情况）
+          let totalExpectedAnswers = (data.summary?.total_questions || 0) * 2  // 每个问题期望2个竞品答案（豆包+小天）
+          let actualCompetitorAnswers = data.summary?.competitor_answers?.total || 0
+          let aiCompletionRate = totalExpectedAnswers > 0 ? ((actualCompetitorAnswers / totalExpectedAnswers) * 100).toFixed(1) : 0
           
           // 更新统计数据
           stats.value[0].value = data.summary?.total_questions || 0
           stats.value[1].value = classifiedCount
-          stats.value[2].value = `${actualAnswers}/${totalExpectedAnswers} (${aiCompletionRate}%)`
+          stats.value[2].value = `${actualCompetitorAnswers}/${totalExpectedAnswers} (${aiCompletionRate}%)`
           stats.value[3].value = data.summary?.scored_answers || 0
+          
+          // 更新趋势数据
+          if (data.trend_data && data.trend_data.length > 0) {
+            trendData.value.dates = data.trend_data.map(item => item.date)
+            trendData.value.questions = data.trend_data.map(item => item.questions)
+            trendData.value.classifications = data.trend_data.map(item => item.classifications)
+            trendData.value.scores = data.trend_data.map(item => item.scores)
+            
+            // 重新初始化图表
+            if (trendChartInstance) {
+              initTrendChart()
+            }
+          }
         }
       } catch (error) {
         console.error('加载统计数据失败:', error)
@@ -297,6 +310,14 @@ export default {
       loadStats()
     }
 
+    // 趋势数据
+    const trendData = ref({
+      dates: [],
+      questions: [],
+      classifications: [],
+      scores: []
+    })
+
     // 初始化趋势图表
     const initTrendChart = () => {
       if (!trendChart.value) return
@@ -312,39 +333,155 @@ export default {
           }
         },
         tooltip: {
-          trigger: 'axis'
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross',
+            label: {
+              backgroundColor: '#6a7985'
+            }
+          },
+          formatter: function(params) {
+            let result = params[0].axisValue + '<br/>'
+            params.forEach(param => {
+              result += param.marker + param.seriesName + ': ' + param.value + '<br/>'
+            })
+            return result
+          }
         },
         legend: {
-          data: ['问题数', '答案数', '评分数']
+          data: ['问题数', '分类数', '评分数'],
+          top: 30
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          containLabel: true
         },
         xAxis: {
           type: 'category',
-          data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+          boundaryGap: false,
+          data: trendData.value.dates,
+          axisLine: {
+            lineStyle: {
+              color: '#ddd'
+            }
+          },
+          axisTick: {
+            show: false
+          },
+          axisLabel: {
+            formatter: function(value) {
+              // 格式化日期显示为 MM-DD 格式
+              const date = new Date(value)
+              return `${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
+            }
+          }
         },
         yAxis: {
-          type: 'value'
+          type: 'value',
+          axisLine: {
+            show: false
+          },
+          axisTick: {
+            show: false
+          },
+          splitLine: {
+            lineStyle: {
+              color: '#f5f5f5'
+            }
+          }
         },
         series: [
           {
             name: '问题数',
             type: 'line',
-            data: [12, 19, 15, 27, 33, 25, 18],
-            smooth: true,
-            itemStyle: { color: '#409EFF' }
+            data: trendData.value.questions,
+            smooth: false,
+            symbol: 'circle',
+            symbolSize: 6,
+            lineStyle: {
+              width: 3,
+              color: '#409EFF'
+            },
+            itemStyle: { 
+              color: '#409EFF',
+              borderWidth: 2,
+              borderColor: '#fff'
+            },
+            areaStyle: {
+              color: {
+                type: 'linear',
+                x: 0,
+                y: 0,
+                x2: 0,
+                y2: 1,
+                colorStops: [
+                  { offset: 0, color: 'rgba(64, 158, 255, 0.3)' },
+                  { offset: 1, color: 'rgba(64, 158, 255, 0.1)' }
+                ]
+              }
+            }
           },
           {
-            name: '答案数',
+            name: '分类数',
             type: 'line',
-            data: [8, 15, 12, 22, 28, 20, 15],
-            smooth: true,
-            itemStyle: { color: '#67C23A' }
+            data: trendData.value.classifications,
+            smooth: false,
+            symbol: 'circle',
+            symbolSize: 6,
+            lineStyle: {
+              width: 3,
+              color: '#67C23A'
+            },
+            itemStyle: { 
+              color: '#67C23A',
+              borderWidth: 2,
+              borderColor: '#fff'
+            },
+            areaStyle: {
+              color: {
+                type: 'linear',
+                x: 0,
+                y: 0,
+                x2: 0,
+                y2: 1,
+                colorStops: [
+                  { offset: 0, color: 'rgba(103, 194, 58, 0.3)' },
+                  { offset: 1, color: 'rgba(103, 194, 58, 0.1)' }
+                ]
+              }
+            }
           },
           {
             name: '评分数',
             type: 'line',
-            data: [5, 12, 8, 18, 23, 16, 12],
-            smooth: true,
-            itemStyle: { color: '#E6A23C' }
+            data: trendData.value.scores,
+            smooth: false,
+            symbol: 'circle',
+            symbolSize: 6,
+            lineStyle: {
+              width: 3,
+              color: '#E6A23C'
+            },
+            itemStyle: { 
+              color: '#E6A23C',
+              borderWidth: 2,
+              borderColor: '#fff'
+            },
+            areaStyle: {
+              color: {
+                type: 'linear',
+                x: 0,
+                y: 0,
+                x2: 0,
+                y2: 1,
+                colorStops: [
+                  { offset: 0, color: 'rgba(230, 162, 60, 0.3)' },
+                  { offset: 1, color: 'rgba(230, 162, 60, 0.1)' }
+                ]
+              }
+            }
           }
         ]
       }
@@ -408,8 +545,8 @@ export default {
 
     // 刷新趋势数据
     const refreshTrends = () => {
+      loadStats()
       ElMessage.success('趋势数据已刷新')
-      // 这里可以调用API获取最新数据
     }
 
     // 响应式调整图表
@@ -441,6 +578,7 @@ export default {
       services,
       trendChart,
       modelChart,
+      trendData,
       handleTimeRangeChange,
       refreshStats,
       refreshTrends
@@ -473,13 +611,22 @@ export default {
 
   .stats-row {
     margin-bottom: 20px;
+    
+    .el-col {
+      margin-bottom: 20px;
+    }
   }
 
   .stat-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    
     .stat-content {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       margin-bottom: 10px;
+      flex: 1;
 
       .stat-icon {
         width: 50px;
@@ -490,29 +637,34 @@ export default {
         justify-content: center;
         margin-right: 15px;
         color: white;
+        flex-shrink: 0;
       }
 
       .stat-info {
         flex: 1;
+        min-width: 0;
 
         .stat-value {
           font-size: 24px;
           font-weight: bold;
           color: #303133;
-          line-height: 1;
+          line-height: 1.2;
+          margin-bottom: 4px;
+          word-break: break-all;
         }
 
         .stat-label {
           font-size: 14px;
           color: #909399;
-          margin-top: 4px;
+          margin-bottom: 4px;
+          font-weight: 500;
         }
 
         .stat-description {
           font-size: 12px;
           color: #c0c4cc;
-          margin-top: 2px;
-          line-height: 1.2;
+          line-height: 1.3;
+          word-break: break-all;
         }
       }
     }
@@ -521,6 +673,7 @@ export default {
       display: flex;
       align-items: center;
       font-size: 12px;
+      margin-top: auto;
 
       .el-icon {
         margin-right: 4px;
