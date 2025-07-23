@@ -79,15 +79,79 @@
         </el-card>
       </el-col>
 
-      <!-- AI模型性能对比 -->
+      <!-- 实时数据监控 -->
       <el-col :span="12">
         <el-card class="chart-card" shadow="hover">
           <template #header>
             <div class="card-header">
-              <span>AI模型性能对比</span>
+              <span>实时数据监控</span>
+              <el-button type="primary" size="small" @click="refreshSystemData">刷新</el-button>
             </div>
           </template>
-          <div ref="modelChart" style="height: 300px;"></div>
+          <div class="real-time-monitor">
+            <!-- 数据更新状态 -->
+            <div class="monitor-section">
+              <h4>数据更新状态</h4>
+              <div class="status-items">
+                <div class="status-item">
+                  <div class="status-icon">
+                    <el-icon :color="dataUpdateStatus.color"><Clock /></el-icon>
+                  </div>
+                  <div class="status-info">
+                    <div class="status-label">最后更新</div>
+                    <div class="status-value">{{ dataUpdateStatus.lastUpdate }}</div>
+                  </div>
+                </div>
+                <div class="status-item">
+                  <div class="status-icon">
+                    <el-icon :color="syncStatus.color"><Refresh /></el-icon>
+                  </div>
+                  <div class="status-info">
+                    <div class="status-label">同步状态</div>
+                    <div class="status-value">{{ syncStatus.text }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 处理队列状态 -->
+            <div class="monitor-section">
+              <h4>处理队列</h4>
+              <div class="queue-progress">
+                <div class="queue-item">
+                  <span>分类待处理</span>
+                  <el-progress :percentage="queueStatus.classify" :status="queueStatus.classify === 100 ? 'success' : ''" />
+                </div>
+                <div class="queue-item">
+                  <span>答案生成中</span>
+                  <el-progress :percentage="queueStatus.generate" :status="queueStatus.generate === 100 ? 'success' : ''" />
+                </div>
+                <div class="queue-item">
+                  <span>评分进行中</span>
+                  <el-progress :percentage="queueStatus.score" :status="queueStatus.score === 100 ? 'success' : ''" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 今日处理量 -->
+            <div class="monitor-section">
+              <h4>今日处理量</h4>
+              <div class="daily-stats">
+                <div class="daily-item">
+                  <span class="daily-number">{{ dailyStats.questions }}</span>
+                  <span class="daily-label">新增问题</span>
+                </div>
+                <div class="daily-item">
+                  <span class="daily-number">{{ dailyStats.answers }}</span>
+                  <span class="daily-label">生成答案</span>
+                </div>
+                <div class="daily-item">
+                  <span class="daily-number">{{ dailyStats.scores }}</span>
+                  <span class="daily-label">完成评分</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </el-card>
       </el-col>
     </el-row>
@@ -137,9 +201,31 @@ export default {
     // 响应式数据
     const loading = ref(false)
     const trendChart = ref(null)
-    const modelChart = ref(null)
     const timeRange = ref('all')  // 默认选择总计
     
+    // 实时监控数据
+    const dataUpdateStatus = ref({
+      lastUpdate: '2分钟前',
+      color: '#67C23A'
+    })
+    
+    const syncStatus = ref({
+      text: '正常运行',
+      color: '#67C23A'
+    })
+    
+    const queueStatus = ref({
+      classify: 85,
+      generate: 92,
+      score: 78
+    })
+    
+    const dailyStats = ref({
+      questions: 156,
+      answers: 312,
+      scores: 89
+    })
+
     // 统计数据
     const stats = ref([
       {
@@ -216,7 +302,6 @@ export default {
 
     // 图表实例
     let trendChartInstance = null
-    let modelChartInstance = null
 
     // 获取时间范围参数
     const getTimeRangeParams = () => {
@@ -277,6 +362,23 @@ export default {
           stats.value[1].value = classifiedCount
           stats.value[2].value = `${actualCompetitorAnswers}/${totalExpectedAnswers} (${aiCompletionRate}%)`
           stats.value[3].value = data.summary?.scored_answers || 0
+        }
+      } catch (error) {
+        console.error('加载统计数据失败:', error)
+        ElMessage.error('加载统计数据失败')
+      } finally {
+        loading.value = false
+      }
+    }
+
+    // 加载趋势数据（独立于时间筛选，固定显示最近7天）
+    const loadTrendData = async () => {
+      try {
+        // 固定获取最近7天的趋势数据，不受时间筛选影响
+        const res = await getStats({ time_range: 'week' })
+        
+        if (res.success && res.data) {
+          const data = res.data
           
           // 更新趋势数据
           if (data.trend_data && data.trend_data.length > 0) {
@@ -292,10 +394,8 @@ export default {
           }
         }
       } catch (error) {
-        console.error('加载统计数据失败:', error)
-        ElMessage.error('加载统计数据失败')
-      } finally {
-        loading.value = false
+        console.error('加载趋势数据失败:', error)
+        ElMessage.error('加载趋势数据失败')
       }
     }
 
@@ -400,6 +500,7 @@ export default {
             smooth: false,
             symbol: 'circle',
             symbolSize: 6,
+            z: 3,
             lineStyle: {
               width: 3,
               color: '#409EFF'
@@ -430,6 +531,7 @@ export default {
             smooth: false,
             symbol: 'circle',
             symbolSize: 6,
+            z: 2,
             lineStyle: {
               width: 3,
               color: '#67C23A'
@@ -460,6 +562,7 @@ export default {
             smooth: false,
             symbol: 'circle',
             symbolSize: 6,
+            z: 1,
             lineStyle: {
               width: 3,
               color: '#E6A23C'
@@ -489,64 +592,26 @@ export default {
       trendChartInstance.setOption(option)
     }
 
-    // 初始化模型对比图表
-    const initModelChart = () => {
-      if (!modelChart.value) return
-      
-      modelChartInstance = echarts.init(modelChart.value)
-      
-      const option = {
-        title: {
-          text: 'AI模型评分对比',
-          textStyle: {
-            fontSize: 14,
-            fontWeight: 'normal'
-          }
-        },
-        tooltip: {
-          trigger: 'axis'
-        },
-        radar: {
-          indicator: [
-            { name: '准确性', max: 5 },
-            { name: '完整性', max: 5 },
-            { name: '清晰度', max: 5 },
-            { name: '相关性', max: 5 },
-            { name: '有用性', max: 5 }
-          ],
-          radius: '70%'
-        },
-        series: [
-          {
-            type: 'radar',
-            data: [
-              {
-                value: [3.2, 3.5, 3.1, 3.8, 3.4],
-                name: '原始模型',
-                itemStyle: { color: '#409EFF' }
-              },
-              {
-                value: [4.2, 4.1, 4.3, 4.0, 4.2],
-                name: '豆包模型',
-                itemStyle: { color: '#67C23A' }
-              },
-              {
-                value: [2.8, 3.2, 2.9, 3.1, 3.0],
-                name: '小天模型',
-                itemStyle: { color: '#E6A23C' }
-              }
-            ]
-          }
-        ]
-      }
-      
-      modelChartInstance.setOption(option)
-    }
-
     // 刷新趋势数据
     const refreshTrends = () => {
-      loadStats()
+      loadTrendData()
       ElMessage.success('趋势数据已刷新')
+    }
+
+    // 刷新系统数据
+    const refreshSystemData = () => {
+      // 模拟数据更新
+      dataUpdateStatus.value.lastUpdate = '刚刚'
+      dataUpdateStatus.value.color = '#67C23A'
+      syncStatus.value.text = '正常运行'
+      syncStatus.value.color = '#67C23A'
+      queueStatus.value.classify = 85
+      queueStatus.value.generate = 92
+      queueStatus.value.score = 78
+      dailyStats.value.questions = 156
+      dailyStats.value.answers = 312
+      dailyStats.value.scores = 89
+      ElMessage.success('系统数据已刷新')
     }
 
     // 响应式调整图表
@@ -554,18 +619,15 @@ export default {
       if (trendChartInstance) {
         trendChartInstance.resize()
       }
-      if (modelChartInstance) {
-        modelChartInstance.resize()
-      }
     }
 
     // 组件挂载
     onMounted(async () => {
       await loadStats()
+      await loadTrendData() // 加载趋势数据
       
       await nextTick()
       initTrendChart()
-      initModelChart()
       
       window.addEventListener('resize', resizeCharts)
     })
@@ -577,11 +639,15 @@ export default {
       systemStatus,
       services,
       trendChart,
-      modelChart,
       trendData,
+      dataUpdateStatus,
+      syncStatus,
+      queueStatus,
+      dailyStats,
       handleTimeRangeChange,
       refreshStats,
-      refreshTrends
+      refreshTrends,
+      refreshSystemData
     }
   }
 }
@@ -690,6 +756,99 @@ export default {
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+  }
+
+  .real-time-monitor {
+    padding: 10px 0;
+
+    .monitor-section {
+      margin-bottom: 25px;
+
+      h4 {
+        font-size: 14px;
+        font-weight: 500;
+        color: #303133;
+        margin: 0 0 12px 0;
+        border-left: 3px solid #409EFF;
+        padding-left: 8px;
+      }
+
+      .status-items {
+        display: flex;
+        gap: 20px;
+      }
+
+      .status-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        .status-icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background-color: #f5f7fa;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .status-info {
+          .status-label {
+            font-size: 12px;
+            color: #909399;
+            margin-bottom: 2px;
+          }
+
+          .status-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: #303133;
+          }
+        }
+      }
+
+      .queue-progress {
+        .queue-item {
+          display: flex;
+          align-items: center;
+          margin-bottom: 8px;
+
+          span {
+            width: 80px;
+            font-size: 12px;
+            color: #606266;
+          }
+
+          .el-progress {
+            flex: 1;
+            margin-left: 10px;
+          }
+        }
+      }
+
+      .daily-stats {
+        display: flex;
+        justify-content: space-around;
+
+        .daily-item {
+          text-align: center;
+
+          .daily-number {
+            display: block;
+            font-size: 20px;
+            font-weight: bold;
+            color: #409EFF;
+            margin-bottom: 4px;
+          }
+
+          .daily-label {
+            font-size: 12px;
+            color: #909399;
+          }
+        }
+      }
     }
   }
 

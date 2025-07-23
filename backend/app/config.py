@@ -38,7 +38,7 @@ class Config:
     CLASSIFY_API_URL = os.environ.get('CLASSIFY_API_URL') or 'http://localhost:8001'
     DOUBAO_API_URL = os.environ.get('DOUBAO_API_URL') or 'http://localhost:8002'  # Mock豆包API
     XIAOTIAN_API_URL = os.environ.get('XIAOTIAN_API_URL') or 'http://localhost:8003'  # Mock小天API
-    SCORE_API_URL = os.environ.get('SCORE_API_URL') or 'http://localhost:8005'
+    SCORE_API_URL = os.environ.get('SCORE_API_URL') or 'http://localhost:8004'
 
     # API密钥配置
     CLASSIFY_API_KEY = os.environ.get('CLASSIFY_API_KEY') or 'classify-dev-key'
@@ -58,9 +58,16 @@ class Config:
         'User-Agent': 'AI-QA-Platform/1.0'
     }
     
-    # 定时任务配置
-    SYNC_INTERVAL_MINUTES = 30  # 数据同步间隔
-    CLEAN_INTERVAL_HOURS = 1    # 数据清洗间隔
+    # 自动化工作流配置（统一调度）
+    AUTO_PROCESS_ON_STARTUP = True  # 启动时立即处理已有数据
+    WORKFLOW_INTERVAL_MINUTES = int(os.environ.get('WORKFLOW_INTERVAL_MINUTES', 3))  # 工作流执行间隔（分钟）
+    DATA_CHECK_ENABLED = True  # 是否启用数据检测
+    AUTO_SUSPEND_WHEN_NO_DATA = True  # 无数据时自动挂起
+    MIN_BATCH_SIZE = 1  # 最小批处理大小，小于此数量时挂起
+    
+    # Mock服务自动启动配置
+    AUTO_START_MOCK_SERVICES = True  # 是否自动启动Mock服务
+    MOCK_SERVICES_ENABLED = True  # Mock服务是否启用
     
     # 批处理配置
     BATCH_SIZE = 100  # 批处理大小

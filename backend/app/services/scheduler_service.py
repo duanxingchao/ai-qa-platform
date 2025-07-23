@@ -122,23 +122,63 @@ class SchedulerService:
             # 初始化工作流状态
             self._initialize_workflow_status()
             
-            # 注册关闭回调
-            import atexit
-            atexit.register(self.shutdown)
+            # 启动时立即处理已有数据
+            if app.config.get('AUTO_PROCESS_ON_STARTUP', True):
+                self.logger.info("配置启用启动时立即处理，开始处理已有数据")
+                self._startup_immediate_process(app)
+            
+            # 注册关闭回调 (注释掉避免开发模式下过早关闭)
+            # import atexit
+            # atexit.register(self.shutdown)
             
         except Exception as e:
             self.logger.error(f"定时任务调度器初始化失败: {str(e)}")
             raise
     
+    def _startup_immediate_process(self, app):
+        """启动时立即处理已有数据"""
+        # 防止重复执行：检查是否已经执行过
+        if hasattr(app, '_startup_process_executed'):
+            self.logger.info("启动时处理已执行过，跳过重复执行")
+            return
+            
+        def immediate_process():
+            try:
+                with app.app_context():
+                    # 标记已执行，防止重复
+                    app._startup_process_executed = True
+                    self.logger.info("🚀 开始启动时立即处理已有数据")
+                    result = self.execute_full_workflow_with_suspend_check(app)
+                    if result.get('success'):
+                        self.logger.info(f"✅ 启动时数据处理完成: {result.get('message')}")
+                    else:
+                        self.logger.error(f"❌ 启动时数据处理失败: {result.get('message')}")
+            except Exception as e:
+                self.logger.error(f"启动时数据处理异常: {str(e)}")
+        
+        # 延迟3秒执行，确保应用完全启动
+        import threading
+        timer = threading.Timer(3.0, immediate_process)
+        timer.start()
+    
     def _register_default_jobs(self, app):
         """注册默认的定时任务"""
-        # 主工作流任务 - 每两分钟执行一次
+        # 获取可配置的间隔时间
+        interval_minutes = app.config.get('WORKFLOW_INTERVAL_MINUTES', 3)
+        self.logger.info(f"配置的工作流间隔时间: {interval_minutes} 分钟，类型: {type(interval_minutes)}")
+        
+        # 确保间隔时间是整数且大于0
+        if not isinstance(interval_minutes, int) or interval_minutes <= 0:
+            interval_minutes = 3
+            self.logger.warning(f"工作流间隔时间无效，使用默认值: {interval_minutes} 分钟")
+        
+        # 主工作流任务 - 可配置间隔执行
         self.add_interval_job(
-            job_id='frequent_workflow',
-            job_name='频繁AI处理工作流',
-            func=lambda: self.execute_full_workflow(app),
-            minutes=2,
-            description='每两分钟自动执行完整的AI数据处理工作流',
+            job_id='configurable_workflow',
+            job_name='可配置间隔AI处理工作流',
+            func=lambda: self.execute_full_workflow_with_suspend_check(app),
+            minutes=interval_minutes,
+            description=f'每{interval_minutes}分钟自动执行完整的AI数据处理工作流（支持无数据挂起）',
             enabled=True
         )
         
@@ -147,8 +187,8 @@ class SchedulerService:
             job_id='frequent_data_sync',
             job_name='频繁数据同步',
             func=lambda: self.execute_workflow_phase(app, WorkflowPhase.DATA_SYNC),
-            minutes=2,
-            description='每两分钟自动同步数据（可独立执行）',
+            minutes=interval_minutes,
+            description=f'每{interval_minutes}分钟自动同步数据（可独立执行）',
             enabled=False  # 默认禁用，由主工作流控制
         )
     
@@ -222,6 +262,126 @@ class SchedulerService:
                 'message': error_msg,
                 'results': {}
             }
+    
+    def execute_full_workflow_with_suspend_check(self, app) -> Dict[str, Any]:
+        """执行完整工作流（带无数据挂起检查）"""
+        workflow_id = f"workflow_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        try:
+            # 检查是否启用数据检测
+            if not app.config.get('DATA_CHECK_ENABLED', True):
+                return self.execute_full_workflow(app)
+            
+            # 检查是否有可处理的数据
+            has_data_to_process = self._check_if_has_data_to_process(app)
+            
+            if not has_data_to_process:
+                if app.config.get('AUTO_SUSPEND_WHEN_NO_DATA', True):
+                    self.logger.info("💤 没有检测到可处理的数据，工作流挂起等待")
+                    return {
+                        'success': True,
+                        'workflow_id': workflow_id,
+                        'message': '没有可处理的数据，工作流挂起等待',
+                        'suspended': True,
+                        'results': {}
+                    }
+            
+            self.logger.info(f"检测到可处理数据，开始执行完整工作流: {workflow_id}")
+            
+            # 执行正常的工作流
+            result = self.execute_full_workflow(app)
+            result['suspended'] = False
+            return result
+            
+        except Exception as e:
+            error_msg = f"带挂起检查的工作流执行异常: {str(e)}"
+            self.logger.error(error_msg)
+            return {
+                'success': False,
+                'workflow_id': workflow_id,
+                'message': error_msg,
+                'suspended': False,
+                'results': {}
+            }
+    
+    def _check_if_has_data_to_process(self, app) -> bool:
+        """检查是否有可处理的数据"""
+        try:
+            with app.app_context():
+                from app.models.question import Question
+                from app.models.answer import Answer
+                from app.utils.database import db
+                from sqlalchemy import func, and_, or_
+                
+                min_batch_size = app.config.get('MIN_BATCH_SIZE', 1)
+                
+                # 检查数据同步阶段：是否有新数据需要同步
+                from app.services.sync_service import sync_service
+                last_sync_time = sync_service.get_last_sync_time()
+                
+                if last_sync_time:
+                    from sqlalchemy import text
+                    new_data_query = text("""
+                        SELECT COUNT(*) FROM table1
+                        WHERE query IS NOT NULL 
+                        AND query != '' 
+                        AND TRIM(query) != ''
+                        AND sendmessagetime > :since_time
+                    """)
+                    new_data_count = db.session.execute(new_data_query, {'since_time': last_sync_time}).scalar()
+                else:
+                    # 第一次同步，检查table1总数据量
+                    new_data_query = text("""
+                        SELECT COUNT(*) FROM table1
+                        WHERE query IS NOT NULL 
+                        AND query != '' 
+                        AND TRIM(query) != ''
+                    """)
+                    new_data_count = db.session.execute(new_data_query).scalar()
+                
+                if new_data_count >= min_batch_size:
+                    self.logger.info(f"🔍 检测到 {new_data_count} 条新数据需要同步")
+                    return True
+                
+                # 检查分类阶段：是否有未分类的问题
+                unclassified_count = db.session.query(Question).filter(
+                    or_(Question.classification.is_(None), Question.classification == '')
+                ).count()
+                
+                if unclassified_count >= min_batch_size:
+                    self.logger.info(f"🔍 检测到 {unclassified_count} 条问题需要分类")
+                    return True
+                
+                # 检查答案生成阶段：是否有已分类但未生成答案的问题
+                # 查找有分类但缺少豆包或小天答案的问题
+                questions_needing_answers = db.session.query(Question).filter(
+                    and_(
+                        Question.classification.isnot(None),
+                        Question.classification != '',
+                        Question.processing_status.in_(['classified', 'generating'])
+                    )
+                ).count()
+                
+                if questions_needing_answers >= min_batch_size:
+                    self.logger.info(f"🔍 检测到 {questions_needing_answers} 条问题需要生成答案")
+                    return True
+                
+                # 检查评分阶段：是否有未评分的答案
+                unscored_answers = db.session.query(Answer).filter(
+                    Answer.is_scored == False
+                ).count()
+                
+                if unscored_answers >= min_batch_size:
+                    self.logger.info(f"🔍 检测到 {unscored_answers} 条答案需要评分")
+                    return True
+                
+                self.logger.info("🔍 没有检测到足够的待处理数据")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"检查待处理数据时出错: {str(e)}")
+            # 出错时默认返回True，避免阻塞正常流程
+            return True
     
     def execute_workflow_phase(
         self, 
@@ -337,16 +497,8 @@ class SchedulerService:
         self.logger.info(f"开始执行答案生成阶段 [workflow: {workflow_id}]")
         
         try:
-            # TODO: 创建AI处理服务后取消注释
-            # from app.services.ai_processing_service import ai_processing_service
-            # result = ai_processing_service.process_answer_generation_batch()
-            
-            # 临时返回成功结果
-            result = {
-                'success': True, 
-                'message': '答案生成阶段完成（待实现具体逻辑）',
-                'processed_count': 0
-            }
+            from app.services.ai_processing_service import ai_processing_service
+            result = ai_processing_service.process_answer_generation_batch()
             return result
             
         except Exception as e:
@@ -538,13 +690,26 @@ class SchedulerService:
                 self.logger.error("APScheduler未安装，无法添加间隔任务")
                 return False
                 
-            trigger = IntervalTrigger(
-                seconds=seconds,
-                minutes=minutes,
-                hours=hours,
-                days=days,
-                timezone='Asia/Shanghai'
-            )
+            # 调试信息：显示所有参数值
+            self.logger.info(f"添加任务 {job_name} - seconds={seconds}, minutes={minutes}, hours={hours}, days={days}")
+            
+            # 确保至少有一个时间参数不为None
+            if all(param is None for param in [seconds, minutes, hours, days]):
+                self.logger.error(f"添加任务失败：所有时间参数都为None - {job_name}")
+                return False
+                
+            # 创建 IntervalTrigger 时只传递非 None 的参数
+            trigger_kwargs = {'timezone': 'Asia/Shanghai'}
+            if seconds is not None:
+                trigger_kwargs['seconds'] = seconds
+            if minutes is not None:
+                trigger_kwargs['minutes'] = minutes
+            if hours is not None:
+                trigger_kwargs['hours'] = hours
+            if days is not None:
+                trigger_kwargs['days'] = days
+                
+            trigger = IntervalTrigger(**trigger_kwargs)
             
             if self.scheduler is None:
                 self.logger.error("调度器未初始化")

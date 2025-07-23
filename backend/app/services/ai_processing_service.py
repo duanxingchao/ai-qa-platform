@@ -499,7 +499,8 @@ class AIProcessingService:
                     self.logger.info(f"处理问题评分: {question.query[:50]}... (包含{len(answers)}个AI答案)")
                     
                     # 构建评分API输入
-                    our_answer = answers.get('our_ai', {}).get('answer_text', '') if 'our_ai' in answers else ''
+                    our_answer = answers.get('original', {}).get('answer_text', '') \
+                                or answers.get('our_ai', {}).get('answer_text', '') if 'our_ai' in answers else ''
                     doubao_answer = answers.get('doubao', {}).get('answer_text', '') if 'doubao' in answers else ''
                     xiaotian_answer = answers.get('xiaotian', {}).get('answer_text', '') if 'xiaotian' in answers else ''
                     classification = question.classification or ''
@@ -515,6 +516,9 @@ class AIProcessingService:
                     
                     # 处理评分结果，按模型匹配
                     model_name_mapping = {
+                        'yoyo': 'original',
+                        '豆包': 'doubao',
+                        '小天': 'xiaotian',
                         '原始模型': 'our_ai',
                         '豆包模型': 'doubao', 
                         '小天模型': 'xiaotian'
@@ -528,33 +532,21 @@ class AIProcessingService:
                         if assistant_type and assistant_type in answers:
                             answer_obj = answers[assistant_type]
                             
-                            # 创建评分记录
-                        score = Score(
+                            # 使用新的创建方法，支持动态维度名称
+                            score = Score.create_from_api_response(
                                 answer_id=answer_obj['id'],
-                                score_1=score_result.get('准确性', 3),
-                                score_2=score_result.get('完整性', 3),
-                                score_3=score_result.get('清晰度', 3),
-                                score_4=score_result.get('相关性', 3),
-                                score_5=score_result.get('有用性', 3),
-                                comment=score_result.get('理由', ''),
-                            rated_at=datetime.utcnow()
-                        )
-                        
-                        # 计算平均分
-                        scores = [score.score_1, score.score_2, score.score_3, score.score_4, score.score_5]
-                        valid_scores = [s for s in scores if s is not None]
-                        if valid_scores:
-                            score.average_score = sum(valid_scores) / len(valid_scores)
-                        
-                        db.session.add(score)
-                        
-                        # 更新答案状态
-                        answer_record = db.session.query(Answer).filter_by(id=answer_obj['id']).first()
-                        if answer_record:
-                            answer_record.is_scored = True
-                            answer_record.updated_at = datetime.utcnow()
-                        
-                        saved_scores += 1
+                                api_response_item=score_result
+                            )
+                            
+                            db.session.add(score)
+                            
+                            # 更新答案状态
+                            answer_record = db.session.query(Answer).filter_by(id=answer_obj['id']).first()
+                            if answer_record:
+                                answer_record.is_scored = True
+                                answer_record.updated_at = datetime.utcnow()
+                            
+                            saved_scores += 1
                         
                     success_count += saved_scores
                     processed_questions += 1
@@ -629,9 +621,13 @@ class AIProcessingService:
         query = db.session.query(Question).filter(
             and_(
                 Question.created_at >= cutoff_time,
-                Question.classification.isnot(None),
-                Question.classification != '',
-                Question.processing_status.in_(['classified', 'answer_generation_failed'])
+                # ① 不再要求必须已经有分类
+                # Question.classification.isnot(None),
+                # Question.classification != '',
+                # ② 处理状态允许 pending
+                Question.processing_status.in_(
+                    ['pending', 'classified', 'answer_generation_failed']
+                )
             )
         ).order_by(Question.created_at.desc())
         

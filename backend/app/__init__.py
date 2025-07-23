@@ -58,8 +58,10 @@ def init_extensions(app):
 
 def register_blueprints(app):
     """注册蓝图"""
-    from app.api import sync_bp, question_bp, process_bp, review_bp, dashboard_bp
+    from app.api import sync_bp, question_bp, process_bp, review_bp, dashboard_bp, scores_bp
     from app.api.scheduler_api import scheduler_bp
+    from app.api.mock_api import mock_bp
+    from app.api.answer_api import answer_bp
     
     app.register_blueprint(sync_bp, url_prefix='/api/sync')
     app.register_blueprint(question_bp, url_prefix='/api/questions')
@@ -67,6 +69,9 @@ def register_blueprints(app):
     app.register_blueprint(review_bp, url_prefix='/api/review')
     app.register_blueprint(scheduler_bp, url_prefix='/api/scheduler')
     app.register_blueprint(dashboard_bp, url_prefix='/api/dashboard')
+    app.register_blueprint(scores_bp, url_prefix='/api/scores')
+    app.register_blueprint(mock_bp, url_prefix='/api/mock')
+    app.register_blueprint(answer_bp, url_prefix='/api/answers')
 
 
 def configure_logging(app):

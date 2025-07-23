@@ -45,10 +45,16 @@ class SyncService:
         return self.sync_status.copy()
     
     def get_last_sync_time(self) -> Optional[datetime]:
-        """获取最后同步时间"""
+        """获取最后同步时间（排除未来时间的数据）"""
         try:
-            last_question = db.session.query(Question).order_by(Question.sendmessagetime.desc()).first()
-            return last_question.sendmessagetime if last_question else None
+            # 只查询当前时间之前的数据，避免未来时间数据干扰
+            last_question = db.session.query(Question).filter(
+                Question.sendmessagetime <= datetime.utcnow()
+            ).order_by(Question.sendmessagetime.desc()).first()
+            
+            last_sync_time = last_question.sendmessagetime if last_question else None
+            self.logger.debug(f"获取最后同步时间: {last_sync_time}")
+            return last_sync_time
         except Exception as e:
             self.logger.error(f"获取最后同步时间失败: {str(e)}")
             return None
@@ -78,7 +84,7 @@ class SyncService:
                 ORDER BY sendmessagetime ASC
             """
             
-            time_filter = "AND sendmessagetime > :since_time" if since_time else ""
+            time_filter = "AND sendmessagetime >= :since_time" if since_time else ""
             sql = text(base_sql.format(time_filter=time_filter))
             result = db.session.execute(sql, {'since_time': since_time} if since_time else {})
             

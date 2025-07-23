@@ -1,0 +1,1075 @@
+=== 启动后端服务 ===
+激活虚拟环境...
+安装Python依赖...
+Requirement already satisfied: Flask==2.3.2 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 2)) (2.3.2)
+Requirement already satisfied: Flask-SQLAlchemy==3.0.5 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 3)) (3.0.5)
+Requirement already satisfied: Flask-CORS==4.0.0 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 4)) (4.0.0)
+Requirement already satisfied: Flask-RESTful==0.3.10 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 5)) (0.3.10)
+Requirement already satisfied: flask-restx==1.1.0 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 6)) (1.1.0)
+Requirement already satisfied: werkzeug==2.3.7 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 8)) (2.3.7)
+Requirement already satisfied: psycopg2-binary==2.9.7 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 11)) (2.9.7)
+Requirement already satisfied: SQLAlchemy==2.0.19 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 12)) (2.0.19)
+Requirement already satisfied: APScheduler==3.10.1 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 15)) (3.10.1)
+Requirement already satisfied: requests==2.31.0 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 18)) (2.31.0)
+Requirement already satisfied: Flask-JWT-Extended==4.5.2 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 21)) (4.5.2)
+Requirement already satisfied: python-dotenv==1.0.0 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 24)) (1.0.0)
+Requirement already satisfied: colorlog==6.7.0 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 27)) (6.7.0)
+Requirement already satisfied: marshmallow==3.20.1 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 30)) (3.20.1)
+Requirement already satisfied: python-dateutil==2.8.2 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 33)) (2.8.2)
+Requirement already satisfied: pytz==2023.3 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 34)) (2023.3)
+Requirement already satisfied: pytest==7.4.0 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 37)) (7.4.0)
+Requirement already satisfied: pytest-flask==1.2.0 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 38)) (1.2.0)
+Requirement already satisfied: black==23.7.0 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 39)) (23.7.0)
+Requirement already satisfied: flake8==6.1.0 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 40)) (6.1.0)
+Requirement already satisfied: gunicorn==21.2.0 in ./venv/lib/python3.11/site-packages (from -r requirements.txt (line 43)) (21.2.0)
+Requirement already satisfied: Jinja2>=3.1.2 in ./venv/lib/python3.11/site-packages (from Flask==2.3.2->-r requirements.txt (line 2)) (3.1.6)
+Requirement already satisfied: itsdangerous>=2.1.2 in ./venv/lib/python3.11/site-packages (from Flask==2.3.2->-r requirements.txt (line 2)) (2.2.0)
+Requirement already satisfied: click>=8.1.3 in ./venv/lib/python3.11/site-packages (from Flask==2.3.2->-r requirements.txt (line 2)) (8.2.1)
+Requirement already satisfied: blinker>=1.6.2 in ./venv/lib/python3.11/site-packages (from Flask==2.3.2->-r requirements.txt (line 2)) (1.9.0)
+Requirement already satisfied: aniso8601>=0.82 in ./venv/lib/python3.11/site-packages (from Flask-RESTful==0.3.10->-r requirements.txt (line 5)) (10.0.1)
+Requirement already satisfied: six>=1.3.0 in ./venv/lib/python3.11/site-packages (from Flask-RESTful==0.3.10->-r requirements.txt (line 5)) (1.17.0)
+Requirement already satisfied: jsonschema in ./venv/lib/python3.11/site-packages (from flask-restx==1.1.0->-r requirements.txt (line 6)) (4.24.0)
+Requirement already satisfied: MarkupSafe>=2.1.1 in ./venv/lib/python3.11/site-packages (from werkzeug==2.3.7->-r requirements.txt (line 8)) (3.0.2)
+Requirement already satisfied: typing-extensions>=4.2.0 in ./venv/lib/python3.11/site-packages (from SQLAlchemy==2.0.19->-r requirements.txt (line 12)) (4.14.1)
+Requirement already satisfied: greenlet!=0.4.17 in ./venv/lib/python3.11/site-packages (from SQLAlchemy==2.0.19->-r requirements.txt (line 12)) (3.2.3)
+Requirement already satisfied: setuptools>=0.7 in ./venv/lib/python3.11/site-packages (from APScheduler==3.10.1->-r requirements.txt (line 15)) (66.1.1)
+Requirement already satisfied: tzlocal!=3.*,>=2.0 in ./venv/lib/python3.11/site-packages (from APScheduler==3.10.1->-r requirements.txt (line 15)) (5.3.1)
+Requirement already satisfied: charset-normalizer<4,>=2 in ./venv/lib/python3.11/site-packages (from requests==2.31.0->-r requirements.txt (line 18)) (3.4.2)
+Requirement already satisfied: idna<4,>=2.5 in ./venv/lib/python3.11/site-packages (from requests==2.31.0->-r requirements.txt (line 18)) (3.10)
+Requirement already satisfied: urllib3<3,>=1.21.1 in ./venv/lib/python3.11/site-packages (from requests==2.31.0->-r requirements.txt (line 18)) (2.5.0)
+Requirement already satisfied: certifi>=2017.4.17 in ./venv/lib/python3.11/site-packages (from requests==2.31.0->-r requirements.txt (line 18)) (2025.6.15)
+Requirement already satisfied: PyJWT<3.0,>=2.0 in ./venv/lib/python3.11/site-packages (from Flask-JWT-Extended==4.5.2->-r requirements.txt (line 21)) (2.10.1)
+Requirement already satisfied: packaging>=17.0 in ./venv/lib/python3.11/site-packages (from marshmallow==3.20.1->-r requirements.txt (line 30)) (25.0)
+Requirement already satisfied: iniconfig in ./venv/lib/python3.11/site-packages (from pytest==7.4.0->-r requirements.txt (line 37)) (2.1.0)
+Requirement already satisfied: pluggy<2.0,>=0.12 in ./venv/lib/python3.11/site-packages (from pytest==7.4.0->-r requirements.txt (line 37)) (1.6.0)
+Requirement already satisfied: mypy-extensions>=0.4.3 in ./venv/lib/python3.11/site-packages (from black==23.7.0->-r requirements.txt (line 39)) (1.1.0)
+Requirement already satisfied: pathspec>=0.9.0 in ./venv/lib/python3.11/site-packages (from black==23.7.0->-r requirements.txt (line 39)) (0.12.1)
+Requirement already satisfied: platformdirs>=2 in ./venv/lib/python3.11/site-packages (from black==23.7.0->-r requirements.txt (line 39)) (4.3.8)
+Requirement already satisfied: mccabe<0.8.0,>=0.7.0 in ./venv/lib/python3.11/site-packages (from flake8==6.1.0->-r requirements.txt (line 40)) (0.7.0)
+Requirement already satisfied: pycodestyle<2.12.0,>=2.11.0 in ./venv/lib/python3.11/site-packages (from flake8==6.1.0->-r requirements.txt (line 40)) (2.11.1)
+Requirement already satisfied: pyflakes<3.2.0,>=3.1.0 in ./venv/lib/python3.11/site-packages (from flake8==6.1.0->-r requirements.txt (line 40)) (3.1.0)
+Requirement already satisfied: attrs>=22.2.0 in ./venv/lib/python3.11/site-packages (from jsonschema->flask-restx==1.1.0->-r requirements.txt (line 6)) (25.3.0)
+Requirement already satisfied: jsonschema-specifications>=2023.03.6 in ./venv/lib/python3.11/site-packages (from jsonschema->flask-restx==1.1.0->-r requirements.txt (line 6)) (2025.4.1)
+Requirement already satisfied: referencing>=0.28.4 in ./venv/lib/python3.11/site-packages (from jsonschema->flask-restx==1.1.0->-r requirements.txt (line 6)) (0.36.2)
+Requirement already satisfied: rpds-py>=0.7.1 in ./venv/lib/python3.11/site-packages (from jsonschema->flask-restx==1.1.0->-r requirements.txt (line 6)) (0.26.0)
+启动后端服务 (http://localhost:8088)...
+2025-07-18 03:29:46,886 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+2025-07-18 03:29:46,886 - sqlalchemy.engine.Engine - INFO - select pg_catalog.version()
+2025-07-18 03:29:46,886 INFO sqlalchemy.engine.Engine [raw sql] {}
+2025-07-18 03:29:46,886 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-07-18 03:29:46,887 INFO sqlalchemy.engine.Engine select current_schema()
+2025-07-18 03:29:46,887 - sqlalchemy.engine.Engine - INFO - select current_schema()
+2025-07-18 03:29:46,887 INFO sqlalchemy.engine.Engine [raw sql] {}
+2025-07-18 03:29:46,887 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-07-18 03:29:46,888 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+2025-07-18 03:29:46,888 - sqlalchemy.engine.Engine - INFO - show standard_conforming_strings
+2025-07-18 03:29:46,888 INFO sqlalchemy.engine.Engine [raw sql] {}
+2025-07-18 03:29:46,888 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-07-18 03:29:46,888 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-07-18 03:29:46,888 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-07-18 03:29:46,891 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-07-18 03:29:46,891 - sqlalchemy.engine.Engine - INFO - SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-07-18 03:29:46,891 INFO sqlalchemy.engine.Engine [generated in 0.00022s] {'table_name': 'questions', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-07-18 03:29:46,891 - sqlalchemy.engine.Engine - INFO - [generated in 0.00022s] {'table_name': 'questions', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-07-18 03:29:46,893 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-07-18 03:29:46,893 - sqlalchemy.engine.Engine - INFO - SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-07-18 03:29:46,893 INFO sqlalchemy.engine.Engine [cached since 0.002224s ago] {'table_name': 'answers', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-07-18 03:29:46,893 - sqlalchemy.engine.Engine - INFO - [cached since 0.002224s ago] {'table_name': 'answers', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-07-18 03:29:46,894 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-07-18 03:29:46,894 - sqlalchemy.engine.Engine - INFO - SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-07-18 03:29:46,894 INFO sqlalchemy.engine.Engine [cached since 0.003095s ago] {'table_name': 'scores', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-07-18 03:29:46,894 - sqlalchemy.engine.Engine - INFO - [cached since 0.003095s ago] {'table_name': 'scores', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-07-18 03:29:46,894 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-07-18 03:29:46,894 - sqlalchemy.engine.Engine - INFO - SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-07-18 03:29:46,895 INFO sqlalchemy.engine.Engine [cached since 0.003747s ago] {'table_name': 'review_status', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-07-18 03:29:46,895 - sqlalchemy.engine.Engine - INFO - [cached since 0.003747s ago] {'table_name': 'review_status', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-07-18 03:29:46,895 INFO sqlalchemy.engine.Engine COMMIT
+2025-07-18 03:29:46,895 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-07-18 03:29:46,895 - app.utils.database - INFO - 数据库表创建完成
+2025-07-18 03:29:46,904 - apscheduler.scheduler - INFO - Scheduler started
+2025-07-18 03:29:46,905 - apscheduler.scheduler - DEBUG - Looking for jobs to run
+2025-07-18 03:29:46,905 - app.services.scheduler_service - INFO - 定时任务调度器启动成功
+2025-07-18 03:29:46,905 - apscheduler.scheduler - DEBUG - No jobs; waiting until a job is added
+2025-07-18 03:29:46,905 - app.services.scheduler_service - ERROR - 添加间隔任务失败: unsupported type for timedelta seconds component: NoneType
+2025-07-18 03:29:46,905 - app.services.scheduler_service - INFO - 任务 频繁数据同步 被禁用，跳过添加
+2025-07-18 03:29:46,905 - app - INFO - 定时任务调度器初始化完成
+ * Serving Flask app 'app'
+ * Debug mode: on
+2025-07-18 03:29:47,350 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+2025-07-18 03:29:47,350 - sqlalchemy.engine.Engine - INFO - select pg_catalog.version()
+2025-07-18 03:29:47,350 INFO sqlalchemy.engine.Engine [raw sql] {}
+2025-07-18 03:29:47,350 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-07-18 03:29:47,351 INFO sqlalchemy.engine.Engine select current_schema()
+2025-07-18 03:29:47,351 - sqlalchemy.engine.Engine - INFO - select current_schema()
+2025-07-18 03:29:47,351 INFO sqlalchemy.engine.Engine [raw sql] {}
+2025-07-18 03:29:47,351 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-07-18 03:29:47,351 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+2025-07-18 03:29:47,351 - sqlalchemy.engine.Engine - INFO - show standard_conforming_strings
+2025-07-18 03:29:47,351 INFO sqlalchemy.engine.Engine [raw sql] {}
+2025-07-18 03:29:47,351 - sqlalchemy.engine.Engine - INFO - [raw sql] {}
+2025-07-18 03:29:47,352 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-07-18 03:29:47,352 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-07-18 03:29:47,355 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-07-18 03:29:47,355 - sqlalchemy.engine.Engine - INFO - SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-07-18 03:29:47,355 INFO sqlalchemy.engine.Engine [generated in 0.00022s] {'table_name': 'questions', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-07-18 03:29:47,355 - sqlalchemy.engine.Engine - INFO - [generated in 0.00022s] {'table_name': 'questions', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-07-18 03:29:47,356 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-07-18 03:29:47,356 - sqlalchemy.engine.Engine - INFO - SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-07-18 03:29:47,356 INFO sqlalchemy.engine.Engine [cached since 0.001518s ago] {'table_name': 'answers', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-07-18 03:29:47,356 - sqlalchemy.engine.Engine - INFO - [cached since 0.001518s ago] {'table_name': 'answers', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-07-18 03:29:47,357 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-07-18 03:29:47,357 - sqlalchemy.engine.Engine - INFO - SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-07-18 03:29:47,357 INFO sqlalchemy.engine.Engine [cached since 0.002024s ago] {'table_name': 'scores', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-07-18 03:29:47,357 - sqlalchemy.engine.Engine - INFO - [cached since 0.002024s ago] {'table_name': 'scores', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-07-18 03:29:47,357 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-07-18 03:29:47,357 - sqlalchemy.engine.Engine - INFO - SELECT pg_catalog.pg_class.relname 
+FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+2025-07-18 03:29:47,357 INFO sqlalchemy.engine.Engine [cached since 0.002453s ago] {'table_name': 'review_status', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-07-18 03:29:47,357 - sqlalchemy.engine.Engine - INFO - [cached since 0.002453s ago] {'table_name': 'review_status', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+2025-07-18 03:29:47,357 INFO sqlalchemy.engine.Engine COMMIT
+2025-07-18 03:29:47,357 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-07-18 03:29:47,358 - app.utils.database - INFO - 数据库表创建完成
+2025-07-18 03:29:47,367 - apscheduler.scheduler - INFO - Scheduler started
+2025-07-18 03:29:47,367 - apscheduler.scheduler - DEBUG - Looking for jobs to run
+2025-07-18 03:29:47,368 - app.services.scheduler_service - INFO - 定时任务调度器启动成功
+2025-07-18 03:29:47,368 - apscheduler.scheduler - DEBUG - No jobs; waiting until a job is added
+2025-07-18 03:29:47,368 - app.services.scheduler_service - ERROR - 添加间隔任务失败: unsupported type for timedelta seconds component: NoneType
+2025-07-18 03:29:47,369 - app.services.scheduler_service - INFO - 任务 频繁数据同步 被禁用，跳过添加
+2025-07-18 03:29:47,369 - app - INFO - 定时任务调度器初始化完成
+2025-07-18 03:29:47,371 - werkzeug - WARNING -  * Debugger is active!
+2025-07-18 03:29:56,499 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-07-18 03:29:56,499 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-07-18 03:29:56,501 INFO sqlalchemy.engine.Engine SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.sendmessagetime DESC 
+ LIMIT %(param_1)s
+2025-07-18 03:29:56,501 - sqlalchemy.engine.Engine - INFO - SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.sendmessagetime DESC 
+ LIMIT %(param_1)s
+2025-07-18 03:29:56,501 INFO sqlalchemy.engine.Engine [generated in 0.00020s] {'param_1': 1}
+2025-07-18 03:29:56,501 - sqlalchemy.engine.Engine - INFO - [generated in 0.00020s] {'param_1': 1}
+2025-07-18 03:29:56,503 - app.services.sync_service - INFO - 开始数据同步，最后同步时间: 2025-08-14 20:04:05.585446
+2025-07-18 03:29:56,503 INFO sqlalchemy.engine.Engine 
+                SELECT 
+                    pageid,
+                    devicetypename,
+                    sendmessagetime,
+                    query,
+                    answer,
+                    serviceid,
+                    qatype,
+                    intent,
+                    classification,
+                    iskeyboardinput,
+                    isstopanswer
+                FROM table1
+                WHERE query IS NOT NULL 
+                AND query != '' 
+                AND TRIM(query) != ''
+                AND sendmessagetime > %(since_time)s
+                ORDER BY sendmessagetime ASC
+            
+2025-07-18 03:29:56,503 - sqlalchemy.engine.Engine - INFO - 
+                SELECT 
+                    pageid,
+                    devicetypename,
+                    sendmessagetime,
+                    query,
+                    answer,
+                    serviceid,
+                    qatype,
+                    intent,
+                    classification,
+                    iskeyboardinput,
+                    isstopanswer
+                FROM table1
+                WHERE query IS NOT NULL 
+                AND query != '' 
+                AND TRIM(query) != ''
+                AND sendmessagetime > %(since_time)s
+                ORDER BY sendmessagetime ASC
+            
+2025-07-18 03:29:56,503 INFO sqlalchemy.engine.Engine [generated in 0.00011s] {'since_time': datetime.datetime(2025, 8, 14, 20, 4, 5, 585446)}
+2025-07-18 03:29:56,503 - sqlalchemy.engine.Engine - INFO - [generated in 0.00011s] {'since_time': datetime.datetime(2025, 8, 14, 20, 4, 5, 585446)}
+2025-07-18 03:29:56,504 - app.services.sync_service - INFO - 从table1获取到 0 条有效数据（已过滤空query记录）
+2025-07-18 03:29:56,504 - app.services.sync_service - INFO - 没有新数据需要同步
+2025-07-18 03:29:56,505 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-07-18 03:29:56,505 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-07-18 06:11:25,208 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-07-18 06:11:25,208 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-07-18 06:11:25,210 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions) AS anon_1
+2025-07-18 06:11:25,210 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions) AS anon_1
+2025-07-18 06:11:25,210 INFO sqlalchemy.engine.Engine [generated in 0.00018s] {}
+2025-07-18 06:11:25,210 - sqlalchemy.engine.Engine - INFO - [generated in 0.00018s] {}
+2025-07-18 06:11:25,213 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers) AS anon_1
+2025-07-18 06:11:25,213 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers) AS anon_1
+2025-07-18 06:11:25,214 INFO sqlalchemy.engine.Engine [generated in 0.00015s] {}
+2025-07-18 06:11:25,214 - sqlalchemy.engine.Engine - INFO - [generated in 0.00015s] {}
+2025-07-18 06:11:25,217 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.is_scored = true) AS anon_1
+2025-07-18 06:11:25,217 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.is_scored = true) AS anon_1
+2025-07-18 06:11:25,218 INFO sqlalchemy.engine.Engine [generated in 0.00017s] {}
+2025-07-18 06:11:25,218 - sqlalchemy.engine.Engine - INFO - [generated in 0.00017s] {}
+2025-07-18 06:11:25,220 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT scores.id AS scores_id, scores.answer_id AS scores_answer_id, scores.score_1 AS scores_score_1, scores.score_2 AS scores_score_2, scores.score_3 AS scores_score_3, scores.score_4 AS scores_score_4, scores.score_5 AS scores_score_5, scores.average_score AS scores_average_score, scores.comment AS scores_comment, scores.rated_at AS scores_rated_at 
+FROM scores) AS anon_1
+2025-07-18 06:11:25,220 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT scores.id AS scores_id, scores.answer_id AS scores_answer_id, scores.score_1 AS scores_score_1, scores.score_2 AS scores_score_2, scores.score_3 AS scores_score_3, scores.score_4 AS scores_score_4, scores.score_5 AS scores_score_5, scores.average_score AS scores_average_score, scores.comment AS scores_comment, scores.rated_at AS scores_rated_at 
+FROM scores) AS anon_1
+2025-07-18 06:11:25,220 INFO sqlalchemy.engine.Engine [generated in 0.00013s] {}
+2025-07-18 06:11:25,220 - sqlalchemy.engine.Engine - INFO - [generated in 0.00013s] {}
+2025-07-18 06:11:25,222 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:25,222 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:25,222 INFO sqlalchemy.engine.Engine [generated in 0.00015s] {'assistant_type_1': 'doubao'}
+2025-07-18 06:11:25,222 - sqlalchemy.engine.Engine - INFO - [generated in 0.00015s] {'assistant_type_1': 'doubao'}
+2025-07-18 06:11:25,223 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:25,223 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:25,224 INFO sqlalchemy.engine.Engine [cached since 0.001243s ago] {'assistant_type_1': 'xiaotian'}
+2025-07-18 06:11:25,224 - sqlalchemy.engine.Engine - INFO - [cached since 0.001243s ago] {'assistant_type_1': 'xiaotian'}
+2025-07-18 06:11:25,224 INFO sqlalchemy.engine.Engine SELECT count(questions.id) AS count_1 
+FROM questions
+2025-07-18 06:11:25,224 - sqlalchemy.engine.Engine - INFO - SELECT count(questions.id) AS count_1 
+FROM questions
+2025-07-18 06:11:25,224 INFO sqlalchemy.engine.Engine [generated in 0.00010s] {}
+2025-07-18 06:11:25,224 - sqlalchemy.engine.Engine - INFO - [generated in 0.00010s] {}
+2025-07-18 06:11:25,225 INFO sqlalchemy.engine.Engine SELECT count(answers.id) AS count_1 
+FROM answers
+2025-07-18 06:11:25,225 - sqlalchemy.engine.Engine - INFO - SELECT count(answers.id) AS count_1 
+FROM answers
+2025-07-18 06:11:25,225 INFO sqlalchemy.engine.Engine [generated in 0.00009s] {}
+2025-07-18 06:11:25,225 - sqlalchemy.engine.Engine - INFO - [generated in 0.00009s] {}
+2025-07-18 06:11:25,226 INFO sqlalchemy.engine.Engine SELECT count(answers.id) AS count_1 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s
+2025-07-18 06:11:25,226 - sqlalchemy.engine.Engine - INFO - SELECT count(answers.id) AS count_1 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s
+2025-07-18 06:11:25,226 INFO sqlalchemy.engine.Engine [generated in 0.00009s] {'assistant_type_1': 'original'}
+2025-07-18 06:11:25,226 - sqlalchemy.engine.Engine - INFO - [generated in 0.00009s] {'assistant_type_1': 'original'}
+2025-07-18 06:11:25,227 INFO sqlalchemy.engine.Engine SELECT COUNT(*) FROM table1
+2025-07-18 06:11:25,227 - sqlalchemy.engine.Engine - INFO - SELECT COUNT(*) FROM table1
+2025-07-18 06:11:25,227 INFO sqlalchemy.engine.Engine [generated in 0.00012s] {}
+2025-07-18 06:11:25,227 - sqlalchemy.engine.Engine - INFO - [generated in 0.00012s] {}
+2025-07-18 06:11:25,227 INFO sqlalchemy.engine.Engine SELECT COUNT(*) FROM table1 WHERE answer IS NOT NULL AND answer != '' AND TRIM(answer) != ''
+2025-07-18 06:11:25,227 - sqlalchemy.engine.Engine - INFO - SELECT COUNT(*) FROM table1 WHERE answer IS NOT NULL AND answer != '' AND TRIM(answer) != ''
+2025-07-18 06:11:25,227 INFO sqlalchemy.engine.Engine [generated in 0.00008s] {}
+2025-07-18 06:11:25,227 - sqlalchemy.engine.Engine - INFO - [generated in 0.00008s] {}
+2025-07-18 06:11:25,228 INFO sqlalchemy.engine.Engine SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.sendmessagetime DESC 
+ LIMIT %(param_1)s
+2025-07-18 06:11:25,228 - sqlalchemy.engine.Engine - INFO - SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.sendmessagetime DESC 
+ LIMIT %(param_1)s
+2025-07-18 06:11:25,228 INFO sqlalchemy.engine.Engine [cached since 9689s ago] {'param_1': 1}
+2025-07-18 06:11:25,228 - sqlalchemy.engine.Engine - INFO - [cached since 9689s ago] {'param_1': 1}
+2025-07-18 06:11:25,229 INFO sqlalchemy.engine.Engine SELECT MAX(sendmessagetime) FROM table1
+2025-07-18 06:11:25,229 - sqlalchemy.engine.Engine - INFO - SELECT MAX(sendmessagetime) FROM table1
+2025-07-18 06:11:25,229 INFO sqlalchemy.engine.Engine [generated in 0.00007s] {}
+2025-07-18 06:11:25,229 - sqlalchemy.engine.Engine - INFO - [generated in 0.00007s] {}
+2025-07-18 06:11:25,230 INFO sqlalchemy.engine.Engine SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS questions 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:25,230 - sqlalchemy.engine.Engine - INFO - SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS questions 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:25,230 INFO sqlalchemy.engine.Engine [generated in 0.00012s] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 25, 229652)}
+2025-07-18 06:11:25,230 - sqlalchemy.engine.Engine - INFO - [generated in 0.00012s] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 25, 229652)}
+2025-07-18 06:11:25,232 INFO sqlalchemy.engine.Engine SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS classifications 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s AND questions.classification IS NOT NULL AND questions.classification != %(classification_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:25,232 - sqlalchemy.engine.Engine - INFO - SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS classifications 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s AND questions.classification IS NOT NULL AND questions.classification != %(classification_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:25,232 INFO sqlalchemy.engine.Engine [generated in 0.00015s] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 25, 229652), 'classification_1': ''}
+2025-07-18 06:11:25,232 - sqlalchemy.engine.Engine - INFO - [generated in 0.00015s] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 25, 229652), 'classification_1': ''}
+2025-07-18 06:11:25,234 INFO sqlalchemy.engine.Engine SELECT date(scores.rated_at) AS date, count(scores.id) AS scores 
+FROM scores 
+WHERE scores.rated_at >= %(rated_at_1)s GROUP BY date(scores.rated_at)
+2025-07-18 06:11:25,234 - sqlalchemy.engine.Engine - INFO - SELECT date(scores.rated_at) AS date, count(scores.id) AS scores 
+FROM scores 
+WHERE scores.rated_at >= %(rated_at_1)s GROUP BY date(scores.rated_at)
+2025-07-18 06:11:25,234 INFO sqlalchemy.engine.Engine [generated in 0.00012s] {'rated_at_1': datetime.datetime(2025, 7, 11, 6, 11, 25, 229652)}
+2025-07-18 06:11:25,234 - sqlalchemy.engine.Engine - INFO - [generated in 0.00012s] {'rated_at_1': datetime.datetime(2025, 7, 11, 6, 11, 25, 229652)}
+2025-07-18 06:11:25,235 INFO sqlalchemy.engine.Engine SELECT questions.classification AS questions_classification, count(questions.id) AS count_1 
+FROM questions 
+WHERE questions.classification IS NOT NULL GROUP BY questions.classification
+2025-07-18 06:11:25,235 - sqlalchemy.engine.Engine - INFO - SELECT questions.classification AS questions_classification, count(questions.id) AS count_1 
+FROM questions 
+WHERE questions.classification IS NOT NULL GROUP BY questions.classification
+2025-07-18 06:11:25,235 INFO sqlalchemy.engine.Engine [generated in 0.00010s] {}
+2025-07-18 06:11:25,235 - sqlalchemy.engine.Engine - INFO - [generated in 0.00010s] {}
+2025-07-18 06:11:25,236 INFO sqlalchemy.engine.Engine SELECT answers.assistant_type AS answers_assistant_type, count(answers.id) AS total 
+FROM answers GROUP BY answers.assistant_type
+2025-07-18 06:11:25,236 - sqlalchemy.engine.Engine - INFO - SELECT answers.assistant_type AS answers_assistant_type, count(answers.id) AS total 
+FROM answers GROUP BY answers.assistant_type
+2025-07-18 06:11:25,236 INFO sqlalchemy.engine.Engine [generated in 0.00011s] {}
+2025-07-18 06:11:25,236 - sqlalchemy.engine.Engine - INFO - [generated in 0.00011s] {}
+2025-07-18 06:11:25,237 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-07-18 06:11:25,237 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-07-18 06:11:26,793 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-07-18 06:11:26,793 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-07-18 06:11:26,793 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions) AS anon_1
+2025-07-18 06:11:26,793 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions) AS anon_1
+2025-07-18 06:11:26,793 INFO sqlalchemy.engine.Engine [cached since 1.583s ago] {}
+2025-07-18 06:11:26,793 - sqlalchemy.engine.Engine - INFO - [cached since 1.583s ago] {}
+2025-07-18 06:11:26,794 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers) AS anon_1
+2025-07-18 06:11:26,794 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers) AS anon_1
+2025-07-18 06:11:26,795 INFO sqlalchemy.engine.Engine [cached since 1.581s ago] {}
+2025-07-18 06:11:26,795 - sqlalchemy.engine.Engine - INFO - [cached since 1.581s ago] {}
+2025-07-18 06:11:26,795 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.is_scored = true) AS anon_1
+2025-07-18 06:11:26,795 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.is_scored = true) AS anon_1
+2025-07-18 06:11:26,795 INFO sqlalchemy.engine.Engine [cached since 1.578s ago] {}
+2025-07-18 06:11:26,795 - sqlalchemy.engine.Engine - INFO - [cached since 1.578s ago] {}
+2025-07-18 06:11:26,796 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT scores.id AS scores_id, scores.answer_id AS scores_answer_id, scores.score_1 AS scores_score_1, scores.score_2 AS scores_score_2, scores.score_3 AS scores_score_3, scores.score_4 AS scores_score_4, scores.score_5 AS scores_score_5, scores.average_score AS scores_average_score, scores.comment AS scores_comment, scores.rated_at AS scores_rated_at 
+FROM scores) AS anon_1
+2025-07-18 06:11:26,796 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT scores.id AS scores_id, scores.answer_id AS scores_answer_id, scores.score_1 AS scores_score_1, scores.score_2 AS scores_score_2, scores.score_3 AS scores_score_3, scores.score_4 AS scores_score_4, scores.score_5 AS scores_score_5, scores.average_score AS scores_average_score, scores.comment AS scores_comment, scores.rated_at AS scores_rated_at 
+FROM scores) AS anon_1
+2025-07-18 06:11:26,796 INFO sqlalchemy.engine.Engine [cached since 1.576s ago] {}
+2025-07-18 06:11:26,796 - sqlalchemy.engine.Engine - INFO - [cached since 1.576s ago] {}
+2025-07-18 06:11:26,797 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:26,797 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:26,797 INFO sqlalchemy.engine.Engine [cached since 1.574s ago] {'assistant_type_1': 'doubao'}
+2025-07-18 06:11:26,797 - sqlalchemy.engine.Engine - INFO - [cached since 1.574s ago] {'assistant_type_1': 'doubao'}
+2025-07-18 06:11:26,797 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:26,797 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:26,797 INFO sqlalchemy.engine.Engine [cached since 1.575s ago] {'assistant_type_1': 'xiaotian'}
+2025-07-18 06:11:26,797 - sqlalchemy.engine.Engine - INFO - [cached since 1.575s ago] {'assistant_type_1': 'xiaotian'}
+2025-07-18 06:11:26,798 INFO sqlalchemy.engine.Engine SELECT count(questions.id) AS count_1 
+FROM questions
+2025-07-18 06:11:26,798 - sqlalchemy.engine.Engine - INFO - SELECT count(questions.id) AS count_1 
+FROM questions
+2025-07-18 06:11:26,798 INFO sqlalchemy.engine.Engine [cached since 1.573s ago] {}
+2025-07-18 06:11:26,798 - sqlalchemy.engine.Engine - INFO - [cached since 1.573s ago] {}
+2025-07-18 06:11:26,798 INFO sqlalchemy.engine.Engine SELECT count(answers.id) AS count_1 
+FROM answers
+2025-07-18 06:11:26,798 - sqlalchemy.engine.Engine - INFO - SELECT count(answers.id) AS count_1 
+FROM answers
+2025-07-18 06:11:26,798 INFO sqlalchemy.engine.Engine [cached since 1.573s ago] {}
+2025-07-18 06:11:26,798 - sqlalchemy.engine.Engine - INFO - [cached since 1.573s ago] {}
+2025-07-18 06:11:26,799 INFO sqlalchemy.engine.Engine SELECT count(answers.id) AS count_1 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s
+2025-07-18 06:11:26,799 - sqlalchemy.engine.Engine - INFO - SELECT count(answers.id) AS count_1 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s
+2025-07-18 06:11:26,799 INFO sqlalchemy.engine.Engine [cached since 1.573s ago] {'assistant_type_1': 'original'}
+2025-07-18 06:11:26,799 - sqlalchemy.engine.Engine - INFO - [cached since 1.573s ago] {'assistant_type_1': 'original'}
+2025-07-18 06:11:26,799 INFO sqlalchemy.engine.Engine SELECT COUNT(*) FROM table1
+2025-07-18 06:11:26,799 - sqlalchemy.engine.Engine - INFO - SELECT COUNT(*) FROM table1
+2025-07-18 06:11:26,799 INFO sqlalchemy.engine.Engine [cached since 1.573s ago] {}
+2025-07-18 06:11:26,799 - sqlalchemy.engine.Engine - INFO - [cached since 1.573s ago] {}
+2025-07-18 06:11:26,800 INFO sqlalchemy.engine.Engine SELECT COUNT(*) FROM table1 WHERE answer IS NOT NULL AND answer != '' AND TRIM(answer) != ''
+2025-07-18 06:11:26,800 - sqlalchemy.engine.Engine - INFO - SELECT COUNT(*) FROM table1 WHERE answer IS NOT NULL AND answer != '' AND TRIM(answer) != ''
+2025-07-18 06:11:26,800 INFO sqlalchemy.engine.Engine [cached since 1.573s ago] {}
+2025-07-18 06:11:26,800 - sqlalchemy.engine.Engine - INFO - [cached since 1.573s ago] {}
+2025-07-18 06:11:26,800 INFO sqlalchemy.engine.Engine SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.sendmessagetime DESC 
+ LIMIT %(param_1)s
+2025-07-18 06:11:26,800 - sqlalchemy.engine.Engine - INFO - SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.sendmessagetime DESC 
+ LIMIT %(param_1)s
+2025-07-18 06:11:26,800 INFO sqlalchemy.engine.Engine [cached since 9690s ago] {'param_1': 1}
+2025-07-18 06:11:26,800 - sqlalchemy.engine.Engine - INFO - [cached since 9690s ago] {'param_1': 1}
+2025-07-18 06:11:26,801 INFO sqlalchemy.engine.Engine SELECT MAX(sendmessagetime) FROM table1
+2025-07-18 06:11:26,801 - sqlalchemy.engine.Engine - INFO - SELECT MAX(sendmessagetime) FROM table1
+2025-07-18 06:11:26,801 INFO sqlalchemy.engine.Engine [cached since 1.572s ago] {}
+2025-07-18 06:11:26,801 - sqlalchemy.engine.Engine - INFO - [cached since 1.572s ago] {}
+2025-07-18 06:11:26,802 INFO sqlalchemy.engine.Engine SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS questions 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:26,802 - sqlalchemy.engine.Engine - INFO - SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS questions 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:26,802 INFO sqlalchemy.engine.Engine [cached since 1.572s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 26, 801929)}
+2025-07-18 06:11:26,802 - sqlalchemy.engine.Engine - INFO - [cached since 1.572s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 26, 801929)}
+2025-07-18 06:11:26,803 INFO sqlalchemy.engine.Engine SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS classifications 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s AND questions.classification IS NOT NULL AND questions.classification != %(classification_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:26,803 - sqlalchemy.engine.Engine - INFO - SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS classifications 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s AND questions.classification IS NOT NULL AND questions.classification != %(classification_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:26,803 INFO sqlalchemy.engine.Engine [cached since 1.571s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 26, 801929), 'classification_1': ''}
+2025-07-18 06:11:26,803 - sqlalchemy.engine.Engine - INFO - [cached since 1.571s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 26, 801929), 'classification_1': ''}
+2025-07-18 06:11:26,804 INFO sqlalchemy.engine.Engine SELECT date(scores.rated_at) AS date, count(scores.id) AS scores 
+FROM scores 
+WHERE scores.rated_at >= %(rated_at_1)s GROUP BY date(scores.rated_at)
+2025-07-18 06:11:26,804 - sqlalchemy.engine.Engine - INFO - SELECT date(scores.rated_at) AS date, count(scores.id) AS scores 
+FROM scores 
+WHERE scores.rated_at >= %(rated_at_1)s GROUP BY date(scores.rated_at)
+2025-07-18 06:11:26,804 INFO sqlalchemy.engine.Engine [cached since 1.57s ago] {'rated_at_1': datetime.datetime(2025, 7, 11, 6, 11, 26, 801929)}
+2025-07-18 06:11:26,804 - sqlalchemy.engine.Engine - INFO - [cached since 1.57s ago] {'rated_at_1': datetime.datetime(2025, 7, 11, 6, 11, 26, 801929)}
+2025-07-18 06:11:26,804 INFO sqlalchemy.engine.Engine SELECT questions.classification AS questions_classification, count(questions.id) AS count_1 
+FROM questions 
+WHERE questions.classification IS NOT NULL GROUP BY questions.classification
+2025-07-18 06:11:26,804 - sqlalchemy.engine.Engine - INFO - SELECT questions.classification AS questions_classification, count(questions.id) AS count_1 
+FROM questions 
+WHERE questions.classification IS NOT NULL GROUP BY questions.classification
+2025-07-18 06:11:26,804 INFO sqlalchemy.engine.Engine [cached since 1.569s ago] {}
+2025-07-18 06:11:26,804 - sqlalchemy.engine.Engine - INFO - [cached since 1.569s ago] {}
+2025-07-18 06:11:26,805 INFO sqlalchemy.engine.Engine SELECT answers.assistant_type AS answers_assistant_type, count(answers.id) AS total 
+FROM answers GROUP BY answers.assistant_type
+2025-07-18 06:11:26,805 - sqlalchemy.engine.Engine - INFO - SELECT answers.assistant_type AS answers_assistant_type, count(answers.id) AS total 
+FROM answers GROUP BY answers.assistant_type
+2025-07-18 06:11:26,805 INFO sqlalchemy.engine.Engine [cached since 1.569s ago] {}
+2025-07-18 06:11:26,805 - sqlalchemy.engine.Engine - INFO - [cached since 1.569s ago] {}
+2025-07-18 06:11:26,806 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-07-18 06:11:26,806 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-07-18 06:11:28,169 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-07-18 06:11:28,169 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-07-18 06:11:28,169 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions) AS anon_1
+2025-07-18 06:11:28,169 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions) AS anon_1
+2025-07-18 06:11:28,169 INFO sqlalchemy.engine.Engine [cached since 2.959s ago] {}
+2025-07-18 06:11:28,169 - sqlalchemy.engine.Engine - INFO - [cached since 2.959s ago] {}
+2025-07-18 06:11:28,170 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers) AS anon_1
+2025-07-18 06:11:28,170 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers) AS anon_1
+2025-07-18 06:11:28,170 INFO sqlalchemy.engine.Engine [cached since 2.957s ago] {}
+2025-07-18 06:11:28,170 - sqlalchemy.engine.Engine - INFO - [cached since 2.957s ago] {}
+2025-07-18 06:11:28,171 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.is_scored = true) AS anon_1
+2025-07-18 06:11:28,171 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.is_scored = true) AS anon_1
+2025-07-18 06:11:28,171 INFO sqlalchemy.engine.Engine [cached since 2.953s ago] {}
+2025-07-18 06:11:28,171 - sqlalchemy.engine.Engine - INFO - [cached since 2.953s ago] {}
+2025-07-18 06:11:28,171 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT scores.id AS scores_id, scores.answer_id AS scores_answer_id, scores.score_1 AS scores_score_1, scores.score_2 AS scores_score_2, scores.score_3 AS scores_score_3, scores.score_4 AS scores_score_4, scores.score_5 AS scores_score_5, scores.average_score AS scores_average_score, scores.comment AS scores_comment, scores.rated_at AS scores_rated_at 
+FROM scores) AS anon_1
+2025-07-18 06:11:28,171 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT scores.id AS scores_id, scores.answer_id AS scores_answer_id, scores.score_1 AS scores_score_1, scores.score_2 AS scores_score_2, scores.score_3 AS scores_score_3, scores.score_4 AS scores_score_4, scores.score_5 AS scores_score_5, scores.average_score AS scores_average_score, scores.comment AS scores_comment, scores.rated_at AS scores_rated_at 
+FROM scores) AS anon_1
+2025-07-18 06:11:28,171 INFO sqlalchemy.engine.Engine [cached since 2.951s ago] {}
+2025-07-18 06:11:28,171 - sqlalchemy.engine.Engine - INFO - [cached since 2.951s ago] {}
+2025-07-18 06:11:28,172 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:28,172 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:28,172 INFO sqlalchemy.engine.Engine [cached since 2.95s ago] {'assistant_type_1': 'doubao'}
+2025-07-18 06:11:28,172 - sqlalchemy.engine.Engine - INFO - [cached since 2.95s ago] {'assistant_type_1': 'doubao'}
+2025-07-18 06:11:28,173 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:28,173 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:28,173 INFO sqlalchemy.engine.Engine [cached since 2.95s ago] {'assistant_type_1': 'xiaotian'}
+2025-07-18 06:11:28,173 - sqlalchemy.engine.Engine - INFO - [cached since 2.95s ago] {'assistant_type_1': 'xiaotian'}
+2025-07-18 06:11:28,173 INFO sqlalchemy.engine.Engine SELECT count(questions.id) AS count_1 
+FROM questions
+2025-07-18 06:11:28,173 - sqlalchemy.engine.Engine - INFO - SELECT count(questions.id) AS count_1 
+FROM questions
+2025-07-18 06:11:28,173 INFO sqlalchemy.engine.Engine [cached since 2.949s ago] {}
+2025-07-18 06:11:28,173 - sqlalchemy.engine.Engine - INFO - [cached since 2.949s ago] {}
+2025-07-18 06:11:28,174 INFO sqlalchemy.engine.Engine SELECT count(answers.id) AS count_1 
+FROM answers
+2025-07-18 06:11:28,174 - sqlalchemy.engine.Engine - INFO - SELECT count(answers.id) AS count_1 
+FROM answers
+2025-07-18 06:11:28,174 INFO sqlalchemy.engine.Engine [cached since 2.949s ago] {}
+2025-07-18 06:11:28,174 - sqlalchemy.engine.Engine - INFO - [cached since 2.949s ago] {}
+2025-07-18 06:11:28,175 INFO sqlalchemy.engine.Engine SELECT count(answers.id) AS count_1 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s
+2025-07-18 06:11:28,175 - sqlalchemy.engine.Engine - INFO - SELECT count(answers.id) AS count_1 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s
+2025-07-18 06:11:28,175 INFO sqlalchemy.engine.Engine [cached since 2.949s ago] {'assistant_type_1': 'original'}
+2025-07-18 06:11:28,175 - sqlalchemy.engine.Engine - INFO - [cached since 2.949s ago] {'assistant_type_1': 'original'}
+2025-07-18 06:11:28,175 INFO sqlalchemy.engine.Engine SELECT COUNT(*) FROM table1
+2025-07-18 06:11:28,175 - sqlalchemy.engine.Engine - INFO - SELECT COUNT(*) FROM table1
+2025-07-18 06:11:28,175 INFO sqlalchemy.engine.Engine [cached since 2.949s ago] {}
+2025-07-18 06:11:28,175 - sqlalchemy.engine.Engine - INFO - [cached since 2.949s ago] {}
+2025-07-18 06:11:28,175 INFO sqlalchemy.engine.Engine SELECT COUNT(*) FROM table1 WHERE answer IS NOT NULL AND answer != '' AND TRIM(answer) != ''
+2025-07-18 06:11:28,175 - sqlalchemy.engine.Engine - INFO - SELECT COUNT(*) FROM table1 WHERE answer IS NOT NULL AND answer != '' AND TRIM(answer) != ''
+2025-07-18 06:11:28,176 INFO sqlalchemy.engine.Engine [cached since 2.948s ago] {}
+2025-07-18 06:11:28,176 - sqlalchemy.engine.Engine - INFO - [cached since 2.948s ago] {}
+2025-07-18 06:11:28,176 INFO sqlalchemy.engine.Engine SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.sendmessagetime DESC 
+ LIMIT %(param_1)s
+2025-07-18 06:11:28,176 - sqlalchemy.engine.Engine - INFO - SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.sendmessagetime DESC 
+ LIMIT %(param_1)s
+2025-07-18 06:11:28,176 INFO sqlalchemy.engine.Engine [cached since 9692s ago] {'param_1': 1}
+2025-07-18 06:11:28,176 - sqlalchemy.engine.Engine - INFO - [cached since 9692s ago] {'param_1': 1}
+2025-07-18 06:11:28,177 INFO sqlalchemy.engine.Engine SELECT MAX(sendmessagetime) FROM table1
+2025-07-18 06:11:28,177 - sqlalchemy.engine.Engine - INFO - SELECT MAX(sendmessagetime) FROM table1
+2025-07-18 06:11:28,177 INFO sqlalchemy.engine.Engine [cached since 2.948s ago] {}
+2025-07-18 06:11:28,177 - sqlalchemy.engine.Engine - INFO - [cached since 2.948s ago] {}
+2025-07-18 06:11:28,177 INFO sqlalchemy.engine.Engine SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS questions 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:28,177 - sqlalchemy.engine.Engine - INFO - SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS questions 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:28,177 INFO sqlalchemy.engine.Engine [cached since 2.947s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 28, 177500)}
+2025-07-18 06:11:28,177 - sqlalchemy.engine.Engine - INFO - [cached since 2.947s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 28, 177500)}
+2025-07-18 06:11:28,179 INFO sqlalchemy.engine.Engine SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS classifications 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s AND questions.classification IS NOT NULL AND questions.classification != %(classification_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:28,179 - sqlalchemy.engine.Engine - INFO - SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS classifications 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s AND questions.classification IS NOT NULL AND questions.classification != %(classification_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:28,179 INFO sqlalchemy.engine.Engine [cached since 2.947s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 28, 177500), 'classification_1': ''}
+2025-07-18 06:11:28,179 - sqlalchemy.engine.Engine - INFO - [cached since 2.947s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 28, 177500), 'classification_1': ''}
+2025-07-18 06:11:28,180 INFO sqlalchemy.engine.Engine SELECT date(scores.rated_at) AS date, count(scores.id) AS scores 
+FROM scores 
+WHERE scores.rated_at >= %(rated_at_1)s GROUP BY date(scores.rated_at)
+2025-07-18 06:11:28,180 - sqlalchemy.engine.Engine - INFO - SELECT date(scores.rated_at) AS date, count(scores.id) AS scores 
+FROM scores 
+WHERE scores.rated_at >= %(rated_at_1)s GROUP BY date(scores.rated_at)
+2025-07-18 06:11:28,180 INFO sqlalchemy.engine.Engine [cached since 2.946s ago] {'rated_at_1': datetime.datetime(2025, 7, 11, 6, 11, 28, 177500)}
+2025-07-18 06:11:28,180 - sqlalchemy.engine.Engine - INFO - [cached since 2.946s ago] {'rated_at_1': datetime.datetime(2025, 7, 11, 6, 11, 28, 177500)}
+2025-07-18 06:11:28,180 INFO sqlalchemy.engine.Engine SELECT questions.classification AS questions_classification, count(questions.id) AS count_1 
+FROM questions 
+WHERE questions.classification IS NOT NULL GROUP BY questions.classification
+2025-07-18 06:11:28,180 - sqlalchemy.engine.Engine - INFO - SELECT questions.classification AS questions_classification, count(questions.id) AS count_1 
+FROM questions 
+WHERE questions.classification IS NOT NULL GROUP BY questions.classification
+2025-07-18 06:11:28,180 INFO sqlalchemy.engine.Engine [cached since 2.945s ago] {}
+2025-07-18 06:11:28,180 - sqlalchemy.engine.Engine - INFO - [cached since 2.945s ago] {}
+2025-07-18 06:11:28,181 INFO sqlalchemy.engine.Engine SELECT answers.assistant_type AS answers_assistant_type, count(answers.id) AS total 
+FROM answers GROUP BY answers.assistant_type
+2025-07-18 06:11:28,181 - sqlalchemy.engine.Engine - INFO - SELECT answers.assistant_type AS answers_assistant_type, count(answers.id) AS total 
+FROM answers GROUP BY answers.assistant_type
+2025-07-18 06:11:28,181 INFO sqlalchemy.engine.Engine [cached since 2.945s ago] {}
+2025-07-18 06:11:28,181 - sqlalchemy.engine.Engine - INFO - [cached since 2.945s ago] {}
+2025-07-18 06:11:28,182 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-07-18 06:11:28,182 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-07-18 06:11:32,108 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-07-18 06:11:32,108 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-07-18 06:11:32,110 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.created_at DESC) AS anon_1
+2025-07-18 06:11:32,110 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.created_at DESC) AS anon_1
+2025-07-18 06:11:32,110 INFO sqlalchemy.engine.Engine [generated in 0.00015s] {}
+2025-07-18 06:11:32,110 - sqlalchemy.engine.Engine - INFO - [generated in 0.00015s] {}
+2025-07-18 06:11:32,112 INFO sqlalchemy.engine.Engine SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.created_at DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+2025-07-18 06:11:32,112 - sqlalchemy.engine.Engine - INFO - SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.created_at DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+2025-07-18 06:11:32,112 INFO sqlalchemy.engine.Engine [generated in 0.00014s] {'param_1': 20, 'param_2': 0}
+2025-07-18 06:11:32,112 - sqlalchemy.engine.Engine - INFO - [generated in 0.00014s] {'param_1': 20, 'param_2': 0}
+2025-07-18 06:11:32,114 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-07-18 06:11:32,114 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-07-18 06:11:32,440 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-07-18 06:11:32,440 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-07-18 06:11:32,440 INFO sqlalchemy.engine.Engine SELECT DISTINCT questions.classification AS questions_classification 
+FROM questions 
+WHERE questions.classification IS NOT NULL AND questions.classification != %(classification_1)s
+2025-07-18 06:11:32,440 - sqlalchemy.engine.Engine - INFO - SELECT DISTINCT questions.classification AS questions_classification 
+FROM questions 
+WHERE questions.classification IS NOT NULL AND questions.classification != %(classification_1)s
+2025-07-18 06:11:32,440 INFO sqlalchemy.engine.Engine [generated in 0.00012s] {'classification_1': ''}
+2025-07-18 06:11:32,440 - sqlalchemy.engine.Engine - INFO - [generated in 0.00012s] {'classification_1': ''}
+2025-07-18 06:11:32,442 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-07-18 06:11:32,442 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-07-18 06:11:33,548 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-07-18 06:11:33,548 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-07-18 06:11:33,548 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions) AS anon_1
+2025-07-18 06:11:33,548 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions) AS anon_1
+2025-07-18 06:11:33,548 INFO sqlalchemy.engine.Engine [cached since 8.338s ago] {}
+2025-07-18 06:11:33,548 - sqlalchemy.engine.Engine - INFO - [cached since 8.338s ago] {}
+2025-07-18 06:11:33,550 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers) AS anon_1
+2025-07-18 06:11:33,550 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers) AS anon_1
+2025-07-18 06:11:33,550 INFO sqlalchemy.engine.Engine [cached since 8.336s ago] {}
+2025-07-18 06:11:33,550 - sqlalchemy.engine.Engine - INFO - [cached since 8.336s ago] {}
+2025-07-18 06:11:33,550 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.is_scored = true) AS anon_1
+2025-07-18 06:11:33,550 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.is_scored = true) AS anon_1
+2025-07-18 06:11:33,550 INFO sqlalchemy.engine.Engine [cached since 8.333s ago] {}
+2025-07-18 06:11:33,550 - sqlalchemy.engine.Engine - INFO - [cached since 8.333s ago] {}
+2025-07-18 06:11:33,551 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT scores.id AS scores_id, scores.answer_id AS scores_answer_id, scores.score_1 AS scores_score_1, scores.score_2 AS scores_score_2, scores.score_3 AS scores_score_3, scores.score_4 AS scores_score_4, scores.score_5 AS scores_score_5, scores.average_score AS scores_average_score, scores.comment AS scores_comment, scores.rated_at AS scores_rated_at 
+FROM scores) AS anon_1
+2025-07-18 06:11:33,551 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT scores.id AS scores_id, scores.answer_id AS scores_answer_id, scores.score_1 AS scores_score_1, scores.score_2 AS scores_score_2, scores.score_3 AS scores_score_3, scores.score_4 AS scores_score_4, scores.score_5 AS scores_score_5, scores.average_score AS scores_average_score, scores.comment AS scores_comment, scores.rated_at AS scores_rated_at 
+FROM scores) AS anon_1
+2025-07-18 06:11:33,551 INFO sqlalchemy.engine.Engine [cached since 8.331s ago] {}
+2025-07-18 06:11:33,551 - sqlalchemy.engine.Engine - INFO - [cached since 8.331s ago] {}
+2025-07-18 06:11:33,552 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:33,552 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:33,552 INFO sqlalchemy.engine.Engine [cached since 8.329s ago] {'assistant_type_1': 'doubao'}
+2025-07-18 06:11:33,552 - sqlalchemy.engine.Engine - INFO - [cached since 8.329s ago] {'assistant_type_1': 'doubao'}
+2025-07-18 06:11:33,552 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:33,552 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:33,552 INFO sqlalchemy.engine.Engine [cached since 8.33s ago] {'assistant_type_1': 'xiaotian'}
+2025-07-18 06:11:33,552 - sqlalchemy.engine.Engine - INFO - [cached since 8.33s ago] {'assistant_type_1': 'xiaotian'}
+2025-07-18 06:11:33,553 INFO sqlalchemy.engine.Engine SELECT count(questions.id) AS count_1 
+FROM questions
+2025-07-18 06:11:33,553 - sqlalchemy.engine.Engine - INFO - SELECT count(questions.id) AS count_1 
+FROM questions
+2025-07-18 06:11:33,553 INFO sqlalchemy.engine.Engine [cached since 8.329s ago] {}
+2025-07-18 06:11:33,553 - sqlalchemy.engine.Engine - INFO - [cached since 8.329s ago] {}
+2025-07-18 06:11:33,553 INFO sqlalchemy.engine.Engine SELECT count(answers.id) AS count_1 
+FROM answers
+2025-07-18 06:11:33,553 - sqlalchemy.engine.Engine - INFO - SELECT count(answers.id) AS count_1 
+FROM answers
+2025-07-18 06:11:33,553 INFO sqlalchemy.engine.Engine [cached since 8.328s ago] {}
+2025-07-18 06:11:33,553 - sqlalchemy.engine.Engine - INFO - [cached since 8.328s ago] {}
+2025-07-18 06:11:33,554 INFO sqlalchemy.engine.Engine SELECT count(answers.id) AS count_1 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s
+2025-07-18 06:11:33,554 - sqlalchemy.engine.Engine - INFO - SELECT count(answers.id) AS count_1 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s
+2025-07-18 06:11:33,554 INFO sqlalchemy.engine.Engine [cached since 8.328s ago] {'assistant_type_1': 'original'}
+2025-07-18 06:11:33,554 - sqlalchemy.engine.Engine - INFO - [cached since 8.328s ago] {'assistant_type_1': 'original'}
+2025-07-18 06:11:33,555 INFO sqlalchemy.engine.Engine SELECT COUNT(*) FROM table1
+2025-07-18 06:11:33,555 - sqlalchemy.engine.Engine - INFO - SELECT COUNT(*) FROM table1
+2025-07-18 06:11:33,555 INFO sqlalchemy.engine.Engine [cached since 8.328s ago] {}
+2025-07-18 06:11:33,555 - sqlalchemy.engine.Engine - INFO - [cached since 8.328s ago] {}
+2025-07-18 06:11:33,555 INFO sqlalchemy.engine.Engine SELECT COUNT(*) FROM table1 WHERE answer IS NOT NULL AND answer != '' AND TRIM(answer) != ''
+2025-07-18 06:11:33,555 - sqlalchemy.engine.Engine - INFO - SELECT COUNT(*) FROM table1 WHERE answer IS NOT NULL AND answer != '' AND TRIM(answer) != ''
+2025-07-18 06:11:33,555 INFO sqlalchemy.engine.Engine [cached since 8.328s ago] {}
+2025-07-18 06:11:33,555 - sqlalchemy.engine.Engine - INFO - [cached since 8.328s ago] {}
+2025-07-18 06:11:33,556 INFO sqlalchemy.engine.Engine SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.sendmessagetime DESC 
+ LIMIT %(param_1)s
+2025-07-18 06:11:33,556 - sqlalchemy.engine.Engine - INFO - SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.sendmessagetime DESC 
+ LIMIT %(param_1)s
+2025-07-18 06:11:33,556 INFO sqlalchemy.engine.Engine [cached since 9697s ago] {'param_1': 1}
+2025-07-18 06:11:33,556 - sqlalchemy.engine.Engine - INFO - [cached since 9697s ago] {'param_1': 1}
+2025-07-18 06:11:33,557 INFO sqlalchemy.engine.Engine SELECT MAX(sendmessagetime) FROM table1
+2025-07-18 06:11:33,557 - sqlalchemy.engine.Engine - INFO - SELECT MAX(sendmessagetime) FROM table1
+2025-07-18 06:11:33,557 INFO sqlalchemy.engine.Engine [cached since 8.328s ago] {}
+2025-07-18 06:11:33,557 - sqlalchemy.engine.Engine - INFO - [cached since 8.328s ago] {}
+2025-07-18 06:11:33,557 INFO sqlalchemy.engine.Engine SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS questions 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:33,557 - sqlalchemy.engine.Engine - INFO - SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS questions 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:33,557 INFO sqlalchemy.engine.Engine [cached since 8.327s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 33, 557354)}
+2025-07-18 06:11:33,557 - sqlalchemy.engine.Engine - INFO - [cached since 8.327s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 33, 557354)}
+2025-07-18 06:11:33,558 INFO sqlalchemy.engine.Engine SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS classifications 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s AND questions.classification IS NOT NULL AND questions.classification != %(classification_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:33,558 - sqlalchemy.engine.Engine - INFO - SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS classifications 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s AND questions.classification IS NOT NULL AND questions.classification != %(classification_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:33,558 INFO sqlalchemy.engine.Engine [cached since 8.326s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 33, 557354), 'classification_1': ''}
+2025-07-18 06:11:33,558 - sqlalchemy.engine.Engine - INFO - [cached since 8.326s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 33, 557354), 'classification_1': ''}
+2025-07-18 06:11:33,559 INFO sqlalchemy.engine.Engine SELECT date(scores.rated_at) AS date, count(scores.id) AS scores 
+FROM scores 
+WHERE scores.rated_at >= %(rated_at_1)s GROUP BY date(scores.rated_at)
+2025-07-18 06:11:33,559 - sqlalchemy.engine.Engine - INFO - SELECT date(scores.rated_at) AS date, count(scores.id) AS scores 
+FROM scores 
+WHERE scores.rated_at >= %(rated_at_1)s GROUP BY date(scores.rated_at)
+2025-07-18 06:11:33,559 INFO sqlalchemy.engine.Engine [cached since 8.325s ago] {'rated_at_1': datetime.datetime(2025, 7, 11, 6, 11, 33, 557354)}
+2025-07-18 06:11:33,559 - sqlalchemy.engine.Engine - INFO - [cached since 8.325s ago] {'rated_at_1': datetime.datetime(2025, 7, 11, 6, 11, 33, 557354)}
+2025-07-18 06:11:33,560 INFO sqlalchemy.engine.Engine SELECT questions.classification AS questions_classification, count(questions.id) AS count_1 
+FROM questions 
+WHERE questions.classification IS NOT NULL GROUP BY questions.classification
+2025-07-18 06:11:33,560 - sqlalchemy.engine.Engine - INFO - SELECT questions.classification AS questions_classification, count(questions.id) AS count_1 
+FROM questions 
+WHERE questions.classification IS NOT NULL GROUP BY questions.classification
+2025-07-18 06:11:33,560 INFO sqlalchemy.engine.Engine [cached since 8.325s ago] {}
+2025-07-18 06:11:33,560 - sqlalchemy.engine.Engine - INFO - [cached since 8.325s ago] {}
+2025-07-18 06:11:33,560 INFO sqlalchemy.engine.Engine SELECT answers.assistant_type AS answers_assistant_type, count(answers.id) AS total 
+FROM answers GROUP BY answers.assistant_type
+2025-07-18 06:11:33,560 - sqlalchemy.engine.Engine - INFO - SELECT answers.assistant_type AS answers_assistant_type, count(answers.id) AS total 
+FROM answers GROUP BY answers.assistant_type
+2025-07-18 06:11:33,561 INFO sqlalchemy.engine.Engine [cached since 8.324s ago] {}
+2025-07-18 06:11:33,561 - sqlalchemy.engine.Engine - INFO - [cached since 8.324s ago] {}
+2025-07-18 06:11:33,561 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-07-18 06:11:33,561 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-07-18 06:11:40,888 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-07-18 06:11:40,888 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-07-18 06:11:40,889 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions) AS anon_1
+2025-07-18 06:11:40,889 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions) AS anon_1
+2025-07-18 06:11:40,889 INFO sqlalchemy.engine.Engine [cached since 15.68s ago] {}
+2025-07-18 06:11:40,889 - sqlalchemy.engine.Engine - INFO - [cached since 15.68s ago] {}
+2025-07-18 06:11:40,890 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers) AS anon_1
+2025-07-18 06:11:40,890 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers) AS anon_1
+2025-07-18 06:11:40,890 INFO sqlalchemy.engine.Engine [cached since 15.68s ago] {}
+2025-07-18 06:11:40,890 - sqlalchemy.engine.Engine - INFO - [cached since 15.68s ago] {}
+2025-07-18 06:11:40,890 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.is_scored = true) AS anon_1
+2025-07-18 06:11:40,890 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.is_scored = true) AS anon_1
+2025-07-18 06:11:40,890 INFO sqlalchemy.engine.Engine [cached since 15.67s ago] {}
+2025-07-18 06:11:40,890 - sqlalchemy.engine.Engine - INFO - [cached since 15.67s ago] {}
+2025-07-18 06:11:40,891 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT scores.id AS scores_id, scores.answer_id AS scores_answer_id, scores.score_1 AS scores_score_1, scores.score_2 AS scores_score_2, scores.score_3 AS scores_score_3, scores.score_4 AS scores_score_4, scores.score_5 AS scores_score_5, scores.average_score AS scores_average_score, scores.comment AS scores_comment, scores.rated_at AS scores_rated_at 
+FROM scores) AS anon_1
+2025-07-18 06:11:40,891 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT scores.id AS scores_id, scores.answer_id AS scores_answer_id, scores.score_1 AS scores_score_1, scores.score_2 AS scores_score_2, scores.score_3 AS scores_score_3, scores.score_4 AS scores_score_4, scores.score_5 AS scores_score_5, scores.average_score AS scores_average_score, scores.comment AS scores_comment, scores.rated_at AS scores_rated_at 
+FROM scores) AS anon_1
+2025-07-18 06:11:40,891 INFO sqlalchemy.engine.Engine [cached since 15.67s ago] {}
+2025-07-18 06:11:40,891 - sqlalchemy.engine.Engine - INFO - [cached since 15.67s ago] {}
+2025-07-18 06:11:40,892 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:40,892 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:40,892 INFO sqlalchemy.engine.Engine [cached since 15.67s ago] {'assistant_type_1': 'doubao'}
+2025-07-18 06:11:40,892 - sqlalchemy.engine.Engine - INFO - [cached since 15.67s ago] {'assistant_type_1': 'doubao'}
+2025-07-18 06:11:40,894 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:40,894 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 06:11:40,894 INFO sqlalchemy.engine.Engine [cached since 15.67s ago] {'assistant_type_1': 'xiaotian'}
+2025-07-18 06:11:40,894 - sqlalchemy.engine.Engine - INFO - [cached since 15.67s ago] {'assistant_type_1': 'xiaotian'}
+2025-07-18 06:11:40,894 INFO sqlalchemy.engine.Engine SELECT count(questions.id) AS count_1 
+FROM questions
+2025-07-18 06:11:40,894 - sqlalchemy.engine.Engine - INFO - SELECT count(questions.id) AS count_1 
+FROM questions
+2025-07-18 06:11:40,894 INFO sqlalchemy.engine.Engine [cached since 15.67s ago] {}
+2025-07-18 06:11:40,894 - sqlalchemy.engine.Engine - INFO - [cached since 15.67s ago] {}
+2025-07-18 06:11:40,895 INFO sqlalchemy.engine.Engine SELECT count(answers.id) AS count_1 
+FROM answers
+2025-07-18 06:11:40,895 - sqlalchemy.engine.Engine - INFO - SELECT count(answers.id) AS count_1 
+FROM answers
+2025-07-18 06:11:40,895 INFO sqlalchemy.engine.Engine [cached since 15.67s ago] {}
+2025-07-18 06:11:40,895 - sqlalchemy.engine.Engine - INFO - [cached since 15.67s ago] {}
+2025-07-18 06:11:40,895 INFO sqlalchemy.engine.Engine SELECT count(answers.id) AS count_1 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s
+2025-07-18 06:11:40,895 - sqlalchemy.engine.Engine - INFO - SELECT count(answers.id) AS count_1 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s
+2025-07-18 06:11:40,895 INFO sqlalchemy.engine.Engine [cached since 15.67s ago] {'assistant_type_1': 'original'}
+2025-07-18 06:11:40,895 - sqlalchemy.engine.Engine - INFO - [cached since 15.67s ago] {'assistant_type_1': 'original'}
+2025-07-18 06:11:40,896 INFO sqlalchemy.engine.Engine SELECT COUNT(*) FROM table1
+2025-07-18 06:11:40,896 - sqlalchemy.engine.Engine - INFO - SELECT COUNT(*) FROM table1
+2025-07-18 06:11:40,896 INFO sqlalchemy.engine.Engine [cached since 15.67s ago] {}
+2025-07-18 06:11:40,896 - sqlalchemy.engine.Engine - INFO - [cached since 15.67s ago] {}
+2025-07-18 06:11:40,896 INFO sqlalchemy.engine.Engine SELECT COUNT(*) FROM table1 WHERE answer IS NOT NULL AND answer != '' AND TRIM(answer) != ''
+2025-07-18 06:11:40,896 - sqlalchemy.engine.Engine - INFO - SELECT COUNT(*) FROM table1 WHERE answer IS NOT NULL AND answer != '' AND TRIM(answer) != ''
+2025-07-18 06:11:40,896 INFO sqlalchemy.engine.Engine [cached since 15.67s ago] {}
+2025-07-18 06:11:40,896 - sqlalchemy.engine.Engine - INFO - [cached since 15.67s ago] {}
+2025-07-18 06:11:40,897 INFO sqlalchemy.engine.Engine SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.sendmessagetime DESC 
+ LIMIT %(param_1)s
+2025-07-18 06:11:40,897 - sqlalchemy.engine.Engine - INFO - SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.sendmessagetime DESC 
+ LIMIT %(param_1)s
+2025-07-18 06:11:40,897 INFO sqlalchemy.engine.Engine [cached since 9704s ago] {'param_1': 1}
+2025-07-18 06:11:40,897 - sqlalchemy.engine.Engine - INFO - [cached since 9704s ago] {'param_1': 1}
+2025-07-18 06:11:40,897 INFO sqlalchemy.engine.Engine SELECT MAX(sendmessagetime) FROM table1
+2025-07-18 06:11:40,897 - sqlalchemy.engine.Engine - INFO - SELECT MAX(sendmessagetime) FROM table1
+2025-07-18 06:11:40,897 INFO sqlalchemy.engine.Engine [cached since 15.67s ago] {}
+2025-07-18 06:11:40,897 - sqlalchemy.engine.Engine - INFO - [cached since 15.67s ago] {}
+2025-07-18 06:11:40,898 INFO sqlalchemy.engine.Engine SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS questions 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:40,898 - sqlalchemy.engine.Engine - INFO - SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS questions 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:40,898 INFO sqlalchemy.engine.Engine [cached since 15.67s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 40, 898140)}
+2025-07-18 06:11:40,898 - sqlalchemy.engine.Engine - INFO - [cached since 15.67s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 40, 898140)}
+2025-07-18 06:11:40,899 INFO sqlalchemy.engine.Engine SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS classifications 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s AND questions.classification IS NOT NULL AND questions.classification != %(classification_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:40,899 - sqlalchemy.engine.Engine - INFO - SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS classifications 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s AND questions.classification IS NOT NULL AND questions.classification != %(classification_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 06:11:40,899 INFO sqlalchemy.engine.Engine [cached since 15.67s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 40, 898140), 'classification_1': ''}
+2025-07-18 06:11:40,899 - sqlalchemy.engine.Engine - INFO - [cached since 15.67s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 6, 11, 40, 898140), 'classification_1': ''}
+2025-07-18 06:11:40,900 INFO sqlalchemy.engine.Engine SELECT date(scores.rated_at) AS date, count(scores.id) AS scores 
+FROM scores 
+WHERE scores.rated_at >= %(rated_at_1)s GROUP BY date(scores.rated_at)
+2025-07-18 06:11:40,900 - sqlalchemy.engine.Engine - INFO - SELECT date(scores.rated_at) AS date, count(scores.id) AS scores 
+FROM scores 
+WHERE scores.rated_at >= %(rated_at_1)s GROUP BY date(scores.rated_at)
+2025-07-18 06:11:40,900 INFO sqlalchemy.engine.Engine [cached since 15.67s ago] {'rated_at_1': datetime.datetime(2025, 7, 11, 6, 11, 40, 898140)}
+2025-07-18 06:11:40,900 - sqlalchemy.engine.Engine - INFO - [cached since 15.67s ago] {'rated_at_1': datetime.datetime(2025, 7, 11, 6, 11, 40, 898140)}
+2025-07-18 06:11:40,901 INFO sqlalchemy.engine.Engine SELECT questions.classification AS questions_classification, count(questions.id) AS count_1 
+FROM questions 
+WHERE questions.classification IS NOT NULL GROUP BY questions.classification
+2025-07-18 06:11:40,901 - sqlalchemy.engine.Engine - INFO - SELECT questions.classification AS questions_classification, count(questions.id) AS count_1 
+FROM questions 
+WHERE questions.classification IS NOT NULL GROUP BY questions.classification
+2025-07-18 06:11:40,901 INFO sqlalchemy.engine.Engine [cached since 15.67s ago] {}
+2025-07-18 06:11:40,901 - sqlalchemy.engine.Engine - INFO - [cached since 15.67s ago] {}
+2025-07-18 06:11:40,902 INFO sqlalchemy.engine.Engine SELECT answers.assistant_type AS answers_assistant_type, count(answers.id) AS total 
+FROM answers GROUP BY answers.assistant_type
+2025-07-18 06:11:40,902 - sqlalchemy.engine.Engine - INFO - SELECT answers.assistant_type AS answers_assistant_type, count(answers.id) AS total 
+FROM answers GROUP BY answers.assistant_type
+2025-07-18 06:11:40,902 INFO sqlalchemy.engine.Engine [cached since 15.67s ago] {}
+2025-07-18 06:11:40,902 - sqlalchemy.engine.Engine - INFO - [cached since 15.67s ago] {}
+2025-07-18 06:11:40,903 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-07-18 06:11:40,903 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-07-18 09:59:25,880 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-07-18 09:59:25,880 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-07-18 09:59:25,880 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions) AS anon_1
+2025-07-18 09:59:25,880 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions) AS anon_1
+2025-07-18 09:59:25,881 INFO sqlalchemy.engine.Engine [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,881 - sqlalchemy.engine.Engine - INFO - [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,888 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers) AS anon_1
+2025-07-18 09:59:25,888 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers) AS anon_1
+2025-07-18 09:59:25,888 INFO sqlalchemy.engine.Engine [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,888 - sqlalchemy.engine.Engine - INFO - [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,889 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.is_scored = true) AS anon_1
+2025-07-18 09:59:25,889 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.is_scored = true) AS anon_1
+2025-07-18 09:59:25,889 INFO sqlalchemy.engine.Engine [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,889 - sqlalchemy.engine.Engine - INFO - [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,889 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT scores.id AS scores_id, scores.answer_id AS scores_answer_id, scores.score_1 AS scores_score_1, scores.score_2 AS scores_score_2, scores.score_3 AS scores_score_3, scores.score_4 AS scores_score_4, scores.score_5 AS scores_score_5, scores.average_score AS scores_average_score, scores.comment AS scores_comment, scores.rated_at AS scores_rated_at 
+FROM scores) AS anon_1
+2025-07-18 09:59:25,889 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT scores.id AS scores_id, scores.answer_id AS scores_answer_id, scores.score_1 AS scores_score_1, scores.score_2 AS scores_score_2, scores.score_3 AS scores_score_3, scores.score_4 AS scores_score_4, scores.score_5 AS scores_score_5, scores.average_score AS scores_average_score, scores.comment AS scores_comment, scores.rated_at AS scores_rated_at 
+FROM scores) AS anon_1
+2025-07-18 09:59:25,890 INFO sqlalchemy.engine.Engine [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,890 - sqlalchemy.engine.Engine - INFO - [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,890 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 09:59:25,890 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 09:59:25,890 INFO sqlalchemy.engine.Engine [cached since 1.368e+04s ago] {'assistant_type_1': 'doubao'}
+2025-07-18 09:59:25,890 - sqlalchemy.engine.Engine - INFO - [cached since 1.368e+04s ago] {'assistant_type_1': 'doubao'}
+2025-07-18 09:59:25,891 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 09:59:25,891 - sqlalchemy.engine.Engine - INFO - SELECT count(*) AS count_1 
+FROM (SELECT answers.id AS answers_id, answers.question_business_id AS answers_question_business_id, answers.answer_text AS answers_answer_text, answers.assistant_type AS answers_assistant_type, answers.is_scored AS answers_is_scored, answers.answer_time AS answers_answer_time, answers.created_at AS answers_created_at, answers.updated_at AS answers_updated_at 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s) AS anon_1
+2025-07-18 09:59:25,891 INFO sqlalchemy.engine.Engine [cached since 1.368e+04s ago] {'assistant_type_1': 'xiaotian'}
+2025-07-18 09:59:25,891 - sqlalchemy.engine.Engine - INFO - [cached since 1.368e+04s ago] {'assistant_type_1': 'xiaotian'}
+2025-07-18 09:59:25,892 INFO sqlalchemy.engine.Engine SELECT count(questions.id) AS count_1 
+FROM questions
+2025-07-18 09:59:25,892 - sqlalchemy.engine.Engine - INFO - SELECT count(questions.id) AS count_1 
+FROM questions
+2025-07-18 09:59:25,892 INFO sqlalchemy.engine.Engine [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,892 - sqlalchemy.engine.Engine - INFO - [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,892 INFO sqlalchemy.engine.Engine SELECT count(answers.id) AS count_1 
+FROM answers
+2025-07-18 09:59:25,892 - sqlalchemy.engine.Engine - INFO - SELECT count(answers.id) AS count_1 
+FROM answers
+2025-07-18 09:59:25,892 INFO sqlalchemy.engine.Engine [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,892 - sqlalchemy.engine.Engine - INFO - [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,893 INFO sqlalchemy.engine.Engine SELECT count(answers.id) AS count_1 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s
+2025-07-18 09:59:25,893 - sqlalchemy.engine.Engine - INFO - SELECT count(answers.id) AS count_1 
+FROM answers 
+WHERE answers.assistant_type = %(assistant_type_1)s
+2025-07-18 09:59:25,893 INFO sqlalchemy.engine.Engine [cached since 1.368e+04s ago] {'assistant_type_1': 'original'}
+2025-07-18 09:59:25,893 - sqlalchemy.engine.Engine - INFO - [cached since 1.368e+04s ago] {'assistant_type_1': 'original'}
+2025-07-18 09:59:25,893 INFO sqlalchemy.engine.Engine SELECT COUNT(*) FROM table1
+2025-07-18 09:59:25,893 - sqlalchemy.engine.Engine - INFO - SELECT COUNT(*) FROM table1
+2025-07-18 09:59:25,893 INFO sqlalchemy.engine.Engine [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,893 - sqlalchemy.engine.Engine - INFO - [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,894 INFO sqlalchemy.engine.Engine SELECT COUNT(*) FROM table1 WHERE answer IS NOT NULL AND answer != '' AND TRIM(answer) != ''
+2025-07-18 09:59:25,894 - sqlalchemy.engine.Engine - INFO - SELECT COUNT(*) FROM table1 WHERE answer IS NOT NULL AND answer != '' AND TRIM(answer) != ''
+2025-07-18 09:59:25,894 INFO sqlalchemy.engine.Engine [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,894 - sqlalchemy.engine.Engine - INFO - [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,894 INFO sqlalchemy.engine.Engine SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.sendmessagetime DESC 
+ LIMIT %(param_1)s
+2025-07-18 09:59:25,894 - sqlalchemy.engine.Engine - INFO - SELECT questions.id AS questions_id, questions.business_id AS questions_business_id, questions.pageid AS questions_pageid, questions.devicetypename AS questions_devicetypename, questions.query AS questions_query, questions.sendmessagetime AS questions_sendmessagetime, questions.classification AS questions_classification, questions.serviceid AS questions_serviceid, questions.qatype AS questions_qatype, questions.intent AS questions_intent, questions.iskeyboardinput AS questions_iskeyboardinput, questions.isstopanswer AS questions_isstopanswer, questions.is_deleted AS questions_is_deleted, questions.processing_status AS questions_processing_status, questions.created_at AS questions_created_at, questions.updated_at AS questions_updated_at 
+FROM questions ORDER BY questions.sendmessagetime DESC 
+ LIMIT %(param_1)s
+2025-07-18 09:59:25,895 INFO sqlalchemy.engine.Engine [cached since 2.337e+04s ago] {'param_1': 1}
+2025-07-18 09:59:25,895 - sqlalchemy.engine.Engine - INFO - [cached since 2.337e+04s ago] {'param_1': 1}
+2025-07-18 09:59:25,895 INFO sqlalchemy.engine.Engine SELECT MAX(sendmessagetime) FROM table1
+2025-07-18 09:59:25,895 - sqlalchemy.engine.Engine - INFO - SELECT MAX(sendmessagetime) FROM table1
+2025-07-18 09:59:25,895 INFO sqlalchemy.engine.Engine [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,895 - sqlalchemy.engine.Engine - INFO - [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,896 INFO sqlalchemy.engine.Engine SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS questions 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 09:59:25,896 - sqlalchemy.engine.Engine - INFO - SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS questions 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 09:59:25,896 INFO sqlalchemy.engine.Engine [cached since 1.368e+04s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 9, 59, 25, 896186)}
+2025-07-18 09:59:25,896 - sqlalchemy.engine.Engine - INFO - [cached since 1.368e+04s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 9, 59, 25, 896186)}
+2025-07-18 09:59:25,897 INFO sqlalchemy.engine.Engine SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS classifications 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s AND questions.classification IS NOT NULL AND questions.classification != %(classification_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 09:59:25,897 - sqlalchemy.engine.Engine - INFO - SELECT date(questions.sendmessagetime) AS date, count(questions.id) AS classifications 
+FROM questions 
+WHERE questions.sendmessagetime >= %(sendmessagetime_1)s AND questions.classification IS NOT NULL AND questions.classification != %(classification_1)s GROUP BY date(questions.sendmessagetime)
+2025-07-18 09:59:25,897 INFO sqlalchemy.engine.Engine [cached since 1.368e+04s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 9, 59, 25, 896186), 'classification_1': ''}
+2025-07-18 09:59:25,897 - sqlalchemy.engine.Engine - INFO - [cached since 1.368e+04s ago] {'sendmessagetime_1': datetime.datetime(2025, 7, 11, 9, 59, 25, 896186), 'classification_1': ''}
+2025-07-18 09:59:25,898 INFO sqlalchemy.engine.Engine SELECT date(scores.rated_at) AS date, count(scores.id) AS scores 
+FROM scores 
+WHERE scores.rated_at >= %(rated_at_1)s GROUP BY date(scores.rated_at)
+2025-07-18 09:59:25,898 - sqlalchemy.engine.Engine - INFO - SELECT date(scores.rated_at) AS date, count(scores.id) AS scores 
+FROM scores 
+WHERE scores.rated_at >= %(rated_at_1)s GROUP BY date(scores.rated_at)
+2025-07-18 09:59:25,898 INFO sqlalchemy.engine.Engine [cached since 1.368e+04s ago] {'rated_at_1': datetime.datetime(2025, 7, 11, 9, 59, 25, 896186)}
+2025-07-18 09:59:25,898 - sqlalchemy.engine.Engine - INFO - [cached since 1.368e+04s ago] {'rated_at_1': datetime.datetime(2025, 7, 11, 9, 59, 25, 896186)}
+2025-07-18 09:59:25,899 INFO sqlalchemy.engine.Engine SELECT questions.classification AS questions_classification, count(questions.id) AS count_1 
+FROM questions 
+WHERE questions.classification IS NOT NULL GROUP BY questions.classification
+2025-07-18 09:59:25,899 - sqlalchemy.engine.Engine - INFO - SELECT questions.classification AS questions_classification, count(questions.id) AS count_1 
+FROM questions 
+WHERE questions.classification IS NOT NULL GROUP BY questions.classification
+2025-07-18 09:59:25,899 INFO sqlalchemy.engine.Engine [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,899 - sqlalchemy.engine.Engine - INFO - [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,899 INFO sqlalchemy.engine.Engine SELECT answers.assistant_type AS answers_assistant_type, count(answers.id) AS total 
+FROM answers GROUP BY answers.assistant_type
+2025-07-18 09:59:25,899 - sqlalchemy.engine.Engine - INFO - SELECT answers.assistant_type AS answers_assistant_type, count(answers.id) AS total 
+FROM answers GROUP BY answers.assistant_type
+2025-07-18 09:59:25,900 INFO sqlalchemy.engine.Engine [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,900 - sqlalchemy.engine.Engine - INFO - [cached since 1.368e+04s ago] {}
+2025-07-18 09:59:25,900 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-07-18 09:59:25,900 - sqlalchemy.engine.Engine - INFO - ROLLBACK

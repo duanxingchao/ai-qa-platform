@@ -16,33 +16,64 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# 评分维度定义
-SCORING_DIMENSIONS = {
-    'accuracy': '准确性',
-    'completeness': '完整性', 
-    'clarity': '清晰度',
-    'relevance': '相关性',
-    'helpfulness': '有用性'
+# 根据分类领域定义不同的评分维度（按照用户需求）
+CLASSIFICATION_DIMENSIONS = {
+    '技术问题': ['信息准确性', '逻辑性', '流畅性', '创新性', '实用性'],
+    '经济问题': ['数据准确性', '分析深度', '表达清晰度', '前瞻性', '实用性'],
+    '教育问题': ['知识准确性', '逻辑严密性', '表达流畅性', '启发性', '适用性'],
+    '工程问题': ['技术准确性', '逻辑严谨性', '表达清晰度', '创新性', '可操作性'],
+    '医疗问题': ['医学准确性', '逻辑推理', '表达清晰度', '安全性', '实用性'],
+    '法律问题': ['法理准确性', '逻辑严密性', '表达精确性', '适用性', '权威性'],
+    '科学问题': ['科学准确性', '逻辑性', '表达清晰度', '创新性', '验证性'],
+    '艺术问题': ['创意性', '表达美感', '文化内涵', '独特性', '感染力'],
+    '历史问题': ['史实准确性', '逻辑关联性', '表达清晰度', '深度分析', '启发性'],
+    '地理问题': ['地理准确性', '逻辑关联性', '表达清晰度', '实用性', '时效性'],
+    '心理问题': ['心理准确性', '逻辑性', '表达温和性', '实用性', '安全性'],
+    '社会问题': ['社会洞察力', '逻辑分析', '表达平衡性', '建设性', '实用性'],
+    '环境问题': ['环境准确性', '逻辑分析', '表达清晰度', '前瞻性', '可行性'],
+    '体育问题': ['专业准确性', '逻辑性', '表达清晰度', '实用性', '时效性'],
+    '娱乐问题': ['信息准确性', '趣味性', '表达生动性', '时效性', '吸引力'],
+    '其他问题': ['信息准确性', '逻辑性', '流畅性', '创新性', '有用性']  # 默认维度
 }
 
-# 模型名称映射
+# 模型名称映射（按照用户需求）
 MODEL_NAMES = {
-    'our_ai': '原始模型',
-    'doubao': '豆包模型',
-    'xiaotian': '小天模型'
+    'our_ai': 'yoyo',      # 用户的AI问答软件
+    'doubao': '豆包',       # 豆包模型
+    'xiaotian': '小天'      # 小天模型
 }
+
+def get_dimensions_for_classification(classification):
+    """根据分类获取对应的评分维度"""
+    # 清理分类名称，移除可能的额外字符
+    clean_classification = classification.strip() if classification else ''
+    
+    # 查找匹配的维度，如果没找到使用默认维度
+    if clean_classification in CLASSIFICATION_DIMENSIONS:
+        return CLASSIFICATION_DIMENSIONS[clean_classification]
+    
+    # 模糊匹配
+    for key in CLASSIFICATION_DIMENSIONS:
+        if key in clean_classification or clean_classification in key:
+            return CLASSIFICATION_DIMENSIONS[key]
+    
+    # 默认维度
+    return CLASSIFICATION_DIMENSIONS['其他问题']
 
 def analyze_answer_quality(question, answer, classification, model_type):
     """分析答案质量并生成评分"""
+    # 获取当前分类的评分维度
+    dimensions = get_dimensions_for_classification(classification)
+    
     if not answer or not answer.strip():
         # 空答案给低分
-        scores = {dim: random.randint(1, 2) for dim in SCORING_DIMENSIONS.keys()}
+        scores = {dim: random.randint(1, 2) for dim in dimensions}
         reason = "答案为空或过短，无法提供有效信息"
         return scores, reason
     
     # 基础评分（根据模型类型设置不同基准）
     if model_type == 'our_ai':
-        # 原始模型稍微低一些
+        # yoyo模型稍微低一些
         base_range = (2, 4)
     elif model_type == 'doubao':
         # 豆包模型稍微高一些
@@ -57,100 +88,93 @@ def analyze_answer_quality(question, answer, classification, model_type):
     answer_lower = answer.lower()
     question_lower = question.lower() if question else ""
     
-    # 准确性评分
-    accuracy_score = random.randint(*base_range)
-    if any(word in answer_lower for word in ['准确', '正确', '事实', '数据']):
-        accuracy_score = min(5, accuracy_score + 1)
-    if any(word in answer_lower for word in ['错误', '不对', '不确定']):
-        accuracy_score = max(1, accuracy_score - 1)
-    scores['accuracy'] = accuracy_score
-    
-    # 完整性评分
-    completeness_score = random.randint(*base_range)
-    if len(answer) > 200:
-        completeness_score = min(5, completeness_score + 1)
-    if any(word in answer for word in ['首先', '其次', '最后', '总结']):
-        completeness_score = min(5, completeness_score + 1)
-    scores['completeness'] = completeness_score
-    
-    # 清晰度评分
-    clarity_score = random.randint(*base_range)
-    if any(word in answer for word in ['清楚', '明确', '简单', '易懂']):
-        clarity_score = min(5, clarity_score + 1)
-    scores['clarity'] = clarity_score
-    
-    # 相关性评分 
-    relevance_score = random.randint(*base_range)
-    if question and classification:
-        # 检查答案是否与问题和分类相关
-        if any(word in answer_lower for word in question_lower.split()):
-            relevance_score = min(5, relevance_score + 1)
-    scores['relevance'] = relevance_score
-    
-    # 有用性评分
-    helpfulness_score = random.randint(*base_range)
-    if any(word in answer_lower for word in ['建议', '方法', '解决', '帮助', '指导']):
-        helpfulness_score = min(5, helpfulness_score + 1)
-    scores['helpfulness'] = helpfulness_score
+    # 为每个维度生成评分
+    for i, dimension in enumerate(dimensions):
+        base_score = random.randint(*base_range)
+        
+        # 根据维度类型调整评分
+        if '准确性' in dimension:
+            if any(word in answer_lower for word in ['准确', '正确', '事实', '数据']):
+                base_score = min(5, base_score + 1)
+            if any(word in answer_lower for word in ['错误', '不对', '不确定']):
+                base_score = max(1, base_score - 1)
+        elif '逻辑' in dimension:
+            if any(word in answer_lower for word in ['因为', '所以', '因此', '导致']):
+                base_score = min(5, base_score + 1)
+        elif '流畅' in dimension or '清晰' in dimension:
+            if len(answer) > 50 and '。' in answer:
+                base_score = min(5, base_score + 1)
+        elif '创新' in dimension:
+            if any(word in answer_lower for word in ['新', '创新', '独特', 'novel']):
+                base_score = min(5, base_score + 1)
+        
+        scores[dimension] = base_score
     
     # 生成评分理由
+    reasons = []
     avg_score = sum(scores.values()) / len(scores)
-    if avg_score >= 4.0:
-        reason_prefix = "答案质量优秀："
-    elif avg_score >= 3.0:
-        reason_prefix = "答案质量良好："
+    
+    if avg_score >= 4:
+        reasons.append(f"{MODEL_NAMES[model_type]}回答质量优秀")
+    elif avg_score >= 3:
+        reasons.append(f"{MODEL_NAMES[model_type]}回答质量良好")
     else:
-        reason_prefix = "答案质量一般："
+        reasons.append(f"{MODEL_NAMES[model_type]}回答质量有待提升")
     
-    # 具体理由分析
-    strong_points = []
-    weak_points = []
+    if len(answer) > 100:
+        reasons.append("回答内容详细")
+    if '例如' in answer or '比如' in answer:
+        reasons.append("提供了具体例子")
     
-    for dim, score in scores.items():
-        if score >= 4:
-            strong_points.append(SCORING_DIMENSIONS[dim])
-        elif score <= 2:
-            weak_points.append(SCORING_DIMENSIONS[dim])
-    
-    reason_parts = [reason_prefix]
-    if strong_points:
-        reason_parts.append(f"{','.join(strong_points)}表现突出")
-    if weak_points:
-        reason_parts.append(f"{','.join(weak_points)}有待改进")
-    
-    reason = "，".join(reason_parts) + "。"
+    reason = "，".join(reasons) + f"。各维度评分：{', '.join([f'{k}:{v}分' for k, v in scores.items()])}"
     
     return scores, reason
 
 def generate_multi_model_scores(question, our_answer, doubao_answer, xiaotian_answer, classification):
-    """生成多模型评分结果"""
-    results = []
+    """生成多模型评分结果 - 按照用户的确切格式"""
     
-    # 评分数据结构：[模型名, 答案内容, 模型类型]
+    # 获取当前分类的评分维度
+    dimensions = get_dimensions_for_classification(classification)
+    
+    # 确保有5个维度（补充或截取）
+    if len(dimensions) < 5:
+        # 如果不足5个，用默认维度补充
+        default_dims = CLASSIFICATION_DIMENSIONS['其他问题']
+        dimensions.extend([d for d in default_dims if d not in dimensions])
+    dimensions = dimensions[:5]  # 只取前5个
+    
+    scores_list = []
+    
+    # 为三个模型生成评分
     models_data = [
-        (MODEL_NAMES['our_ai'], our_answer, 'our_ai'),
-        (MODEL_NAMES['doubao'], doubao_answer, 'doubao'), 
-        (MODEL_NAMES['xiaotian'], xiaotian_answer, 'xiaotian')
+        ('our_ai', 'yoyo', our_answer),
+        ('doubao', '豆包', doubao_answer), 
+        ('xiaotian', '小天', xiaotian_answer)
     ]
     
-    for model_name, answer, model_type in models_data:
-        # 生成该模型的评分
-        scores, reason = analyze_answer_quality(question, answer, classification, model_type)
+    for model_key, model_name, answer in models_data:
+        if not answer or answer.strip() == '':
+            # 空答案处理
+            scores, reason = analyze_answer_quality(question, '', classification, model_key)
+        else:
+            scores, reason = analyze_answer_quality(question, answer, classification, model_key)
         
-        # 构造返回格式
+        # 按照用户的确切JSON格式构建结果
         model_result = {
-            "模型名称": model_name,
-            "准确性": scores['accuracy'],
-            "完整性": scores['completeness'],
-            "清晰度": scores['clarity'],
-            "相关性": scores['relevance'],
-            "有用性": scores['helpfulness'],
-            "理由": reason
+            "模型名称": model_name
         }
         
-        results.append(model_result)
+        # 动态添加当前分类的5个维度评分
+        for i, dimension in enumerate(dimensions):
+            if dimension in scores:
+                model_result[dimension] = str(scores[dimension])  # 转换为字符串
+            else:
+                model_result[dimension] = str(random.randint(2, 4))  # 默认评分转换为字符串
+        
+        model_result["理由"] = reason
+        scores_list.append(model_result)
     
-    return results
+    return scores_list
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -161,7 +185,7 @@ def health_check():
         'version': '1.0.0',
         'timestamp': time.time(),
         'supported_models': list(MODEL_NAMES.values()),
-        'scoring_dimensions': list(SCORING_DIMENSIONS.values())
+        'scoring_dimensions': list(CLASSIFICATION_DIMENSIONS.values()) # Changed to CLASSIFICATION_DIMENSIONS
     })
 
 @app.route('/score', methods=['POST'])
@@ -247,7 +271,7 @@ def get_stats():
         'success_rate': round(random.uniform(0.95, 0.99), 3),
         'average_response_time': round(random.uniform(800, 1500), 2),
         'models_supported': len(MODEL_NAMES),
-        'dimensions_count': len(SCORING_DIMENSIONS),
+        'dimensions_count': len(CLASSIFICATION_DIMENSIONS), # Changed to CLASSIFICATION_DIMENSIONS
         'score_distribution': {
             '5分': random.randint(15, 30),
             '4分': random.randint(25, 40), 
@@ -256,7 +280,7 @@ def get_stats():
             '1分': random.randint(5, 15)
         },
         'models': list(MODEL_NAMES.values()),
-        'dimensions': list(SCORING_DIMENSIONS.values()),
+        'dimensions': list(CLASSIFICATION_DIMENSIONS.values()), # Changed to CLASSIFICATION_DIMENSIONS
         'uptime': f"{random.randint(20, 100)} days"
     })
 
@@ -346,7 +370,7 @@ def main():
     for key, name in MODEL_NAMES.items():
         print(f"   {key}: {name}")
     print("📋 评分维度:")
-    for key, name in SCORING_DIMENSIONS.items():
+    for key, name in CLASSIFICATION_DIMENSIONS.items(): # Changed to CLASSIFICATION_DIMENSIONS
         print(f"   {key}: {name}")
     print("-" * 60)
     
