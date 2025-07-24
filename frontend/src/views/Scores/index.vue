@@ -59,7 +59,7 @@
               </div>
             </div>
           </template>
-
+          
           <!-- 评分列表表格 -->
           <el-table :data="scoresList" v-loading="loading" stripe>
             <el-table-column prop="question_text" label="问题内容" min-width="200" show-overflow-tooltip />
@@ -100,8 +100,8 @@
               @size-change="handleSizeChange"
               @current-change="handleCurrentChange"
             />
-          </div>
-        </el-card>
+      </div>
+    </el-card>
       </el-col>
     </el-row>
   </div>
@@ -166,21 +166,21 @@ export default {
           ]
         },
         series: [{
-          type: 'radar',
-          data: [
-            {
+            type: 'radar',
+            data: [
+              {
               value: [8, 7, 9, 8, 8],
               name: '原始模型'
-            },
-            {
+              },
+              {
               value: [7, 8, 7, 9, 8],
               name: '豆包模型'
-            },
-            {
+              },
+              {
               value: [9, 8, 8, 7, 9],
               name: '小天模型'
-            }
-          ]
+              }
+            ]
         }]
       }
       modelChartInstance.setOption(option)
@@ -301,13 +301,13 @@ export default {
           indicator: chartData.indicators
         },
         series: [{
-          type: 'radar',
-          data: chartData.data.map((item, index) => ({
+            type: 'radar',
+            data: chartData.data.map((item, index) => ({
             ...item,
-            itemStyle: {
+              itemStyle: { 
               color: ['#FF6B6B', '#4ECDC4', '#45B7D1'][index]
             }
-          }))
+            }))
         }]
       }
       modelChartInstance.setOption(option)
@@ -449,20 +449,20 @@ export default {
     }
   }
 }
-</script>
+</script> 
 
 <style lang="scss" scoped>
 .scores {
   .page-header {
     margin-bottom: 20px;
-
+    
     h1 {
       margin: 0;
       color: #2c3e50;
       font-size: 24px;
       font-weight: bold;
     }
-
+    
     .page-description {
       margin: 8px 0 0 0;
       color: #7f8c8d;
@@ -495,5 +495,5 @@ export default {
     margin-top: 20px;
     text-align: center;
   }
-}
+  }
 </style> 

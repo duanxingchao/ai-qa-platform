@@ -1,6 +1,10 @@
 <template>
   <div id="app">
-    <el-container class="app-container">
+    <!-- 大屏展示页面，不显示布局 -->
+    <router-view v-if="$route.meta.hideLayout" />
+    
+    <!-- 普通页面，显示完整布局 -->
+    <el-container v-else class="app-container">
       <!-- 侧边栏 -->
       <el-aside width="250px" class="app-aside">
         <div class="logo">
@@ -38,6 +42,10 @@
           <el-menu-item index="/settings">
             <el-icon><Setting /></el-icon>
             <span>系统配置</span>
+          </el-menu-item>
+          <el-menu-item index="/display">
+            <el-icon><FullScreen /></el-icon>
+            <span>大屏展示</span>
           </el-menu-item>
         </el-menu>
       </el-aside>
@@ -95,7 +103,8 @@ export default {
         '/answers': [{ title: '答案对比', path: '/answers' }],
         '/scores': [{ title: '评分分析', path: '/scores' }],
         '/monitor': [{ title: '系统监控', path: '/monitor' }],
-        '/settings': [{ title: '系统配置', path: '/settings' }]
+        '/settings': [{ title: '系统配置', path: '/settings' }],
+        '/display': [{ title: '大屏展示', path: '/display' }]
       }
       return routeMap[route.path] || []
     })

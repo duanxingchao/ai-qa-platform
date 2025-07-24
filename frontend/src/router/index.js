@@ -52,6 +52,15 @@ const routes = [
     meta: {
       title: '系统配置'
     }
+  },
+  {
+    path: '/display',
+    name: 'Display',
+    component: () => import('@/views/Display/index.vue'),
+    meta: {
+      title: '大屏展示',
+      hideLayout: true  // 隐藏默认布局
+    }
   }
 ]
 

@@ -62,6 +62,7 @@ def register_blueprints(app):
     from app.api.scheduler_api import scheduler_bp
     from app.api.mock_api import mock_bp
     from app.api.answer_api import answer_bp
+    from app.api.display_api import display_bp
     
     app.register_blueprint(sync_bp, url_prefix='/api/sync')
     app.register_blueprint(question_bp, url_prefix='/api/questions')
@@ -72,6 +73,7 @@ def register_blueprints(app):
     app.register_blueprint(scores_bp, url_prefix='/api/scores')
     app.register_blueprint(mock_bp, url_prefix='/api/mock')
     app.register_blueprint(answer_bp, url_prefix='/api/answers')
+    app.register_blueprint(display_bp, url_prefix='/api/display')
 
 
 def configure_logging(app):
