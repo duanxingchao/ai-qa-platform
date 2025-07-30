@@ -91,10 +91,15 @@ class SchedulerService:
     def initialize(self, app):
         """初始化调度器"""
         try:
+            # 检查是否启用调度器
+            if not app.config.get('SCHEDULER_ENABLED', True):
+                self.logger.info("调度器已被配置禁用，跳过初始化")
+                return
+
             if BackgroundScheduler is None:
                 self.logger.error("APScheduler未安装，无法启动定时任务调度器")
                 return
-                
+
             if self.scheduler is not None:
                 self.logger.warning("调度器已经初始化，跳过重复初始化")
                 return
@@ -315,29 +320,36 @@ class SchedulerService:
                 
                 min_batch_size = app.config.get('MIN_BATCH_SIZE', 1)
                 
-                # 检查数据同步阶段：是否有新数据需要同步
+                # 检查数据同步阶段：是否有新数据需要同步（限制本周数据，避免重复同步）
                 from app.services.sync_service import sync_service
-                last_sync_time = sync_service.get_last_sync_time()
-                
-                if last_sync_time:
-                    from sqlalchemy import text
-                    new_data_query = text("""
-                        SELECT COUNT(*) FROM table1
-                        WHERE query IS NOT NULL 
-                        AND query != '' 
-                        AND TRIM(query) != ''
-                        AND sendmessagetime > :since_time
-                    """)
-                    new_data_count = db.session.execute(new_data_query, {'since_time': last_sync_time}).scalar()
-                else:
-                    # 第一次同步，检查table1总数据量
-                    new_data_query = text("""
-                        SELECT COUNT(*) FROM table1
-                        WHERE query IS NOT NULL 
-                        AND query != '' 
-                        AND TRIM(query) != ''
-                    """)
-                    new_data_count = db.session.execute(new_data_query).scalar()
+                from datetime import datetime, timedelta
+
+                # 获取本周开始时间
+                today = datetime.utcnow()
+                days_since_monday = today.weekday()
+                week_start = today - timedelta(days=days_since_monday)
+                week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+
+                from sqlalchemy import text
+                # 检查本周未同步的数据量（排除已存在的business_id）
+                new_data_query = text("""
+                    SELECT COUNT(*) FROM table1 t1
+                    WHERE t1.query IS NOT NULL
+                    AND t1.query != ''
+                    AND TRIM(t1.query) != ''
+                    AND t1.sendmessagetime >= :week_start
+                    AND NOT EXISTS (
+                        SELECT 1 FROM questions q
+                        WHERE q.business_id = MD5(CONCAT(
+                            t1.pageid,
+                            COALESCE(to_char(t1.sendmessagetime, 'YYYY-MM-DD"T"HH24:MI:SS.US'), ''),
+                            t1.query
+                        ))
+                    )
+                """)
+                new_data_count = db.session.execute(new_data_query, {
+                    'week_start': week_start
+                }).scalar()
                 
                 if new_data_count >= min_batch_size:
                     self.logger.info(f"🔍 检测到 {new_data_count} 条新数据需要同步")

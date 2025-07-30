@@ -3,10 +3,13 @@ AI处理服务
 负责批量处理问题分类、答案生成和评分任务
 """
 import logging
+import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Tuple
 from sqlalchemy import text, func, and_
 from sqlalchemy.exc import SQLAlchemyError
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Lock
 
 from app.utils.database import db
 from app.models.question import Question
@@ -19,7 +22,7 @@ from app.config import Config
 
 class AIProcessingService:
     """AI处理服务"""
-    
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.batch_size = Config.BATCH_SIZE or 50

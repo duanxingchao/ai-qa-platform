@@ -337,9 +337,14 @@ def get_scheduler_config():
     """获取调度器配置信息"""
     try:
         from app.config import Config
-        
+
         config_data = {
-            'sync_interval_minutes': getattr(Config, 'SYNC_INTERVAL_MINUTES', 30),
+            'scheduler_enabled': getattr(Config, 'SCHEDULER_ENABLED', False),
+            'auto_process_on_startup': getattr(Config, 'AUTO_PROCESS_ON_STARTUP', False),
+            'workflow_interval_minutes': getattr(Config, 'WORKFLOW_INTERVAL_MINUTES', 3),
+            'data_check_enabled': getattr(Config, 'DATA_CHECK_ENABLED', True),
+            'auto_suspend_when_no_data': getattr(Config, 'AUTO_SUSPEND_WHEN_NO_DATA', True),
+            'min_batch_size': getattr(Config, 'MIN_BATCH_SIZE', 1),
             'batch_size': getattr(Config, 'BATCH_SIZE', 100),
             'api_timeout': getattr(Config, 'API_TIMEOUT', 30),
             'api_retry_times': getattr(Config, 'API_RETRY_TIMES', 3),
@@ -362,6 +367,113 @@ def get_scheduler_config():
         return jsonify({
             'success': False,
             'message': f'获取配置失败: {str(e)}'
+        }), 500
+
+
+@scheduler_bp.route('/config', methods=['PUT'])
+def update_scheduler_config():
+    """更新调度器配置"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': '请求数据不能为空'
+            }), 400
+
+        from app.config import Config
+        import os
+
+        # 更新配置值（注意：这里只是演示，实际生产环境需要更安全的配置更新机制）
+        config_mapping = {
+            'scheduler_enabled': 'SCHEDULER_ENABLED',
+            'auto_process_on_startup': 'AUTO_PROCESS_ON_STARTUP',
+            'workflow_interval_minutes': 'WORKFLOW_INTERVAL_MINUTES',
+            'data_check_enabled': 'DATA_CHECK_ENABLED',
+            'auto_suspend_when_no_data': 'AUTO_SUSPEND_WHEN_NO_DATA',
+            'min_batch_size': 'MIN_BATCH_SIZE',
+            'batch_size': 'BATCH_SIZE'
+        }
+
+        updated_configs = []
+        for key, value in data.items():
+            if key in config_mapping:
+                config_attr = config_mapping[key]
+                # 更新Config类的属性
+                setattr(Config, config_attr, value)
+                updated_configs.append(f"{config_attr}={value}")
+
+        return jsonify({
+            'success': True,
+            'message': f'配置更新成功: {", ".join(updated_configs)}',
+            'data': {
+                'updated_configs': updated_configs,
+                'note': '配置已更新，部分配置可能需要重启应用才能生效'
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'更新配置失败: {str(e)}'
+        }), 500
+
+
+@scheduler_bp.route('/enable', methods=['POST'])
+def enable_scheduler():
+    """启用调度器"""
+    try:
+        from app.config import Config
+
+        # 更新配置
+        Config.SCHEDULER_ENABLED = True
+
+        # 尝试启动调度器
+        if hasattr(scheduler_service, 'start_scheduler'):
+            scheduler_service.start_scheduler()
+
+        return jsonify({
+            'success': True,
+            'message': '调度器已启用',
+            'data': {
+                'scheduler_enabled': True,
+                'note': '调度器已启用，如果之前未运行，可能需要重启应用'
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'启用调度器失败: {str(e)}'
+        }), 500
+
+
+@scheduler_bp.route('/disable', methods=['POST'])
+def disable_scheduler():
+    """禁用调度器"""
+    try:
+        from app.config import Config
+
+        # 更新配置
+        Config.SCHEDULER_ENABLED = False
+
+        # 尝试停止调度器
+        if hasattr(scheduler_service, 'stop_scheduler'):
+            scheduler_service.stop_scheduler()
+
+        return jsonify({
+            'success': True,
+            'message': '调度器已禁用',
+            'data': {
+                'scheduler_enabled': False,
+                'note': '调度器已禁用，所有定时任务将停止执行'
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'禁用调度器失败: {str(e)}'
         }), 500
 
 

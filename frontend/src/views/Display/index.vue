@@ -40,63 +40,135 @@
 
     <!-- 主要内容区域 -->
     <main class="display-main">
-      <!-- 中央状态区域（原来的center-panel，现在移到左侧） -->
-      <section class="center-panel">
+      <!-- 左侧面板 -->
+      <section class="left-panel">
         <!-- 近一周处理趋势 -->
         <div class="chart-card trend-compact">
           <h3 class="card-title">📈 近一周处理趋势</h3>
           <div ref="trendChart" class="chart-container compact-chart" style="margin: -5px -10px;"></div>
         </div>
 
-        <!-- 系统健康度 -->
+        <!-- 系统健康度 - 改为预留区域 -->
         <div class="health-card">
           <h3 class="card-title">💚 系统健康度</h3>
           <div class="health-circle">
             <div ref="healthGauge" class="health-gauge"></div>
-            <div class="health-score">
-              <span class="score-number">{{ healthScore }}</span>
-              <span class="score-unit">%</span>
-            </div>
           </div>
-          <div class="service-list">
-            <div 
-              v-for="service in services" 
-              :key="service.name"
-              class="service-item"
-            >
-              <span class="service-name">{{ service.name }}</span>
-              <span class="service-status" :class="service.status">
-                {{ getStatusText(service.status) }}
-              </span>
-            </div>
+          <div class="placeholder-content">
+            <div class="placeholder-text">此区域预留给后续功能</div>
           </div>
         </div>
       </section>
 
-      <!-- 左侧图表区域（原来的left-panel，现在移到中央） -->
-      <section class="left-panel">
+      <!-- 系统流程面板 -->
+      <section class="center-panel flow-panel">
         <!-- 数据处理流程图 -->
         <div class="chart-card process-flow">
-          <h3 class="card-title">📊 系统流程（当日处理情况）</h3>
-          <div class="process-stages">
-            <div 
-              v-for="(stage, index) in processFlow" 
-              :key="stage.name"
-              class="stage-item"
-              :class="{ 'active': stage.rate > 50 }"
-            >
-              <div class="stage-icon">{{ stage.icon }}</div>
+          <h3 class="card-title">📊 系统流程（本周处理情况）</h3>
+          <div class="process-stages compact-flow">
+            <div class="pipeline-container">
+              <!-- 第一个流程项 -->
+              <div class="stage-item" :class="{ 'active': processFlow[0]?.rate > 50 }">
+                <div class="stage-icon">{{ processFlow[0]?.icon }}</div>
               <div class="stage-info">
-                <div class="stage-name">{{ stage.name }}</div>
-                <div class="stage-count">{{ stage.count }}</div>
-                <div class="stage-rate">{{ stage.rate }}%</div>
+                  <div class="stage-name">{{ processFlow[0]?.name }}</div>
+                  <div class="stage-count">{{ processFlow[0]?.count }}</div>
+                  <div class="stage-rate">{{ processFlow[0]?.rate }}%</div>
+                  <div class="stage-status" :class="getStatusClass(processFlow[0]?.status)">
+                    <span class="status-indicator"></span>
+                    <span class="status-text">{{ getStatusText(processFlow[0]?.status) }}</span>
+                  </div>
+                </div>
               </div>
-              <div v-if="index < processFlow.length - 1" class="stage-arrow">→</div>
+              
+              <!-- 第一个箭头 -->
+              <div class="pipeline-arrow">
+                <span class="simple-arrow">→</span>
+              </div>
+              
+              <!-- 第二个流程项 -->
+              <div class="stage-item" :class="{ 'active': processFlow[1]?.rate > 50 }">
+                <div class="stage-icon">{{ processFlow[1]?.icon }}</div>
+                <div class="stage-info">
+                  <div class="stage-name">{{ processFlow[1]?.name }}</div>
+                  <div class="stage-count">{{ processFlow[1]?.count }}</div>
+                  <div class="stage-rate">{{ processFlow[1]?.rate }}%</div>
+                  <div class="stage-status" :class="getStatusClass(processFlow[1]?.status)">
+                    <span class="status-indicator"></span>
+                    <span class="status-text">{{ getStatusText(processFlow[1]?.status) }}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 第二个箭头 -->
+              <div class="pipeline-arrow">
+                <span class="simple-arrow">→</span>
+              </div>
+              
+              <!-- 第三个流程项 -->
+              <div class="stage-item" :class="{ 'active': processFlow[2]?.rate > 50 }">
+                <div class="stage-icon">{{ processFlow[2]?.icon }}</div>
+                <div class="stage-info">
+                  <div class="stage-name">{{ processFlow[2]?.name }}</div>
+                  <div class="stage-count">{{ processFlow[2]?.count }}</div>
+                  <div class="stage-rate">{{ processFlow[2]?.rate }}%</div>
+                  <div class="stage-status" :class="getStatusClass(processFlow[2]?.status)">
+                    <span class="status-indicator"></span>
+                    <span class="status-text">{{ getStatusText(processFlow[2]?.status) }}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 第三个箭头 -->
+              <div class="pipeline-arrow">
+                <span class="simple-arrow">→</span>
+              </div>
+              
+              <!-- 第四个流程项 -->
+              <div class="stage-item" :class="{ 'active': processFlow[3]?.rate > 50 }">
+                <div class="stage-icon">{{ processFlow[3]?.icon }}</div>
+                <div class="stage-info">
+                  <div class="stage-name">{{ processFlow[3]?.name }}</div>
+                  <div class="stage-count">{{ processFlow[3]?.count }}</div>
+                  <div class="stage-rate">{{ processFlow[3]?.rate }}%</div>
+                  <div class="stage-status" :class="getStatusClass(processFlow[3]?.status)">
+                    <span class="status-indicator"></span>
+                    <span class="status-text">{{ getStatusText(processFlow[3]?.status) }}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 第四个箭头 -->
+              <div class="pipeline-arrow">
+                <span class="simple-arrow">→</span>
+              </div>
+              
+              <!-- 第五个流程项 -->
+              <div class="stage-item" :class="{ 'active': processFlow[4]?.rate > 50 }">
+                <div class="stage-icon">{{ processFlow[4]?.icon }}</div>
+                <div class="stage-info">
+                  <div class="stage-name">{{ processFlow[4]?.name }}</div>
+                  <div class="stage-count">{{ processFlow[4]?.count }}</div>
+                  <div class="stage-rate">{{ processFlow[4]?.rate }}%</div>
+                  <div class="stage-status" :class="getStatusClass(processFlow[4]?.status)">
+                    <span class="status-indicator"></span>
+                    <span class="status-text">{{ getStatusText(processFlow[4]?.status) }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+
         </div>
-
-
+      </section>
+      
+      <!-- AI分类评分对比面板 -->
+      <section class="center-panel feature-panel">
+        <!-- AI分类评分对比卡片 -->
+        <div class="chart-card ai-category-scores">
+          <h3 class="card-title">🤖 AI分类评分对比</h3>
+          <div class="chart-container" ref="aiCategoryChart"></div>
+        </div>
       </section>
 
       <!-- 右侧分析区域 -->
@@ -129,16 +201,35 @@
         <span class="stream-time">{{ lastUpdate }}</span>
       </div>
       <div class="stream-content">
-        <div class="stream-items" ref="streamItems">
-          <div 
-            v-for="event in realtimeEvents" 
-            :key="event.time + event.message"
-            class="stream-item"
-            :class="event.type"
-          >
-            <span class="event-time">{{ event.time }}</span>
-            <span class="event-icon">{{ event.icon }}</span>
-            <span class="event-message">{{ event.message }}</span>
+        <!-- 第一排数据流 -->
+        <div class="stream-row">
+          <div class="stream-items stream-items-1" ref="streamItems1">
+            <div
+              v-for="(event, index) in realtimeEventsRow1"
+              :key="'row1-' + index + '-' + event.time + event.message"
+              class="stream-item"
+              :class="event.type"
+            >
+              <span class="event-time">{{ event.time }}</span>
+              <span class="event-icon">{{ event.icon }}</span>
+              <span class="event-message">{{ event.message }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 第二排数据流 -->
+        <div class="stream-row">
+          <div class="stream-items stream-items-2" ref="streamItems2">
+            <div
+              v-for="(event, index) in realtimeEventsRow2"
+              :key="'row2-' + index + '-' + event.time + event.message"
+              class="stream-item"
+              :class="event.type"
+            >
+              <span class="event-time">{{ event.time }}</span>
+              <span class="event-icon">{{ event.icon }}</span>
+              <span class="event-message">{{ event.message }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -150,9 +241,10 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
-import { getDisplayDashboard, getRealtimeUpdate } from '@/api/display'
+import { getDisplayDashboard } from '@/api/display'
+import { getAiCategoryScores } from '@/api/display'
 
 export default {
   name: 'Display',
@@ -167,11 +259,13 @@ export default {
     // 图表DOM refs
     const trendChart = ref(null)
     const categoryChart = ref(null)
-    
+    const aiCategoryChart = ref(null)
+
     // 图表实例
     let trendChartInstance = null
     let healthGaugeInstance = null
     let categoryChartInstance = null
+    let aiCategoryChartInstance = null
     
     // 更新定时器
     let updateTimer = null
@@ -181,10 +275,12 @@ export default {
     const coreMetrics = ref([])
     const processFlow = ref([])
     const trendWeek = ref([])
-    const services = ref([])
     const hotCategories = ref([])
     const realtimeEvents = ref([])
-    
+    const realtimeEventsRow1 = ref([])
+    const realtimeEventsRow2 = ref([])
+    const aiCategoryScores = ref([])
+
     // 分类数据
     const categoryTotalCount = ref(0)
     const categoryTimeRange = ref('近一周')
@@ -214,7 +310,17 @@ export default {
       }
       return iconMap[trend] || 'el-icon-minus'
     }
-    
+
+    // 获取状态样式类
+    const getStatusClass = (status) => {
+      const classMap = {
+        '空闲': 'status-idle',
+        '进行中': 'status-running',
+        '异常': 'status-error'
+      }
+      return classMap[status] || 'status-idle'
+    }
+
     // 获取状态文本
     const getStatusText = (status) => {
       const textMap = {
@@ -222,9 +328,12 @@ export default {
         'offline': '离线',
         'idle': '空闲',
         'warning': '警告',
-        'error': '错误'
+        'error': '错误',
+        '空闲': '空闲',
+        '进行中': '进行中',
+        '异常': '异常'
       }
-      return textMap[status] || '未知'
+      return textMap[status] || status || '空闲'
     }
     
     // 全屏切换
@@ -487,6 +596,309 @@ export default {
       categoryChartInstance.setOption(option)
     }
 
+    // 初始化AI分类评分图表
+    const initAiCategoryChart = () => {
+      if (!aiCategoryChart.value) return
+
+      aiCategoryChartInstance = echarts.init(aiCategoryChart.value)
+
+      // 初始化空图表，等待数据加载
+      const option = {
+        backgroundColor: 'transparent',
+        grid: [
+          {
+            left: '5%',
+            right: '5%',
+            top: '5%',
+            height: '40%',
+            containLabel: true
+          },
+          {
+            left: '5%',
+            right: '5%',
+            top: '55%',
+            height: '40%',
+            containLabel: true
+          }
+        ],
+        legend: {
+          data: ['YOYO', '豆包', '小天'],
+          top: '2%',
+          textStyle: {
+            color: '#ffffff',
+            fontSize: 12
+          },
+          itemWidth: 15,
+          itemHeight: 10
+        },
+        xAxis: [
+          {
+            type: 'category',
+            data: [],
+            gridIndex: 0,
+            axisLabel: {
+              color: '#ffffff',
+              fontSize: 10,
+              rotate: 45
+            },
+            axisLine: {
+              lineStyle: { color: '#444' }
+            }
+          },
+          {
+            type: 'category',
+            data: [],
+            gridIndex: 1,
+            axisLabel: {
+              color: '#ffffff',
+              fontSize: 10,
+              rotate: 45
+            },
+            axisLine: {
+              lineStyle: { color: '#444' }
+            }
+          }
+        ],
+        yAxis: [
+          {
+            type: 'value',
+            gridIndex: 0,
+            min: 0,
+            max: 5,
+            axisLabel: {
+              color: '#ffffff',
+              fontSize: 10
+            },
+            axisLine: {
+              lineStyle: { color: '#444' }
+            },
+            splitLine: {
+              lineStyle: { color: '#333' }
+            }
+          },
+          {
+            type: 'value',
+            gridIndex: 1,
+            min: 0,
+            max: 5,
+            axisLabel: {
+              color: '#ffffff',
+              fontSize: 10
+            },
+            axisLine: {
+              lineStyle: { color: '#444' }
+            },
+            splitLine: {
+              lineStyle: { color: '#333' }
+            }
+          }
+        ],
+        series: [],
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          borderColor: '#00d4ff',
+          textStyle: {
+            color: '#ffffff'
+          }
+        }
+      }
+
+      aiCategoryChartInstance.setOption(option)
+    }
+
+    // 更新AI分类评分图表
+    const updateAiCategoryChart = () => {
+      if (!aiCategoryChartInstance || !aiCategoryScores.value.length) return
+
+      // 分两排显示，每排8个分类
+      const firstRowData = aiCategoryScores.value.slice(0, 8)
+      const secondRowData = aiCategoryScores.value.slice(8, 16)
+
+      const option = {
+        backgroundColor: 'transparent',
+        grid: [
+          {
+            left: '5%',
+            right: '5%',
+            top: '5%',
+            height: '40%',
+            containLabel: true
+          },
+          {
+            left: '5%',
+            right: '5%',
+            top: '55%',
+            height: '40%',
+            containLabel: true
+          }
+        ],
+        legend: {
+          data: ['YOYO', '豆包', '小天'],
+          top: '2%',
+          textStyle: {
+            color: '#ffffff',
+            fontSize: 12
+          },
+          itemWidth: 15,
+          itemHeight: 10
+        },
+        xAxis: [
+          {
+            type: 'category',
+            data: firstRowData.map(item => item.category),
+            gridIndex: 0,
+            axisLabel: {
+              color: '#ffffff',
+              fontSize: 10,
+              rotate: 45
+            },
+            axisLine: {
+              lineStyle: { color: '#444' }
+            }
+          },
+          {
+            type: 'category',
+            data: secondRowData.map(item => item.category),
+            gridIndex: 1,
+            axisLabel: {
+              color: '#ffffff',
+              fontSize: 10,
+              rotate: 45
+            },
+            axisLine: {
+              lineStyle: { color: '#444' }
+            }
+          }
+        ],
+        yAxis: [
+          {
+            type: 'value',
+            gridIndex: 0,
+            min: 0,
+            max: 5,
+            axisLabel: {
+              color: '#ffffff',
+              fontSize: 10
+            },
+            axisLine: {
+              lineStyle: { color: '#444' }
+            },
+            splitLine: {
+              lineStyle: { color: '#333' }
+            }
+          },
+          {
+            type: 'value',
+            gridIndex: 1,
+            min: 0,
+            max: 5,
+            axisLabel: {
+              color: '#ffffff',
+              fontSize: 10
+            },
+            axisLine: {
+              lineStyle: { color: '#444' }
+            },
+            splitLine: {
+              lineStyle: { color: '#333' }
+            }
+          }
+        ],
+        series: [
+          // 第一排 - YOYO
+          {
+            name: 'YOYO',
+            type: 'bar',
+            xAxisIndex: 0,
+            yAxisIndex: 0,
+            data: firstRowData.map(item => item.YOYO),
+            itemStyle: {
+              color: '#00d4ff'
+            },
+            barWidth: '20%'
+          },
+          // 第一排 - 豆包
+          {
+            name: '豆包',
+            type: 'bar',
+            xAxisIndex: 0,
+            yAxisIndex: 0,
+            data: firstRowData.map(item => item.豆包),
+            itemStyle: {
+              color: '#00ff88'
+            },
+            barWidth: '20%'
+          },
+          // 第一排 - 小天
+          {
+            name: '小天',
+            type: 'bar',
+            xAxisIndex: 0,
+            yAxisIndex: 0,
+            data: firstRowData.map(item => item.小天),
+            itemStyle: {
+              color: '#ff6b6b'
+            },
+            barWidth: '20%'
+          },
+          // 第二排 - YOYO
+          {
+            name: 'YOYO',
+            type: 'bar',
+            xAxisIndex: 1,
+            yAxisIndex: 1,
+            data: secondRowData.map(item => item.YOYO),
+            itemStyle: {
+              color: '#00d4ff'
+            },
+            barWidth: '20%'
+          },
+          // 第二排 - 豆包
+          {
+            name: '豆包',
+            type: 'bar',
+            xAxisIndex: 1,
+            yAxisIndex: 1,
+            data: secondRowData.map(item => item.豆包),
+            itemStyle: {
+              color: '#00ff88'
+            },
+            barWidth: '20%'
+          },
+          // 第二排 - 小天
+          {
+            name: '小天',
+            type: 'bar',
+            xAxisIndex: 1,
+            yAxisIndex: 1,
+            data: secondRowData.map(item => item.小天),
+            itemStyle: {
+              color: '#ff6b6b'
+            },
+            barWidth: '20%'
+          }
+        ],
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          borderColor: '#00d4ff',
+          textStyle: {
+            color: '#ffffff'
+          },
+          formatter: function(params) {
+            let result = params[0].name + '<br/>'
+            params.forEach(param => {
+              result += param.seriesName + ': ' + param.value + '分<br/>'
+            })
+            return result
+          }
+        }
+      }
+
+      aiCategoryChartInstance.setOption(option)
+    }
+
     // 更新图表数据
     const updateCharts = (data) => {
       // 更新趋势图
@@ -540,43 +952,35 @@ export default {
       // 设置默认核心指标
       coreMetrics.value = [
         {
-          key: 'total_sync_count',
+          key: 'total_data_count',
           icon: '📊',
           value: '加载中...',
           unit: '',
-          label: '累计问题',
+          label: '总计数据量',
           trend: 'up'
         },
         {
-          key: 'monthly_sync_count', 
+          key: 'weekly_update_count',
           icon: '📈',
           value: '加载中...',
           unit: '',
-          label: '月新增',
+          label: '周更新数据量',
           trend: 'up'
         },
         {
-          key: 'daily_sync_count',
+          key: 'weekly_scored_count',
           icon: '⚡',
           value: '加载中...',
           unit: '',
-          label: '日新增',
+          label: '周抽样跑测量',
           trend: 'up'
         },
         {
-          key: 'daily_completion_rate',
-          icon: '🎯',
-          value: '加载中...',
-          unit: '',
-          label: '日完成度',
-          trend: 'stable'
-        },
-        {
-          key: 'daily_visits',
+          key: 'platform_visits',
           icon: '👥',
           value: '加载中...',
           unit: '',
-          label: '平台访问',
+          label: '平台访问量',
           trend: 'up'
         }
       ]
@@ -591,14 +995,7 @@ export default {
       ]
       
 
-      
-      // 设置默认服务
-      services.value = [
-        { name: '同步&清洗', status: 'online' },
-        { name: 'AI垂域分类', status: 'online' },
-        { name: 'AI竞品跑测', status: 'online' },
-        { name: 'AI答案评测', status: 'online' }
-      ]
+
       
       // 设置默认分类
       hotCategories.value = [
@@ -616,6 +1013,7 @@ export default {
           icon: '🔄'
         }
       ]
+      splitEventsToRows(realtimeEvents.value)
 
       trendWeek.value = [
         { time: '一周前', questions: 0, answers: 0, scores: 0 },
@@ -627,6 +1025,39 @@ export default {
         { time: '昨天', questions: 0, answers: 0, scores: 0 },
         { time: '今天', questions: 0, answers: 0, scores: 0 }
       ]
+    }
+
+    // 加载AI分类评分数据
+    const loadAiCategoryScores = async () => {
+      try {
+        const response = await getAiCategoryScores()
+        if (response && response.success && response.data) {
+          aiCategoryScores.value = response.data.chart_data || []
+          // 更新AI分类评分图表
+          updateAiCategoryChart()
+        }
+      } catch (error) {
+        console.error('加载AI分类评分数据失败:', error)
+        // 使用模拟数据
+        aiCategoryScores.value = generateMockAiCategoryData()
+        updateAiCategoryChart()
+      }
+    }
+
+    // 生成模拟AI分类评分数据
+    const generateMockAiCategoryData = () => {
+      const categories = [
+        '教育', '医疗健康', '经济金融', '科技技术', '法律',
+        '娱乐', '体育运动', '旅游', '美食餐饮', '购物消费',
+        '交通出行', '房产置业', '工作职场', '情感关系', '生活服务', '其他'
+      ]
+
+      return categories.map(category => ({
+        category,
+        YOYO: +(Math.random() * 1.5 + 3.5).toFixed(2), // 3.5-5.0
+        豆包: +(Math.random() * 1.2 + 3.2).toFixed(2), // 3.2-4.4
+        小天: +(Math.random() * 1.0 + 3.0).toFixed(2)  // 3.0-4.0
+      }))
     }
 
     // 加载大屏数据
@@ -648,7 +1079,7 @@ export default {
                 icon: '📊',
                 value: data.core_metrics.total_sync_count || 0,
                 unit: '个',
-                label: '累计问题',
+                label: '总计数据量',
                 trend: 'up'
               },
               {
@@ -656,7 +1087,7 @@ export default {
                 icon: '📈',
                 value: data.core_metrics.monthly_sync_count || 0,
                 unit: '个',
-                label: '月新增',
+                label: '月更新数据量',
                 trend: 'up'
               },
               {
@@ -664,23 +1095,15 @@ export default {
                 icon: '⚡',
                 value: data.core_metrics.daily_sync_count || 0,
                 unit: '个',
-                label: '日新增',
+                label: '日新增数据量',
                 trend: 'up'
-              },
-              {
-                key: 'daily_completion_rate',
-                icon: '🎯',
-                value: data.core_metrics.daily_completion_rate || 0,
-                unit: '%',
-                label: '日完成度',
-                trend: 'stable'
               },
               {
                 key: 'daily_visits',
                 icon: '👥',
                 value: data.core_metrics.daily_visits || '暂无数据',
                 unit: '次',
-                label: '平台访问',
+                label: '平台访问量',
                 trend: 'up'
               }
             ]
@@ -690,11 +1113,7 @@ export default {
           if (data.process_flow && data.process_flow.stages) {
             processFlow.value = data.process_flow.stages
           }
-          if (data.system_status) {
-            if (data.system_status.services) {
-              services.value = data.system_status.services
-            }
-          }
+
           if (data.hot_categories) {
             hotCategories.value = data.hot_categories.categories || data.hot_categories
             categoryTotalCount.value = data.hot_categories.total_count || 0
@@ -702,6 +1121,7 @@ export default {
           }
           if (data.realtime_events) {
             realtimeEvents.value = data.realtime_events
+            splitEventsToRows(data.realtime_events)
           }
           if (data.trends_24h) {
             trendWeek.value = data.trends_24h.map(item => ({
@@ -727,53 +1147,45 @@ export default {
         // API失败时使用模拟数据
         coreMetrics.value = [
           {
-            key: 'total_sync_count',
+            key: 'total_data_count',
             icon: '📊',
             value: 1024,
             unit: '个',
-            label: '累计问题',
+            label: '总计数据量',
             trend: 'up'
           },
           {
-            key: 'monthly_sync_count',
+            key: 'weekly_update_count',
             icon: '📈',
             value: 156,
             unit: '个',
-            label: '月新增',
+            label: '周更新数据量',
             trend: 'up'
           },
           {
-            key: 'daily_sync_count',
+            key: 'weekly_scored_count',
             icon: '⚡',
             value: 42,
             unit: '个',
-            label: '日新增',
+            label: '周抽样跑测量',
             trend: 'up'
           },
           {
-            key: 'daily_completion_rate',
-            icon: '🎯',
-            value: 85.6,
-            unit: '%',
-            label: '日完成度',
-            trend: 'stable'
-          },
-          {
-            key: 'daily_visits',
+            key: 'platform_visits',
             icon: '👥',
             value: '暂无数据',
             unit: '次',
-            label: '平台访问',
+            label: '平台访问量',
             trend: 'up'
           }
         ]
         
         processFlow.value = [
-          { name: '同步&清洗', count: 1024, rate: 100, icon: '📊' },
-          { name: 'AI垂域分类', count: 856, rate: 83.6, icon: '🏷️' },
-          { name: 'AI竞品跑测', count: 742, rate: 72.5, icon: '🤖' },
-          { name: 'AI答案评测', count: 658, rate: 64.3, icon: '⭐' },
-          { name: '人工复核', count: 234, rate: 22.9, icon: '✅' }
+          { name: '同步&清洗', count: 573, rate: 100, icon: '📊', status: '异常' },
+          { name: 'AI垂域分类', count: 371, rate: 64.7, icon: '🏷️', status: '进行中' },
+          { name: 'AI竞品跑测', count: 1599, rate: 279.1, icon: '🤖', status: '空闲' },
+          { name: 'AI答案评测', count: 990, rate: 61.9, icon: '⭐', status: '进行中' },
+          { name: '人工复核', count: 0, rate: 0, icon: '✅', status: '进行中' }
         ]
         
         realtimeEvents.value = [
@@ -784,11 +1196,28 @@ export default {
             icon: '⚠️'
           }
         ]
+        splitEventsToRows(realtimeEvents.value)
         
         lastUpdate.value = new Date().toLocaleTimeString()
       }
     }
-    
+
+    // 将事件数据分配到两排
+    const splitEventsToRows = (events) => {
+      if (!events || events.length === 0) {
+        realtimeEventsRow1.value = []
+        realtimeEventsRow2.value = []
+        return
+      }
+
+      // 复制事件数组以创建更多数据流动效果
+      const duplicatedEvents = [...events, ...events, ...events]
+
+      // 将事件分配到两排，奇数索引到第一排，偶数索引到第二排
+      realtimeEventsRow1.value = duplicatedEvents.filter((_, index) => index % 2 === 0)
+      realtimeEventsRow2.value = duplicatedEvents.filter((_, index) => index % 2 === 1)
+    }
+
     // 初始化粒子背景
     const initParticles = () => {
       // 这里可以添加粒子动画效果
@@ -800,6 +1229,7 @@ export default {
       if (trendChartInstance) trendChartInstance.resize()
       if (healthGaugeInstance) healthGaugeInstance.resize()
       if (categoryChartInstance) categoryChartInstance.resize()
+      if (aiCategoryChartInstance) aiCategoryChartInstance.resize()
     }
     
     // 组件挂载
@@ -818,11 +1248,13 @@ export default {
         initTrendChart()
         initHealthGauge()
         initCategoryChart()
+        initAiCategoryChart()
       }, 100)
       
       // 延迟加载数据，让用户先看到界面
       setTimeout(async () => {
         await loadDashboardData()
+        await loadAiCategoryScores()
       }, 500)
       
       // 设置定时更新
@@ -846,6 +1278,7 @@ export default {
       if (trendChartInstance) trendChartInstance.dispose()
       if (healthGaugeInstance) healthGaugeInstance.dispose()
       if (categoryChartInstance) categoryChartInstance.dispose()
+      if (aiCategoryChartInstance) aiCategoryChartInstance.dispose()
     })
     
     return {
@@ -857,15 +1290,18 @@ export default {
       healthScore,
       coreMetrics,
       processFlow,
-      services,
       hotCategories,
       realtimeEvents,
+      realtimeEventsRow1,
+      realtimeEventsRow2,
       categoryTotalCount,
       categoryTimeRange,
       trendChart,
       categoryChart,
+      aiCategoryChart,
       getTrendIcon,
       getStatusText,
+      getStatusClass,
       toggleFullscreen
     }
   }
@@ -1052,7 +1488,8 @@ export default {
 // 主要内容区域
 .display-main {
   display: grid;
-  grid-template-columns: 0.75fr 1fr 0.75fr;
+  grid-template-columns: 1fr 1fr 1fr;  /* 三等分 */
+  grid-template-rows: minmax(320px, auto) 1fr;  /* 第一行固定高度，第二行填充剩余空间 */
   gap: 25px;
   padding: 30px 40px;
   height: calc(100vh - 350px);
@@ -1069,6 +1506,9 @@ export default {
   padding: 20px;
   overflow: hidden;
   min-width: 0;
+  height: 100%;  /* 确保所有卡片高度一致 */
+  display: flex;
+  flex-direction: column;
   
   .card-title {
     margin: 0 0 20px 0;
@@ -1076,17 +1516,515 @@ export default {
     color: #00d4ff;
     border-bottom: 1px solid rgba(0, 212, 255, 0.2);
     padding-bottom: 10px;
+    flex-shrink: 0;  /* 防止标题被压缩 */
   }
 }
 
 // 预留区域样式
-.placeholder-card {
+.placeholder-card, .future-feature {
   .placeholder-content {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 150px;
+    height: auto;  /* 自动高度 */
+    flex: 1;
+    
+    .placeholder-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+      opacity: 0.8;
+    }
+    
+    .placeholder-text {
+      font-size: 16px;
+      color: #8892b0;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    
+          .feature-coming-soon {
+        font-size: 18px;
+        color: #00d4ff;
+        font-weight: bold;
+        margin-top: 15px;
+        border-top: 1px dashed rgba(0, 212, 255, 0.3);
+        padding-top: 15px;
+        width: 80%;
+        text-align: center;
+      }
+  }
+}
+
+// AI分类评分图表样式
+.ai-category-scores {
+  height: 100%;   /* 填充整个容器高度 */
+  margin-top: 0;  /* 移除上边距 */
+
+  .card-title {
+    margin-bottom: 15px;  /* 减小标题下方间距 */
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: bold;
+  }
+
+  .chart-container {
+    height: calc(100% - 50px);  /* 减去标题高度 */
+    width: 100%;
+    min-height: 300px;
+  }
+}
+
+// 左侧和右侧面板
+.left-panel, .right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  max-width: 100%;
+  height: 100%;  /* 确保面板高度一致 */
+  align-items: stretch; /* 子元素拉伸填满容器宽度 */
+}
+
+// 左侧面板定位
+.left-panel {
+  grid-column: 1;
+  grid-row: 1 / span 2; // 跨越两行
+}
+
+// 右侧面板定位
+.right-panel {
+  grid-column: 3;
+  grid-row: 1 / span 2; // 跨越两行
+}
+
+// 中央面板
+.center-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 5px;
+  
+  // 系统流程面板
+  &.flow-panel {
+    grid-column: 2;     // 放在第二列
+    grid-row: 1;        // 放在第一行
+    height: 100%;       // 填充容器高度
+    margin-bottom: 0;   // 移除底部外边距
+    align-items: stretch; // 子元素拉伸填满容器宽度
+  }
+  
+  // 功能开发区面板
+  &.feature-panel {
+    grid-column: 2;     // 放在第二列
+    grid-row: 2;        // 放在第二行
+    height: 100%;       // 填充容器高度
+    margin-top: 0;      // 移除顶部外边距
+    align-items: stretch; // 子元素拉伸填满容器宽度
+  }
+}
+
+// 紧凑趋势图样式
+.trend-compact {
+  padding: 15px;
+  flex: 1;  /* 允许图表占用可用空间 */
+  
+  .card-title {
+    margin-bottom: 10px;
+    font-size: 16px;
+  }
+  
+  .compact-chart {
+    height: 100% !important;  /* 填充可用空间 */
+    width: 100%;
+    min-height: 220px;  /* 设置最小高度 */
+    
+    // 确保图表在小容器中清晰显示
+    canvas {
+      max-width: 100%;
+      max-height: 100%;
+    }
+  }
+}
+
+// 处理流程图样式
+.process-flow {
+  padding-bottom: 15px;  // 底部内边距
+  height: 100%;          // 填充容器高度
+  min-height: 320px;     // 最小高度
+  display: flex;         // 使用弹性布局
+  flex-direction: column;// 垂直排列
+  justify-content: space-between; // 内容均匀分布
+}
+
+// 处理流程区域紧凑化
+.process-stages.compact-flow {
+  padding: 20px 0;
+  flex: 1; /* 填充可用空间 */
+  
+  .pipeline-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+  padding: 10px 0;
+  }
+  
+  .stage-item {
+    padding: 15px 10px;
+    min-width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(0, 30, 60, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    transition: all 0.3s ease;
+    flex: 1;
+    max-width: 120px;
+    
+    &.active {
+      border-color: rgba(0, 212, 255, 0.5);
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+      background: rgba(0, 30, 60, 0.5);
+    }
+    
+    .stage-icon {
+      font-size: 24px;
+      margin-bottom: 10px;
+      width: 45px;
+      height: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 212, 255, 0.1);
+      border-radius: 50%;
+      border: 1px solid rgba(0, 212, 255, 0.3);
+    }
+    
+    .stage-info {
+      text-align: center;
+      width: 100%;
+      
+      .stage-name {
+        color: #8892b0;
+        font-size: 16px;
+        margin-bottom: 4px;
+        font-weight: 500;
+      }
+
+      .stage-count {
+        font-size: 20px;
+        font-weight: bold;
+        color: #00d4ff;
+        text-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+      }
+
+      .stage-rate {
+        color: #00ff88;
+        font-size: 16px;
+        margin-top: 2px;
+        font-weight: 500;
+      }
+    }
+  }
+  
+  .pipeline-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 5px;
+    
+    .simple-arrow {
+      font-size: 28px;
+      color: #00ff88;
+      text-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+      animation: arrowPulse 1.5s infinite;
+    margin: 0 5px;
+    }
+    
+    @keyframes arrowPulse {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
+  }
+}
+
+// 流程状态样式
+.stage-status {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+  font-size: 12px;
+
+  .status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+    display: inline-block;
+  }
+
+  .status-text {
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  // 空闲状态
+  &.status-idle {
+    .status-indicator {
+      background-color: #00ff88;
+      box-shadow: 0 0 6px rgba(0, 255, 136, 0.6);
+    }
+    .status-text {
+      color: #00ff88;
+    }
+  }
+
+  // 进行中状态
+  &.status-running {
+    .status-indicator {
+      background-color: #00d4ff;
+      box-shadow: 0 0 6px rgba(0, 212, 255, 0.6);
+      animation: statusPulse 1.5s infinite;
+    }
+    .status-text {
+      color: #00d4ff;
+    }
+  }
+
+  // 异常状态
+  &.status-error {
+    .status-indicator {
+      background-color: #ff4757;
+      box-shadow: 0 0 6px rgba(255, 71, 87, 0.6);
+    }
+    .status-text {
+      color: #ff4757;
+    }
+  }
+}
+
+@keyframes statusPulse {
+  0% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0.7; transform: scale(1); }
+}
+
+// 系统健康度卡片
+.health-card {
+  flex: 1;  /* 允许健康度卡片占用可用空间 */
+  display: flex;
+  flex-direction: column;
+  
+  .health-circle {
+    flex: 0;  /* 修改为不伸缩 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;  /* 设置最小高度 */
+    margin-bottom: 10px;
+    
+    .health-gauge {
+      width: 150px;
+      height: 150px;
+    }
+    
+    .health-score {
+      position: absolute;
+      text-align: center;
+      
+      .score-number {
+        font-size: 36px;
+        font-weight: bold;
+        color: #00d4ff;
+      }
+      
+      .score-unit {
+        font-size: 18px;
+        color: #8892b0;
+      }
+    }
+  }
+  
+  .placeholder-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8892b0;
+    font-style: italic;
+  }
+}
+
+// 处理流程图
+.process-flow {
+  flex: 1;  /* 填充可用空间 */
+  display: flex;
+  flex-direction: column;
+  
+  .process-stages {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    flex: 1;  /* 填充可用空间 */
+    
+    .stage-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 15px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      min-width: 80px;
+      transition: all 0.3s;
+      
+      &.active {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid #00d4ff;
+      }
+      
+      .stage-icon {
+        font-size: 24px;
+        margin-bottom: 8px;
+      }
+      
+      .stage-info {
+        text-align: center;
+        
+        .stage-name {
+          font-size: 16px;
+          color: #8892b0;
+          margin-bottom: 4px;
+          font-weight: 500;
+        }
+
+        .stage-count {
+          font-size: 20px;
+          font-weight: bold;
+          color: #00d4ff;
+        }
+
+        .stage-rate {
+          font-size: 16px;
+          color: #00ff88;
+          font-weight: 500;
+        }
+
+        .stage-status {
+          display: flex;
+          align-items: center;
+          margin-top: 4px;
+          font-size: 12px;
+
+          .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+            display: inline-block;
+          }
+
+          .status-text {
+            font-size: 12px;
+            font-weight: 500;
+          }
+
+          // 空闲状态
+          &.status-idle {
+            .status-indicator {
+              background-color: #00ff88;
+              box-shadow: 0 0 6px rgba(0, 255, 136, 0.6);
+            }
+            .status-text {
+              color: #00ff88;
+            }
+          }
+
+          // 进行中状态
+          &.status-running {
+            .status-indicator {
+              background-color: #00d4ff;
+              box-shadow: 0 0 6px rgba(0, 212, 255, 0.6);
+              animation: statusPulse 1.5s infinite;
+            }
+            .status-text {
+              color: #00d4ff;
+            }
+          }
+
+          // 异常状态
+          &.status-error {
+            .status-indicator {
+              background-color: #ff4757;
+              box-shadow: 0 0 6px rgba(255, 71, 87, 0.6);
+            }
+            .status-text {
+              color: #ff4757;
+            }
+          }
+        }
+      }
+      
+      .stage-arrow {
+        font-size: 20px;
+        color: #8892b0;
+        margin: 0 10px;
+      }
+    }
+  }
+  
+  // 添加服务状态列表样式
+  .service-list {
+    margin-top: auto;    // 自动调整顶部外边距，推到底部
+    padding-top: 15px;
+    padding-bottom: 15px; // 增加底部内边距
+    margin-bottom: 0;     // 移除底部外边距
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    
+    .service-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      
+      .service-name {
+        font-size: 14px;
+      }
+      
+      .service-status {
+        font-size: 12px;
+        
+        &.online { color: #00ff88; }
+        &.offline { color: #ff4444; }
+        &.warning { color: #ff8800; }
+        &.error { color: #ff4444; }
+      }
+    }
+  }
+}
+
+// 右侧面板的卡片
+.right-panel {
+  .placeholder-card, .chart-card {
+    flex: 1;  /* 右侧两个卡片平分空间 */
+  }
+  
+  .placeholder-content {
+    height: auto;  /* 自动高度 */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     
     .placeholder-icon {
       font-size: 48px;
@@ -1100,216 +2038,18 @@ export default {
       opacity: 0.8;
     }
   }
-}
-
-// 左侧面板
-.left-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  min-width: 0;
-  max-width: 100%;
-  
-  .process-flow {
-    .process-stages {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 10px;
-      
-      .stage-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 15px;
-        border-radius: 8px;
-        background: rgba(255, 255, 255, 0.05);
-        min-width: 80px;
-        transition: all 0.3s;
-        
-        &.active {
-          background: rgba(0, 212, 255, 0.1);
-          border: 1px solid #00d4ff;
-        }
-        
-        .stage-icon {
-          font-size: 24px;
-          margin-bottom: 8px;
-        }
-        
-        .stage-info {
-          text-align: center;
-          
-          .stage-name {
-            font-size: 12px;
-            color: #8892b0;
-            margin-bottom: 4px;
-          }
-          
-          .stage-count {
-            font-size: 18px;
-            font-weight: bold;
-            color: #00d4ff;
-          }
-          
-          .stage-rate {
-            font-size: 12px;
-            color: #00ff88;
-          }
-        }
-      }
-      
-      .stage-arrow {
-        font-size: 20px;
-        color: #8892b0;
-        margin: 0 10px;
-      }
-    }
-  }
   
   .chart-container {
-    height: 300px;
-  }
-}
-
-// 中央面板
-.center-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  min-width: 0;
-  max-width: 100%;
-  padding: 0 5px;
-  
-  // 紧凑趋势图样式
-  .trend-compact {
-    padding: 15px;
-    
-    .card-title {
-      margin-bottom: 10px;
-      font-size: 16px;
-    }
-    
-    .compact-chart {
-      height: 220px !important;
-      width: 100%;
-      
-      // 确保图表在小容器中清晰显示
-      canvas {
-        max-width: 100%;
-        max-height: 100%;
-      }
-    }
-  }
-  
-  .model-status {
-    .model-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.05);
-      
-      .model-name {
-        font-size: 16px;
-        font-weight: 500;
-      }
-      
-      .model-indicator {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        
-        .status-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          
-          &.online { background: #00ff88; }
-          &.idle { background: #ff8800; }
-          &.offline { background: #ff4444; }
-        }
-        
-        .status-text {
-          font-size: 14px;
-          color: #8892b0;
-        }
-      }
-    }
-  }
-  
-  .health-card {
-    .health-circle {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 20px;
-      
-      .health-gauge {
-        width: 150px;
-        height: 150px;
-      }
-      
-      .health-score {
-        position: absolute;
-        text-align: center;
-        
-        .score-number {
-          font-size: 36px;
-          font-weight: bold;
-          color: #00d4ff;
-        }
-        
-        .score-unit {
-          font-size: 18px;
-          color: #8892b0;
-        }
-      }
-    }
-    
-    .service-list {
-      .service-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 8px 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        
-        .service-name {
-          font-size: 14px;
-        }
-        
-        .service-status {
-          font-size: 12px;
-          
-          &.online { color: #00ff88; }
-          &.offline { color: #ff4444; }
-        }
-      }
-    }
-  }
-}
-
-// 右侧面板
-.right-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  min-width: 0;
-  max-width: 100%;
-  
-  .chart-container {
-    height: 200px;
-    width: 100%;
-    overflow: hidden;
+    height: auto;  /* 自动高度 */
+    flex: 1;
+    min-height: 200px;  /* 设置最小高度 */
   }
   
   .category-chart {
-    height: 280px !important;
+    height: auto !important;  /* 自动高度 */
+    min-height: 280px;  /* 设置最小高度 */
     width: 100% !important;
+    flex: 1;  /* 填充可用空间 */
   }
   
   .category-summary {
@@ -1334,61 +2074,104 @@ export default {
 
 // 底部实时数据流
 .realtime-footer {
-  height: 100px;
+  height: 120px;
   background: rgba(0, 0, 0, 0.4);
   border-top: 1px solid rgba(0, 212, 255, 0.2);
   padding: 15px 40px;
-  
+
   .stream-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
-    
+
     .stream-title {
       font-size: 16px;
       color: #00d4ff;
       font-weight: bold;
     }
-    
+
     .stream-time {
       font-size: 12px;
       color: #8892b0;
     }
   }
-  
+
   .stream-content {
-    height: 50px;
+    height: 70px;
     overflow: hidden;
-    
-    .stream-items {
-      display: flex;
-      animation: scroll-left 60s linear infinite;
-      
-      .stream-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    &::before, &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      height: 100%;
+      width: 40px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    &::before {
+      left: 0;
+      background: linear-gradient(to right, rgba(0, 0, 0, 0.4), transparent);
+    }
+
+    &::after {
+      right: 0;
+      background: linear-gradient(to left, rgba(0, 0, 0, 0.4), transparent);
+    }
+
+    .stream-row {
+      height: 30px;
+      overflow: hidden;
+      position: relative;
+
+      .stream-items {
         display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 0 20px;
-        white-space: nowrap;
-        
-        .event-time {
-          color: #8892b0;
-          font-size: 12px;
+        padding: 0 40px;
+
+        &.stream-items-1 {
+          animation: scroll-left 80s linear infinite;
         }
-        
-        .event-icon {
-          font-size: 14px;
+
+        &.stream-items-2 {
+          animation: scroll-left 75s linear infinite;
         }
-        
-        .event-message {
-          font-size: 13px;
-          color: #ffffff;
+
+        .stream-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 0 15px;
+          white-space: nowrap;
+          margin-right: 15px;
+          border-radius: 4px;
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(5px);
+
+          .event-time {
+            color: #8892b0;
+            font-size: 11px;
+          }
+
+          .event-icon {
+            font-size: 12px;
+          }
+
+          .event-message {
+            font-size: 12px;
+            color: #ffffff;
+          }
+
+          &.question { border-left: 2px solid #00d4ff; }
+          &.answer { border-left: 2px solid #00ff88; }
+          &.score { border-left: 2px solid #ff8800; }
+          &.system { border-left: 2px solid #ff3366; }
         }
-        
-        &.question { border-left: 2px solid #00d4ff; }
-        &.answer { border-left: 2px solid #00ff88; }
-        &.score { border-left: 2px solid #ff8800; }
       }
     }
   }
@@ -1413,13 +2196,13 @@ export default {
 
 @keyframes scroll-left {
   0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+  100% { transform: translateX(-200%); }
 }
 
 // 响应式设计
 @media (max-width: 1920px) {
   .display-main {
-    grid-template-columns: 35% 30% 35%;
+    grid-template-columns: 1fr 1fr 1fr;  /* 保持三等分 */
   }
 }
 

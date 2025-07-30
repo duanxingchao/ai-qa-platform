@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI分类评分测试</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #1a1a1a;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .chart-container {
+            width: 100%;
+            height: 600px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #00d4ff;
+        }
+        .api-test {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #333;
+            border-radius: 5px;
+        }
+        .api-result {
+            background-color: #444;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🤖 AI分类评分对比测试</h1>
+        
+        <div class="api-test">
+            <h3>API测试结果：</h3>
+            <div id="apiResult" class="api-result">正在加载...</div>
+        </div>
+        
+        <div class="chart-container">
+            <div id="aiChart" style="width: 100%; height: 100%;"></div>
+        </div>
+    </div>
+
+    <script>
+        // 测试API
+        async function testAPI() {
+            try {
+                const response = await fetch('/api/display/ai-category-scores');
+                const data = await response.json();
+                
+                document.getElementById('apiResult').innerHTML = JSON.stringify(data, null, 2);
+                
+                if (data.success && data.data) {
+                    createChart(data.data.chart_data);
+                }
+            } catch (error) {
+                document.getElementById('apiResult').innerHTML = '错误: ' + error.message;
+                // 使用模拟数据
+                createMockChart();
+            }
+        }
+
+        // 创建图表
+        function createChart(chartData) {
+            const chart = echarts.init(document.getElementById('aiChart'));
+            
+            // 分两排显示，每排8个分类
+            const firstRowData = chartData.slice(0, 8);
+            const secondRowData = chartData.slice(8, 16);
+            
+            const option = {
+                backgroundColor: 'transparent',
+                title: {
+                    text: 'AI分类评分对比',
+                    left: 'center',
+                    textStyle: {
+                        color: '#ffffff',
+                        fontSize: 18
+                    }
+                },
+                grid: [
+                    {
+                        left: '5%',
+                        right: '5%',
+                        top: '15%',
+                        height: '35%',
+                        containLabel: true
+                    },
+                    {
+                        left: '5%',
+                        right: '5%',
+                        top: '60%',
+                        height: '35%',
+                        containLabel: true
+                    }
+                ],
+                legend: {
+                    data: ['YOYO', '豆包', '小天'],
+                    top: '8%',
+                    textStyle: {
+                        color: '#ffffff',
+                        fontSize: 14
+                    },
+                    itemWidth: 20,
+                    itemHeight: 12
+                },
+                xAxis: [
+                    {
+                        type: 'category',
+                        data: firstRowData.map(item => item.category),
+                        gridIndex: 0,
+                        axisLabel: {
+                            color: '#ffffff',
+                            fontSize: 12,
+                            rotate: 45
+                        },
+                        axisLine: {
+                            lineStyle: { color: '#444' }
+                        }
+                    },
+                    {
+                        type: 'category',
+                        data: secondRowData.map(item => item.category),
+                        gridIndex: 1,
+                        axisLabel: {
+                            color: '#ffffff',
+                            fontSize: 12,
+                            rotate: 45
+                        },
+                        axisLine: {
+                            lineStyle: { color: '#444' }
+                        }
+                    }
+                ],
+                yAxis: [
+                    {
+                        type: 'value',
+                        gridIndex: 0,
+                        min: 0,
+                        max: 5,
+                        axisLabel: {
+                            color: '#ffffff',
+                            fontSize: 12
+                        },
+                        axisLine: {
+                            lineStyle: { color: '#444' }
+                        },
+                        splitLine: {
+                            lineStyle: { color: '#333' }
+                        }
+                    },
+                    {
+                        type: 'value',
+                        gridIndex: 1,
+                        min: 0,
+                        max: 5,
+                        axisLabel: {
+                            color: '#ffffff',
+                            fontSize: 12
+                        },
+                        axisLine: {
+                            lineStyle: { color: '#444' }
+                        },
+                        splitLine: {
+                            lineStyle: { color: '#333' }
+                        }
+                    }
+                ],
+                series: [
+                    // 第一排 - YOYO
+                    {
+                        name: 'YOYO',
+                        type: 'bar',
+                        xAxisIndex: 0,
+                        yAxisIndex: 0,
+                        data: firstRowData.map(item => item.YOYO),
+                        itemStyle: {
+                            color: '#00d4ff'
+                        },
+                        barWidth: '25%'
+                    },
+                    // 第一排 - 豆包
+                    {
+                        name: '豆包',
+                        type: 'bar',
+                        xAxisIndex: 0,
+                        yAxisIndex: 0,
+                        data: firstRowData.map(item => item.豆包),
+                        itemStyle: {
+                            color: '#00ff88'
+                        },
+                        barWidth: '25%'
+                    },
+                    // 第一排 - 小天
+                    {
+                        name: '小天',
+                        type: 'bar',
+                        xAxisIndex: 0,
+                        yAxisIndex: 0,
+                        data: firstRowData.map(item => item.小天),
+                        itemStyle: {
+                            color: '#ff6b6b'
+                        },
+                        barWidth: '25%'
+                    },
+                    // 第二排 - YOYO
+                    {
+                        name: 'YOYO',
+                        type: 'bar',
+                        xAxisIndex: 1,
+                        yAxisIndex: 1,
+                        data: secondRowData.map(item => item.YOYO),
+                        itemStyle: {
+                            color: '#00d4ff'
+                        },
+                        barWidth: '25%'
+                    },
+                    // 第二排 - 豆包
+                    {
+                        name: '豆包',
+                        type: 'bar',
+                        xAxisIndex: 1,
+                        yAxisIndex: 1,
+                        data: secondRowData.map(item => item.豆包),
+                        itemStyle: {
+                            color: '#00ff88'
+                        },
+                        barWidth: '25%'
+                    },
+                    // 第二排 - 小天
+                    {
+                        name: '小天',
+                        type: 'bar',
+                        xAxisIndex: 1,
+                        yAxisIndex: 1,
+                        data: secondRowData.map(item => item.小天),
+                        itemStyle: {
+                            color: '#ff6b6b'
+                        },
+                        barWidth: '25%'
+                    }
+                ],
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    borderColor: '#00d4ff',
+                    textStyle: {
+                        color: '#ffffff'
+                    },
+                    formatter: function(params) {
+                        let result = params[0].name + '<br/>'
+                        params.forEach(param => {
+                            if (param.value !== undefined) {
+                                result += param.seriesName + ': ' + param.value + '分<br/>'
+                            }
+                        })
+                        return result
+                    }
+                }
+            };
+            
+            chart.setOption(option);
+            
+            // 响应式
+            window.addEventListener('resize', function() {
+                chart.resize();
+            });
+        }
+
+        // 创建模拟图表
+        function createMockChart() {
+            const categories = [
+                '教育', '医疗健康', '经济金融', '科技技术', '法律',
+                '娱乐', '体育运动', '旅游', '美食餐饮', '购物消费',
+                '交通出行', '房产置业', '工作职场', '情感关系', '生活服务', '其他'
+            ];
+            
+            const mockData = categories.map(category => ({
+                category,
+                YOYO: +(Math.random() * 1.5 + 3.5).toFixed(2), // 3.5-5.0
+                豆包: +(Math.random() * 1.2 + 3.2).toFixed(2), // 3.2-4.4
+                小天: +(Math.random() * 1.0 + 3.0).toFixed(2)  // 3.0-4.0
+            }));
+            
+            createChart(mockData);
+        }
+
+        // 页面加载时测试API
+        testAPI();
+    </script>
+</body>
+</html>

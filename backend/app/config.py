@@ -59,7 +59,8 @@ class Config:
     }
     
     # 自动化工作流配置（统一调度）
-    AUTO_PROCESS_ON_STARTUP = True  # 启动时立即处理已有数据
+    AUTO_PROCESS_ON_STARTUP = False  # 启动时立即处理已有数据 - 已禁用以避免自动处理
+    SCHEDULER_ENABLED = False  # 完全禁用调度器 - 防止自动启动任何任务
     WORKFLOW_INTERVAL_MINUTES = int(os.environ.get('WORKFLOW_INTERVAL_MINUTES', 3))  # 工作流执行间隔（分钟）
     DATA_CHECK_ENABLED = True  # 是否启用数据检测
     AUTO_SUSPEND_WHEN_NO_DATA = True  # 无数据时自动挂起

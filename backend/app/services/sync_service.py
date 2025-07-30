@@ -59,34 +59,63 @@ class SyncService:
             self.logger.error(f"获取最后同步时间失败: {str(e)}")
             return None
     
+    def get_week_start(self) -> datetime:
+        """获取本周开始时间（周一00:00:00）"""
+        today = datetime.utcnow()
+        days_since_monday = today.weekday()
+        week_start = today - timedelta(days=days_since_monday)
+        return week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+
     def fetch_new_data_from_table1(self, since_time: Optional[datetime] = None) -> List[Dict]:
-        """从table1获取新数据，包括answer字段"""
+        """从table1获取新数据，包括answer字段，限制只同步本周数据，并避免重复同步"""
         try:
-            # 构建查询SQL - 获取所有字段，包括answer字段
+            # 获取本周开始时间
+            week_start = self.get_week_start()
+
+            # 确保since_time不早于本周开始时间，防止同步过多历史数据
+            if since_time and since_time < week_start:
+                self.logger.info(f"最后同步时间({since_time})早于本周开始时间({week_start})，调整为本周开始时间")
+                since_time = week_start
+            elif not since_time:
+                # 如果没有since_time，默认只同步本周数据
+                since_time = week_start
+                self.logger.info(f"没有最后同步时间，默认只同步本周数据，开始时间: {week_start}")
+
+            # 构建查询SQL - 获取所有字段，包括answer字段，并排除已存在的business_id
+            # 注意：使用to_char来格式化时间，确保与Python的isoformat()一致
             base_sql = """
-                SELECT 
-                    pageid,
-                    devicetypename,
-                    sendmessagetime,
-                    query,
-                    answer,
-                    serviceid,
-                    qatype,
-                    intent,
-                    classification,
-                    iskeyboardinput,
-                    isstopanswer
-                FROM table1
-                WHERE query IS NOT NULL 
-                AND query != '' 
-                AND TRIM(query) != ''
-                {time_filter}
-                ORDER BY sendmessagetime ASC
+                SELECT
+                    t1.pageid,
+                    t1.devicetypename,
+                    t1.sendmessagetime,
+                    t1.query,
+                    t1.answer,
+                    t1.serviceid,
+                    t1.qatype,
+                    t1.intent,
+                    t1.classification,
+                    t1.iskeyboardinput,
+                    t1.isstopanswer
+                FROM table1 t1
+                WHERE t1.query IS NOT NULL
+                AND t1.query != ''
+                AND TRIM(t1.query) != ''
+                AND t1.sendmessagetime >= :week_start
+                AND NOT EXISTS (
+                    SELECT 1 FROM questions q
+                    WHERE q.business_id = MD5(CONCAT(
+                        t1.pageid,
+                        COALESCE(to_char(t1.sendmessagetime, 'YYYY-MM-DD"T"HH24:MI:SS.US'), ''),
+                        t1.query
+                    ))
+                )
+                ORDER BY t1.sendmessagetime ASC
             """
-            
-            time_filter = "AND sendmessagetime >= :since_time" if since_time else ""
-            sql = text(base_sql.format(time_filter=time_filter))
-            result = db.session.execute(sql, {'since_time': since_time} if since_time else {})
+
+            sql = text(base_sql)
+            result = db.session.execute(sql, {
+                'week_start': week_start
+            })
             
             # 转换为字典列表并生成business_id
             data = []

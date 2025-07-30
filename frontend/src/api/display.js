@@ -21,4 +21,14 @@ export function getRealtimeUpdate() {
     url: '/display/realtime',
     method: 'get'
   })
-} 
+}
+
+/**
+ * 获取AI分类评分数据
+ */
+export function getAiCategoryScores() {
+  return request({
+    url: '/display/ai-category-scores',
+    method: 'get'
+  })
+}

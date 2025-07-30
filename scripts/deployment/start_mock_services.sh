@@ -3,7 +3,18 @@
 # 用于快速启动所有必需的Mock API服务
 
 echo "🚀 启动AI问答平台Mock服务..."
-echo "=" * 50
+echo "=================================================="
+
+# 检查配置文件是否禁用了Mock服务
+if [ -f "mock_services_config.json" ]; then
+    ENABLED=$(python3 -c "import json; config=json.load(open('mock_services_config.json')); print(config['mock_services']['enabled'])" 2>/dev/null)
+    if [ "$ENABLED" = "False" ]; then
+        echo "❌ Mock服务已被配置禁用"
+        echo "💡 如需启用，请修改 mock_services_config.json 中的 enabled 为 true"
+        echo "💡 或者运行: ./enable_mock_services.sh"
+        exit 1
+    fi
+fi
 
 # 检查是否在正确的目录
 if [ ! -d "backend" ]; then

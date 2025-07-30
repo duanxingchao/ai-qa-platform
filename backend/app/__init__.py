@@ -95,9 +95,14 @@ def configure_logging(app):
 def init_scheduler(app):
     """初始化定时任务调度器"""
     try:
+        # 检查是否启用调度器
+        if not app.config.get('SCHEDULER_ENABLED', True):
+            app.logger.info("调度器已被配置禁用，跳过初始化")
+            return
+
         from app.services.scheduler_service import scheduler_service
         scheduler_service.initialize(app)
         app.logger.info("定时任务调度器初始化完成")
     except Exception as e:
         app.logger.error(f"定时任务调度器初始化失败: {str(e)}")
-        # 不抛出异常，允许应用继续运行 
+        # 不抛出异常，允许应用继续运行

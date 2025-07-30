@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>调度器配置测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .status {
+            background-color: #f0f9ff;
+        }
+        .config {
+            background-color: #f0f0f0;
+        }
+        button {
+            background-color: #409EFF;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #337ecc;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        input, select {
+            padding: 5px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 调度器配置管理测试</h1>
+    
+    <div class="section status">
+        <h2>📊 调度器状态</h2>
+        <button onclick="getStatus()">获取状态</button>
+        <pre id="statusResult">点击按钮获取状态...</pre>
+    </div>
+    
+    <div class="section config">
+        <h2>⚙️ 配置管理</h2>
+        <button onclick="getConfig()">获取配置</button>
+        <button onclick="updateConfig()">更新配置</button>
+        <br><br>
+        
+        <label>
+            启用调度器: 
+            <select id="schedulerEnabled">
+                <option value="true">是</option>
+                <option value="false">否</option>
+            </select>
+        </label>
+        <br>
+        
+        <label>
+            工作流间隔(分钟): 
+            <input type="number" id="workflowInterval" value="3" min="1" max="60">
+        </label>
+        <br>
+        
+        <label>
+            批处理大小: 
+            <input type="number" id="batchSize" value="100" min="1" max="1000">
+        </label>
+        
+        <pre id="configResult">点击按钮获取配置...</pre>
+    </div>
+    
+    <div class="section">
+        <h2>🔄 工作流操作</h2>
+        <button onclick="executePhase('data_sync')">执行数据同步</button>
+        <button onclick="executePhase('classification')">执行问题分类</button>
+        <button onclick="executePhase('answer_generation')">执行答案生成</button>
+        <button onclick="executePhase('scoring')">执行评分处理</button>
+        <pre id="workflowResult">点击按钮执行工作流...</pre>
+    </div>
+
+    <script>
+        const API_BASE = '/api/scheduler';
+        
+        async function apiCall(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                return { success: false, message: error.message };
+            }
+        }
+        
+        async function getStatus() {
+            const result = await apiCall(`${API_BASE}/status`);
+            document.getElementById('statusResult').textContent = JSON.stringify(result, null, 2);
+        }
+        
+        async function getConfig() {
+            const result = await apiCall(`${API_BASE}/config`);
+            document.getElementById('configResult').textContent = JSON.stringify(result, null, 2);
+            
+            if (result.success && result.data) {
+                // 更新表单值
+                document.getElementById('schedulerEnabled').value = result.data.scheduler_enabled;
+                document.getElementById('workflowInterval').value = result.data.workflow_interval_minutes || 3;
+                document.getElementById('batchSize').value = result.data.batch_size || 100;
+            }
+        }
+        
+        async function updateConfig() {
+            const config = {
+                scheduler_enabled: document.getElementById('schedulerEnabled').value === 'true',
+                workflow_interval_minutes: parseInt(document.getElementById('workflowInterval').value),
+                batch_size: parseInt(document.getElementById('batchSize').value)
+            };
+            
+            const result = await apiCall(`${API_BASE}/config`, {
+                method: 'PUT',
+                body: JSON.stringify(config)
+            });
+            
+            document.getElementById('configResult').textContent = JSON.stringify(result, null, 2);
+        }
+        
+        async function executePhase(phase) {
+            const result = await apiCall(`${API_BASE}/workflow/phase/${phase}`, {
+                method: 'POST'
+            });
+            
+            document.getElementById('workflowResult').textContent = JSON.stringify(result, null, 2);
+        }
+        
+        // 页面加载时获取初始状态
+        window.onload = function() {
+            getStatus();
+            getConfig();
+        };
+    </script>
+</body>
+</html>

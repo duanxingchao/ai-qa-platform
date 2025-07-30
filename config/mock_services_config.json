@@ -1,0 +1,33 @@
+{
+  "mock_services": {
+    "enabled": false,
+    "auto_start": false,
+    "services": {
+      "classification_api": {
+        "port": 8001,
+        "enabled": false,
+        "script": "backend/tests/mock_classification_api.py"
+      },
+      "doubao_ai_api": {
+        "port": 8002,
+        "enabled": false,
+        "script": "backend/tests/mock_ai_api.py",
+        "args": ["--service", "doubao"]
+      },
+      "xiaotian_ai_api": {
+        "port": 8003,
+        "enabled": false,
+        "script": "backend/tests/mock_ai_api.py",
+        "args": ["--service", "xiaotian"]
+      },
+      "score_api": {
+        "port": 8004,
+        "enabled": false,
+        "script": "backend/tests/mock_score_api.py"
+      }
+    },
+    "last_disabled": "2025-07-29T06:07:00Z",
+    "disabled_by": "user_request",
+    "notes": "Mock services disabled by user request to prevent automatic startup"
+  }
+}
