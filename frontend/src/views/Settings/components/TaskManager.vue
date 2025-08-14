@@ -1,12 +1,10 @@
 <template>
-  <el-card class="task-manager">
-    <template #header>
-      <div class="card-header">
-        <span>📋 定时任务管理</span>
-      </div>
-    </template>
-    
-    <el-table 
+  <div class="task-manager">
+    <div class="config-header">
+      <h3 class="config-title">📋 定时任务管理</h3>
+    </div>
+
+    <el-table
       :data="tasks" 
       style="width: 100%"
       empty-text="暂无定时任务"
@@ -80,7 +78,7 @@
       </el-icon>
       <p>暂无定时任务</p>
     </div>
-  </el-card>
+  </div>
 </template>
 
 <script setup>
@@ -99,12 +97,14 @@ const emit = defineEmits(['action'])
 const getTaskStatusType = (enabled, status) => {
   if (!enabled) return 'info'
   if (status === 'running') return 'success'
-  return 'warning'
+  if (status === 'paused') return 'warning'
+  return 'info'
 }
 
 const getTaskStatusText = (enabled, status) => {
   if (!enabled) return '已禁用'
   if (status === 'running') return '运行中'
+  if (status === 'paused') return '已暂停'
   return '等待中'
 }
 
@@ -134,15 +134,23 @@ const handleTaskAction = (action, task) => {
 
 <style scoped>
 .task-manager {
-  margin-bottom: 16px;
+  padding: 24px;
 }
 
-.card-header {
+.config-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-weight: 600;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.config-title {
+  margin: 0;
+  color: #303133;
   font-size: 16px;
+  font-weight: 600;
 }
 
 .task-name {

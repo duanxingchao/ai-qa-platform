@@ -34,6 +34,9 @@ marshmallow==3.20.1
 python-dateutil==2.8.2
 pytz==2023.3
 
+# 中文分词
+jieba==0.42.1
+
 # 数据处理和导出 (修复版本兼容性)
 numpy==1.24.3
 pandas==2.0.3

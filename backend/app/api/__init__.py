@@ -9,7 +9,11 @@ question_bp = Blueprint('question', __name__)
 process_bp = Blueprint('process', __name__)
 review_bp = Blueprint('review', __name__)
 dashboard_bp = Blueprint('dashboard', __name__)
+answer_bp = Blueprint('answer', __name__)
 scores_bp = Blueprint('scores', __name__)
+admin_bp = Blueprint('admin', __name__)
+
+analysis_bp = Blueprint('analysis', __name__)
 
 # 导入路由
-from . import sync_api, question_api, process_api, review_api, dashboard_api, scores_api 
+from . import sync_api, question_api, process_api, review_api, dashboard_api, word_analysis_api, answer_api, scores_api, admin_api

@@ -10,6 +10,7 @@ import subprocess
 import json
 import traceback
 from datetime import datetime
+from sqlalchemy import inspect
 from typing import Dict, List, Any
 import threading
 import signal
@@ -199,14 +200,14 @@ class EnhancedProjectTestSuite:
                 # 1. 连接测试
                 db.session.execute(db.text("SELECT 1")).fetchone()
                 
-                # 2. 表结构测试
+                # 2. 表结构测试（兼容多方言）
                 expected_tables = ['questions', 'answers', 'scores', 'review_status', 'table1']
-                actual_tables = db.session.execute(db.text("""
-                    SELECT table_name FROM information_schema.tables 
-                    WHERE table_schema = 'public'
-                """)).fetchall()
-                
-                actual_table_names = [table[0] for table in actual_tables]
+                dialect_name = db.session.bind.dialect.name if db.session.bind else ''
+                if dialect_name == 'sqlite':
+                    rows = db.session.execute(db.text("SELECT name FROM sqlite_master WHERE type='table'"))
+                    actual_table_names = [r[0] for r in rows.fetchall()]
+                else:
+                    actual_table_names = inspect(db.engine).get_table_names()
                 missing_tables = set(expected_tables) - set(actual_table_names)
                 
                 # 3. 数据统计
@@ -608,39 +609,47 @@ class EnhancedProjectTestSuite:
         """运行现有的测试套件"""
         print("\n🧪 运行现有测试套件...")
         
-        # 运行comprehensive_test_suite.py
-        try:
-            print("    运行comprehensive_test_suite.py...")
-            result = subprocess.run([
-                sys.executable, 'comprehensive_test_suite.py'
-            ], capture_output=True, text=True, timeout=300)
-            
-            success = result.returncode == 0
+        # 运行comprehensive_test_suite.py（存在才执行）
+        comp_path = os.path.join(os.path.dirname(__file__), 'comprehensive_test_suite.py')
+        if os.path.exists(comp_path):
+            try:
+                print("    运行comprehensive_test_suite.py...")
+                result = subprocess.run([
+                    sys.executable, comp_path
+                ], capture_output=True, text=True, timeout=300)
+                success = result.returncode == 0
+                self.log_test_result(
+                    "现有测试",
+                    "综合测试套件",
+                    success,
+                    "测试通过" if success else "测试失败",
+                    {
+                        'returncode': result.returncode,
+                        'stdout_lines': len(result.stdout.split('\n')),
+                        'stderr_lines': len(result.stderr.split('\n'))
+                    }
+                )
+            except subprocess.TimeoutExpired:
+                self.log_test_result(
+                    "现有测试",
+                    "综合测试套件",
+                    False,
+                    "测试超时（300秒）"
+                )
+            except Exception as e:
+                self.log_test_result(
+                    "现有测试",
+                    "综合测试套件",
+                    False,
+                    f"测试执行失败: {str(e)}"
+                )
+        else:
             self.log_test_result(
                 "现有测试",
                 "综合测试套件",
-                success,
-                "测试通过" if success else "测试失败",
-                {
-                    'returncode': result.returncode,
-                    'stdout_lines': len(result.stdout.split('\n')),
-                    'stderr_lines': len(result.stderr.split('\n'))
-                }
-            )
-            
-        except subprocess.TimeoutExpired:
-            self.log_test_result(
-                "现有测试",
-                "综合测试套件",
-                False,
-                "测试超时（300秒）"
-            )
-        except Exception as e:
-            self.log_test_result(
-                "现有测试",
-                "综合测试套件",
-                False,
-                f"测试执行失败: {str(e)}"
+                None,
+                "文件不存在，跳过",
+                {'path': comp_path}
             )
         
         # 运行tests目录下的测试

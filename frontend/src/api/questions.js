@@ -54,9 +54,10 @@ export function getQuestionCategories() {
 }
 
 // 重新分类问题
-export function reclassifyQuestion(id) {
+export function reclassifyQuestion(id, data) {
   return request({
     url: `/questions/${id}/reclassify`,
-    method: 'post'
+    method: 'post',
+    data
   })
 } 

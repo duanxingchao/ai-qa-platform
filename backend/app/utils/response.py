@@ -8,12 +8,12 @@ from typing import Any, Dict, Optional
 def api_response(data: Any = None, message: str = "操作成功", code: int = 200) -> Dict:
     """
     标准API成功响应格式
-    
+
     Args:
         data: 响应数据
         message: 响应消息
         code: 响应状态码
-    
+
     Returns:
         标准化的响应格式
     """
@@ -25,6 +25,20 @@ def api_response(data: Any = None, message: str = "操作成功", code: int = 20
         "timestamp": int(__import__('time').time())
     }
     return jsonify(response)
+
+
+def success_response(message: str = "操作成功", data: Any = None) -> Dict:
+    """
+    成功响应的简化版本
+
+    Args:
+        message: 响应消息
+        data: 响应数据
+
+    Returns:
+        标准化的成功响应格式
+    """
+    return api_response(data=data, message=message)
 
 
 def error_response(message: str = "操作失败", code: int = 400, error_code: Optional[str] = None) -> Dict:

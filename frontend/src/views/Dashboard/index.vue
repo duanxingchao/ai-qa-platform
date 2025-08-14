@@ -11,6 +11,7 @@
         <el-card class="filter-card" shadow="never">
           <div class="time-filter">
             <span class="filter-label">时间范围：</span>
+            <!-- 统计逻辑：按数据入库时间(created_at)筛选，与监控大屏保持一致 -->
             <el-radio-group v-model="timeRange" @change="handleTimeRangeChange">
               <el-radio-button label="today">本日</el-radio-button>
               <el-radio-button label="week">本周</el-radio-button>
@@ -127,7 +128,7 @@
                   <el-progress :percentage="queueStatus.generate" :status="queueStatus.generate === 100 ? 'success' : ''" />
                 </div>
                 <div class="queue-item">
-                  <span>评分进行中</span>
+                  <span>竞品横评中</span>
                   <el-progress :percentage="queueStatus.score" :status="queueStatus.score === 100 ? 'success' : ''" />
                 </div>
               </div>
@@ -147,7 +148,7 @@
                 </div>
                 <div class="daily-item">
                   <span class="daily-number">{{ dailyStats.scores }}</span>
-                  <span class="daily-label">完成评分</span>
+                  <span class="daily-label">完成横评</span>
                 </div>
               </div>
             </div>
@@ -192,11 +193,37 @@
 <script>
 import { ref, onMounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import {
+  Refresh,
+  ChatDotRound,
+  Flag,
+  Star,
+  ArrowUp,
+  ArrowDown,
+  Clock,
+  CircleCheck,
+  CircleClose,
+  Document,
+  TrendCharts
+} from '@element-plus/icons-vue'
 import { getStats, getSystemHealth, getSyncStatus } from '@/api/dashboard'
 import { ElMessage } from 'element-plus'
 
 export default {
   name: 'Dashboard',
+  components: {
+    Refresh,
+    ChatDotRound,
+    Flag,
+    Star,
+    ArrowUp,
+    ArrowDown,
+    Clock,
+    CircleCheck,
+    CircleClose,
+    Document,
+    TrendCharts
+  },
   setup() {
     // 响应式数据
     const loading = ref(false)
@@ -226,43 +253,43 @@ export default {
       scores: 89
     })
 
-    // 统计数据
+    // 统计数据 - 统计逻辑已与监控大屏保持一致
     const stats = ref([
       {
         key: 'total_questions',
         label: '总问题数',
         value: 0,
-        icon: 'ChatDotRound',
+        icon: ChatDotRound,
         color: '#409EFF',
         trend: null,
-        description: '指定时间范围内的问题总数'
+        description: '指定时间范围内同步入库的问题总数'
       },
       {
         key: 'classified_questions',
         label: '已分类问题数',
         value: 0,
-        icon: 'Flag',
+        icon: Flag,
         color: '#67C23A',
         trend: null,
-        description: '已完成自动分类的问题数量'
+        description: '指定时间范围内已完成自动分类的问题数量'
       },
       {
         key: 'ai_answers_completion',
         label: '竞品跑测完成度',
-        value: '0/0',
-        icon: 'Robot',
+        value: 0,
+        icon: Document,
         color: '#E6A23C',
         trend: null,
-        description: '豆包/小天竞品答案完成情况'
+        description: '指定时间范围内已分类问题的豆包/小天竞品答案数'
       },
       {
         key: 'scored_answers',
-        label: '评分完成数',
+        label: '竞品横评数',
         value: 0,
-        icon: 'Star',
+        icon: Star,
         color: '#F56C6C',
         trend: null,
-        description: '已完成评分的答案数量'
+        description: '指定时间范围内完成横评的问题数（三个AI都已评分）'
       }
     ])
 
@@ -293,7 +320,7 @@ export default {
         lastCheck: '刚刚'
       },
       {
-        name: '评分API',
+        name: '横评API',
         url: 'localhost:8005',
         status: 'healthy',
         lastCheck: '刚刚'
@@ -303,19 +330,22 @@ export default {
     // 图表实例
     let trendChartInstance = null
 
-    // 获取时间范围参数
+    // 获取时间范围参数 - 与监控大屏保持一致的时间计算方式
     const getTimeRangeParams = () => {
       const now = new Date()
       const params = { time_range: timeRange.value }
-      
+
       switch (timeRange.value) {
         case 'today':
           const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
           params.start_time = today.toISOString()
-          params.end_time = new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString()
+          params.end_time = now.toISOString()
           break
         case 'week':
-          const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+          // 本周：从本周一0点开始到现在（与监控大屏一致）
+          const weekStart = new Date(now)
+          weekStart.setDate(now.getDate() - now.getDay() + 1) // 设置为本周一
+          weekStart.setHours(0, 0, 0, 0) // 设置为0点
           params.start_time = weekStart.toISOString()
           params.end_time = now.toISOString()
           break
@@ -334,7 +364,7 @@ export default {
           // 不传时间参数，获取全部数据
           break
       }
-      
+
       return params
     }
 
@@ -349,19 +379,17 @@ export default {
           const data = res.data
           
           // 计算已分类问题数（classification不为null且不为空的问题）
-          const classifiedCount = data.classification_distribution ? 
+          const classifiedCount = data.classification_distribution ?
             Object.values(data.classification_distribution).reduce((sum, count) => sum + count, 0) : 0
-          
-          // 计算竞品跑测完成度（豆包/小天两个竞品的答案完成情况）
-          let totalExpectedAnswers = (data.summary?.total_questions || 0) * 2  // 每个问题期望2个竞品答案（豆包+小天）
+
+          // 竞品跑测完成度 - 显示实际生成的竞品答案数（与大屏展示系统流程一致）
           let actualCompetitorAnswers = data.summary?.competitor_answers?.total || 0
-          let aiCompletionRate = totalExpectedAnswers > 0 ? ((actualCompetitorAnswers / totalExpectedAnswers) * 100).toFixed(1) : 0
-          
+
           // 更新统计数据
           stats.value[0].value = data.summary?.total_questions || 0
           stats.value[1].value = classifiedCount
-          stats.value[2].value = `${actualCompetitorAnswers}/${totalExpectedAnswers} (${aiCompletionRate}%)`
-          stats.value[3].value = data.summary?.scored_answers || 0
+          stats.value[2].value = actualCompetitorAnswers  // 直接显示实际答案数，不再计算百分比
+          stats.value[3].value = data.summary?.scored_answers || 0  // 现在是完成横评的问题数
         }
       } catch (error) {
         console.error('加载统计数据失败:', error)
@@ -449,7 +477,7 @@ export default {
           }
         },
         legend: {
-          data: ['问题数', '分类数', '评分数'],
+          data: ['问题数', '分类数', '横评数'],
           top: 30
         },
         grid: {
@@ -556,7 +584,7 @@ export default {
             }
           },
           {
-            name: '评分数',
+            name: '横评数',
             type: 'line',
             data: trendData.value.scores,
             smooth: false,

@@ -66,6 +66,8 @@ class SyncService:
         week_start = today - timedelta(days=days_since_monday)
         return week_start.replace(hour=0, minute=0, second=0, microsecond=0)
 
+
+
     def fetch_new_data_from_table1(self, since_time: Optional[datetime] = None) -> List[Dict]:
         """从table1获取新数据，包括answer字段，限制只同步本周数据，并避免重复同步"""
         try:
@@ -81,41 +83,61 @@ class SyncService:
                 since_time = week_start
                 self.logger.info(f"没有最后同步时间，默认只同步本周数据，开始时间: {week_start}")
 
-            # 构建查询SQL - 获取所有字段，包括answer字段，并排除已存在的business_id
-            # 注意：使用to_char来格式化时间，确保与Python的isoformat()一致
-            base_sql = """
-                SELECT
-                    t1.pageid,
-                    t1.devicetypename,
-                    t1.sendmessagetime,
-                    t1.query,
-                    t1.answer,
-                    t1.serviceid,
-                    t1.qatype,
-                    t1.intent,
-                    t1.classification,
-                    t1.iskeyboardinput,
-                    t1.isstopanswer
-                FROM table1 t1
-                WHERE t1.query IS NOT NULL
-                AND t1.query != ''
-                AND TRIM(t1.query) != ''
-                AND t1.sendmessagetime >= :week_start
-                AND NOT EXISTS (
-                    SELECT 1 FROM questions q
-                    WHERE q.business_id = MD5(CONCAT(
+            # 构建查询SQL - 适配不同方言，避免使用 Postgres 专有函数
+            dialect_name = db.session.bind.dialect.name if db.session.bind else ""
+            if dialect_name == 'sqlite':
+                base_sql = """
+                    SELECT
                         t1.pageid,
-                        COALESCE(to_char(t1.sendmessagetime, 'YYYY-MM-DD"T"HH24:MI:SS.US'), ''),
-                        t1.query
-                    ))
-                )
-                ORDER BY t1.sendmessagetime ASC
-            """
-
-            sql = text(base_sql)
-            result = db.session.execute(sql, {
-                'week_start': week_start
-            })
+                        t1.devicetypename,
+                        t1.sendmessagetime,
+                        t1.query,
+                        t1.answer,
+                        t1.serviceid,
+                        t1.qatype,
+                        t1.intent,
+                        t1.iskeyboardinput,
+                        t1.isstopanswer
+                    FROM table1 t1
+                    WHERE t1.query IS NOT NULL
+                    AND t1.query != ''
+                    AND TRIM(t1.query) != ''
+                    AND datetime(t1.sendmessagetime) >= datetime(:week_start)
+                    ORDER BY t1.sendmessagetime ASC
+                """
+                sql = text(base_sql)
+                result = db.session.execute(sql, {'week_start': week_start})
+            else:
+                # Postgres 版本：保留去重避免重复同步到 questions（基于 business_id）
+                base_sql = """
+                    SELECT
+                        t1.pageid,
+                        t1.devicetypename,
+                        t1.sendmessagetime,
+                        t1.query,
+                        t1.answer,
+                        t1.serviceid,
+                        t1.qatype,
+                        t1.intent,
+                        t1.iskeyboardinput,
+                        t1.isstopanswer
+                    FROM table1 t1
+                    WHERE t1.query IS NOT NULL
+                    AND t1.query != ''
+                    AND TRIM(t1.query) != ''
+                    AND t1.sendmessagetime >= :week_start
+                    AND NOT EXISTS (
+                        SELECT 1 FROM questions q
+                        WHERE q.business_id = MD5(CONCAT(
+                            t1.pageid,
+                            COALESCE(to_char(t1.sendmessagetime, 'YYYY-MM-DD"T"HH24:MI:SS.US'), ''),
+                            t1.query
+                        ))
+                    )
+                    ORDER BY t1.sendmessagetime ASC
+                """
+                sql = text(base_sql)
+                result = db.session.execute(sql, {'week_start': week_start})
             
             # 转换为字典列表并生成business_id
             data = []
@@ -135,6 +157,7 @@ class SyncService:
                 ) = row
 
                 # 生成business_id = MD5(pageid + sendmessagetime + query)
+                # 统一使用 Python 端生成，避免不同方言函数差异
                 raw_str = f"{pageid}{send_time.isoformat() if send_time else ''}{query_text}"
                 business_id = hashlib.md5(raw_str.encode('utf-8')).hexdigest()
 
@@ -161,23 +184,23 @@ class SyncService:
             raise
     
     def sync_to_questions(self, data: List[Dict]) -> int:
-        """将问题相关数据同步到questions表"""
+        """将问题相关数据同步到questions表（不包含分类，分类将由AI处理服务后续填充）"""
         synced_count = 0
-        
+
         try:
             for item in data:
                 # 检查是否已存在（基于business_id）
                 existing = db.session.query(Question).filter_by(
                     business_id=item['business_id']
                 ).first()
-                
+
                 if existing:
-                    # 更新现有记录
+                    # 更新现有记录（不更新classification字段，保留现有分类）
                     existing.pageid = item['pageid']
                     existing.devicetypename = item['devicetypename']
                     existing.query = item['query']
                     existing.sendmessagetime = item['sendmessagetime']
-                    existing.classification = item['classification']
+                    # 注意：不更新classification字段，保留AI处理的结果
                     existing.serviceid = item['serviceid']
                     existing.qatype = item['qatype']
                     existing.intent = item['intent']
@@ -185,14 +208,14 @@ class SyncService:
                     existing.isstopanswer = item['isstopanswer']
                     existing.updated_at = datetime.utcnow()
                 else:
-                    # 创建新记录 - 只包含questions表相关字段
+                    # 创建新记录 - classification字段初始为None，等待AI处理
                     question = Question(
                         business_id=item['business_id'],
                         pageid=item['pageid'],
                         devicetypename=item['devicetypename'],
                         query=item['query'],
                         sendmessagetime=item['sendmessagetime'],
-                        classification=item['classification'],
+                        classification=None,  # 初始为None，等待AI分类处理
                         serviceid=item['serviceid'],
                         qatype=item['qatype'],
                         intent=item['intent'],
@@ -200,12 +223,12 @@ class SyncService:
                         isstopanswer=item['isstopanswer']
                     )
                     db.session.add(question)
-                
+
                 synced_count += 1
-            
-            self.logger.info(f"准备同步 {synced_count} 条数据到questions表")
+
+            self.logger.info(f"准备同步 {synced_count} 条数据到questions表（classification字段将由AI处理服务填充）")
             return synced_count
-            
+
         except Exception as e:
             self.logger.error(f"同步数据到questions表失败: {str(e)}")
             raise
@@ -224,7 +247,7 @@ class SyncService:
                 # 检查是否已存在（基于business_id和assistant_type）
                 existing = db.session.query(Answer).filter_by(
                     question_business_id=item['business_id'],
-                    assistant_type='original'
+                    assistant_type='yoyo'
                 ).first()
                 
                 if existing:
@@ -237,7 +260,7 @@ class SyncService:
                     answer = Answer(
                         question_business_id=item['business_id'],
                         answer_text=answer_text,
-                        assistant_type='original',  # 标识为原始答案
+                        assistant_type='yoyo',  # 标识为yoyo答案
                         answer_time=item['sendmessagetime']
                     )
                     db.session.add(answer)
@@ -322,7 +345,7 @@ class SyncService:
             
             # 获取answers表统计
             answers_count = db.session.query(func.count(Answer.id)).scalar()
-            original_answers_count = db.session.query(func.count(Answer.id)).filter_by(assistant_type='original').scalar()
+            yoyo_answers_count = db.session.query(func.count(Answer.id)).filter_by(assistant_type='yoyo').scalar()
             
             # 获取table1表统计
             table1_total_query = text("SELECT COUNT(*) FROM table1")
@@ -342,11 +365,11 @@ class SyncService:
             return {
                 'questions_count': questions_count,
                 'answers_count': answers_count,
-                'original_answers_count': original_answers_count,
+                'yoyo_answers_count': yoyo_answers_count,
                 'table1_total_count': table1_total_count,
                 'table1_with_answer_count': table1_with_answer_count,
                 'questions_sync_rate': f"{(questions_count/table1_total_count*100):.1f}%" if table1_total_count > 0 else "0%",
-                'answers_sync_rate': f"{(original_answers_count/table1_with_answer_count*100):.1f}%" if table1_with_answer_count > 0 else "0%",
+                'answers_sync_rate': f"{(yoyo_answers_count/table1_with_answer_count*100):.1f}%" if table1_with_answer_count > 0 else "0%",
                 'latest_question_time': latest_question.sendmessagetime.isoformat() if latest_question else None,
                 'latest_table1_time': latest_table1_time.isoformat() if latest_table1_time else None,
                 'sync_status': self.sync_status['status']

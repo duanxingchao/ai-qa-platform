@@ -150,4 +150,98 @@ def health_check():
         'status': 'healthy',
         'service': 'sync_api',
         'timestamp': 'now'
-    }) 
+    })
+
+@sync_bp.route('/table1-structure', methods=['GET'])
+def get_table1_structure():
+    """获取table1表结构信息"""
+    try:
+        from sqlalchemy import text
+        from app.utils.database import db
+
+        # 检查表是否存在
+        table_exists_query = text("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_schema = 'public'
+                AND table_name = 'table1'
+            );
+        """)
+
+        table_exists = db.session.execute(table_exists_query).scalar()
+
+        if not table_exists:
+            return jsonify({
+                'success': True,
+                'data': {'exists': False, 'message': 'table1表不存在'},
+                'message': "table1表不存在"
+            })
+
+        # 获取表结构
+        columns_query = text("""
+            SELECT
+                column_name,
+                data_type,
+                is_nullable,
+                column_default,
+                character_maximum_length
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+            AND table_name = 'table1'
+            ORDER BY ordinal_position;
+        """)
+
+        columns_result = db.session.execute(columns_query)
+        columns = []
+
+        for row in columns_result:
+            columns.append({
+                'column_name': row[0],
+                'data_type': row[1],
+                'is_nullable': row[2],
+                'column_default': row[3],
+                'character_maximum_length': row[4]
+            })
+
+        # 获取记录数
+        count_query = text("SELECT COUNT(*) FROM table1")
+        total_count = db.session.execute(count_query).scalar()
+
+        # 检查是否有classification字段
+        has_classification = any(col['column_name'] == 'classification' for col in columns)
+
+        # 如果有classification字段，获取其值分布
+        classification_distribution = []
+        if has_classification:
+            classification_query = text("""
+                SELECT classification, COUNT(*) as count
+                FROM table1
+                WHERE classification IS NOT NULL AND classification != ''
+                GROUP BY classification
+                ORDER BY count DESC
+            """)
+
+            classification_result = db.session.execute(classification_query)
+            for row in classification_result:
+                classification_distribution.append({
+                    'classification': row[0],
+                    'count': row[1]
+                })
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'exists': True,
+                'columns': columns,
+                'total_count': total_count,
+                'has_classification': has_classification,
+                'classification_distribution': classification_distribution
+            },
+            'message': f"成功获取table1表结构，共{len(columns)}个字段，{total_count}条记录"
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'获取table1表结构失败: {str(e)}'
+        }), 500

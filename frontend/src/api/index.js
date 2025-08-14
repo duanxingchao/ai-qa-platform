@@ -13,10 +13,11 @@ const request = axios.create({
 // 请求拦截器
 request.interceptors.request.use(
   config => {
-    // 在发送请求之前可以添加token等
-    // if (store.getters.token) {
-    //   config.headers['Authorization'] = `Bearer ${store.getters.token}`
-    // }
+    // 添加认证token
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`
+    }
     return config
   },
   error => {
@@ -54,6 +55,13 @@ request.interceptors.response.use(
           break
         case 401:
           message = '未授权，请重新登录'
+          // 清除token并跳转到登录页
+          localStorage.removeItem('token')
+          localStorage.removeItem('userInfo')
+          // 如果当前不在登录页，则跳转到登录页
+          if (window.location.hash !== '#/login') {
+            window.location.hash = '#/login'
+          }
           break
         case 403:
           message = '拒绝访问'

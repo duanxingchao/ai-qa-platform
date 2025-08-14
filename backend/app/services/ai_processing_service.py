@@ -165,62 +165,88 @@ class AIProcessingService:
                 
                 for question in batch:
                     try:
-                        # 检查是否已经存在答案，避免重复生成
-                        existing_doubao = db.session.query(Answer).filter_by(
+                        # 在事务中重新检查是否已经存在答案，避免并发重复生成
+                        # 使用 count() 而不是 first() 来检查数量
+                        existing_doubao_count = db.session.query(Answer).filter_by(
                             question_business_id=question.business_id,
                             assistant_type='doubao'
-                        ).first()
-                        
-                        existing_xiaotian = db.session.query(Answer).filter_by(
+                        ).count()
+
+                        existing_xiaotian_count = db.session.query(Answer).filter_by(
                             question_business_id=question.business_id,
                             assistant_type='xiaotian'
-                        ).first()
-                        
+                        ).count()
+
                         # 生成豆包AI答案
-                        if not existing_doubao:
+                        if existing_doubao_count == 0:
                             try:
                                 doubao_result = doubao_client.generate_answer(
                                     question=question.query,
                                     context=f"分类: {question.classification}" if question.classification else None
                                 )
-                                
-                                # 保存豆包答案
-                                doubao_answer = Answer(
+
+                                # 再次检查是否在生成过程中被其他进程创建了答案
+                                # 再次检查是否在生成过程中被其他进程创建了答案
+                                final_doubao_count = db.session.query(Answer).filter_by(
                                     question_business_id=question.business_id,
-                                    answer_text=doubao_result.get('answer', ''),
-                                    assistant_type='doubao',
-                                    answer_time=datetime.utcnow()
-                                )
-                                db.session.add(doubao_answer)
-                                doubao_count += 1
-                                self.logger.info(f"豆包答案生成成功: 问题 {question.id}")
-                                
+                                    assistant_type='doubao'
+                                ).count()
+
+                                if final_doubao_count == 0:
+                                    # 保存豆包答案
+                                    doubao_answer = Answer(
+                                        question_business_id=question.business_id,
+                                        answer_text=doubao_result.get('answer', ''),
+                                        assistant_type='doubao',
+                                        answer_time=datetime.utcnow()
+                                    )
+                                    db.session.merge(doubao_answer)
+                                    doubao_count += 1
+                                    self.logger.info(f"豆包答案生成成功: 问题 {question.id}")
+                                else:
+                                    self.logger.warning(f"问题 {question.id} 在生成过程中已被其他进程创建豆包答案，跳过保存")
+
                             except Exception as e:
                                 self.logger.error(f"豆包答案生成失败 {question.id}: {str(e)}")
+                        elif existing_doubao_count > 1:
+                            self.logger.warning(f"问题 {question.id} 存在 {existing_doubao_count} 个豆包答案，存在重复数据")
                         else:
                             self.logger.debug(f"问题 {question.id} 已存在豆包答案，跳过")
-                        
+
                         # 生成小天AI答案
-                        if not existing_xiaotian:
+                        if existing_xiaotian_count == 0:
                             try:
                                 xiaotian_result = xiaotian_client.generate_answer(
                                     question=question.query,
                                     context=f"分类: {question.classification}" if question.classification else None
                                 )
-                                
-                                # 保存小天答案
-                                xiaotian_answer = Answer(
+
+                                # 再次检查是否在生成过程中被其他进程创建了答案
+                                # 再次检查是否在生成过程中被其他进程创建了答案
+                                final_xiaotian_count = db.session.query(Answer).filter_by(
                                     question_business_id=question.business_id,
-                                    answer_text=xiaotian_result.get('answer', ''),
-                                    assistant_type='xiaotian',
-                                    answer_time=datetime.utcnow()
-                                )
-                                db.session.add(xiaotian_answer)
-                                xiaotian_count += 1
-                                self.logger.info(f"小天答案生成成功: 问题 {question.id}")
-                                
+                                    assistant_type='xiaotian'
+                                ).count()
+
+                                if final_xiaotian_count == 0:
+                                    # 保存小天答案
+                                    # 使用merge确保幂等，避免并发下重复插入
+                                    xiaotian_answer = Answer(
+                                        question_business_id=question.business_id,
+                                        answer_text=xiaotian_result.get('answer', ''),
+                                        assistant_type='xiaotian',
+                                        answer_time=datetime.utcnow()
+                                    )
+                                    db.session.merge(xiaotian_answer)
+                                    xiaotian_count += 1
+                                    self.logger.info(f"小天答案生成成功: 问题 {question.id}")
+                                else:
+                                    self.logger.warning(f"问题 {question.id} 在生成过程中已被其他进程创建小天答案，跳过保存")
+
                             except Exception as e:
                                 self.logger.error(f"小天答案生成失败 {question.id}: {str(e)}")
+                        elif existing_xiaotian_count > 1:
+                            self.logger.warning(f"问题 {question.id} 存在 {existing_xiaotian_count} 个小天答案，存在重复数据")
                         else:
                             self.logger.debug(f"问题 {question.id} 已存在小天答案，跳过")
                         
@@ -501,12 +527,16 @@ class AIProcessingService:
                     
                     self.logger.info(f"处理问题评分: {question.query[:50]}... (包含{len(answers)}个AI答案)")
                     
-                    # 构建评分API输入
-                    our_answer = answers.get('original', {}).get('answer_text', '') \
-                                or answers.get('our_ai', {}).get('answer_text', '') if 'our_ai' in answers else ''
-                    doubao_answer = answers.get('doubao', {}).get('answer_text', '') if 'doubao' in answers else ''
-                    xiaotian_answer = answers.get('xiaotian', {}).get('answer_text', '') if 'xiaotian' in answers else ''
+                    # 构建评分API输入（确保三个答案都存在）
+                    our_answer = answers.get('yoyo', {}).get('answer_text', '')
+                    doubao_answer = answers.get('doubao', {}).get('answer_text', '')
+                    xiaotian_answer = answers.get('xiaotian', {}).get('answer_text', '')
                     classification = question.classification or ''
+
+                    # 验证三个答案都不为空（双重保险）
+                    if not all([our_answer, doubao_answer, xiaotian_answer, classification]):
+                        self.logger.warning(f"问题 {question.business_id} 答案或分类为空，跳过评分")
+                        continue
                         
                         # 调用评分API
                     score_results = score_client.score_multiple_answers(
@@ -519,10 +549,10 @@ class AIProcessingService:
                     
                     # 处理评分结果，按模型匹配
                     model_name_mapping = {
-                        'yoyo': 'original',
+                        'yoyo': 'yoyo',
                         '豆包': 'doubao',
                         '小天': 'xiaotian',
-                        '原始模型': 'our_ai',
+                        '原始模型': 'yoyo',
                         '豆包模型': 'doubao', 
                         '小天模型': 'xiaotian'
                     }
@@ -531,29 +561,47 @@ class AIProcessingService:
                     for score_result in score_results:
                         model_name = score_result.get('模型名称', '')
                         assistant_type = model_name_mapping.get(model_name)
-                        
+
                         if assistant_type and assistant_type in answers:
                             answer_obj = answers[assistant_type]
-                            
+
                             # 使用新的创建方法，支持动态维度名称
                             score = Score.create_from_api_response(
-                                answer_id=answer_obj['id'],
-                                api_response_item=score_result
+                                answer_obj['id'],
+                                score_result
                             )
-                            
+
                             db.session.add(score)
-                            
+
                             # 更新答案状态
                             answer_record = db.session.query(Answer).filter_by(id=answer_obj['id']).first()
                             if answer_record:
                                 answer_record.is_scored = True
                                 answer_record.updated_at = datetime.utcnow()
-                            
+
                             saved_scores += 1
-                        
+
                     success_count += saved_scores
                     processed_questions += 1
-                        
+
+                    # 检查并更新问题状态为scored
+                    if saved_scores > 0:  # 如果有评分被保存
+                        if self._check_question_scoring_complete(question.business_id):
+                            # 更新问题状态为scored
+                            question.processing_status = 'scored'
+                            question.updated_at = datetime.utcnow()
+                            self.logger.info(f"问题 {question.business_id} 所有答案评分完成，状态更新为scored")
+
+                            # 检测badcase（新增）
+                            try:
+                                from app.services.badcase_detection_service import BadcaseDetectionService
+                                badcase_service = BadcaseDetectionService()
+                                is_badcase = badcase_service.detect_badcase(question.business_id)
+                                if is_badcase:
+                                    self.logger.info(f"问题 {question.business_id} 被标记为badcase")
+                            except Exception as e:
+                                self.logger.error(f"检测badcase时出错 {question.business_id}: {str(e)}")
+
                     # 提交当前问题的评分
                     try:
                         db.session.commit()
@@ -593,34 +641,33 @@ class AIProcessingService:
             }
     
     def _get_unclassified_questions(
-        self, 
-        limit: Optional[int] = None, 
+        self,
+        limit: Optional[int] = None,
         days_back: int = 1
     ) -> List[Question]:
-        """获取未分类的问题"""
-        cutoff_time = datetime.utcnow() - timedelta(days=days_back)
-        
+        """获取未分类的问题 - 查找所有状态为pending或classification_failed的问题"""
+        self.logger.info(f"查找所有待分类问题（不限制时间范围）")
+
         query = db.session.query(Question).filter(
             and_(
-                Question.created_at >= cutoff_time,
                 Question.classification.is_(None) | (Question.classification == ''),
                 Question.processing_status.in_(['pending', 'classification_failed'])
             )
         ).order_by(Question.created_at.desc())
-        
+
         if limit:
             query = query.limit(limit)
-        
+
         return query.all()
     
     def _get_questions_for_answer_generation(
-        self, 
-        limit: Optional[int] = None, 
+        self,
+        limit: Optional[int] = None,
         days_back: int = 1
     ) -> List[Question]:
         """获取需要生成答案的问题"""
         cutoff_time = datetime.utcnow() - timedelta(days=days_back)
-        
+
         query = db.session.query(Question).filter(
             and_(
                 Question.created_at >= cutoff_time,
@@ -633,10 +680,10 @@ class AIProcessingService:
                 )
             )
         ).order_by(Question.created_at.desc())
-        
+
         if limit:
             query = query.limit(limit)
-        
+
         return query.all()
     
     def _get_questions_for_scoring(
@@ -647,13 +694,13 @@ class AIProcessingService:
         """获取需要评分的问题组（按问题分组，包含多个AI模型答案）"""
         cutoff_time = datetime.utcnow() - timedelta(days=days_back)
         
-        # 查询有答案但未评分的问题
+        # 查询有答案的问题（优化：只查询已生成答案但未评分的问题）
         questions_with_answers = db.session.query(Question).join(Answer).filter(
             and_(
                 Question.created_at >= cutoff_time,
                 Question.classification.isnot(None),
                 Question.classification != '',
-                Answer.is_scored == False,
+                Question.processing_status.in_(['answers_generated', 'scoring']),
                 Answer.answer_text.isnot(None),
                 Answer.answer_text != ''
             )
@@ -684,15 +731,33 @@ class AIProcessingService:
                 answers_by_type[answer.assistant_type] = {
                     'id': answer.id,
                     'answer_text': answer.answer_text,
-                    'assistant_type': answer.assistant_type
+                    'assistant_type': answer.assistant_type,
+                    'is_scored': answer.is_scored
                 }
             
-            # 只有包含多个AI模型答案的问题才进行评分
-            if len(answers_by_type) >= 1:  # 至少有一个答案
-                question_groups.append({
-                    'question': question,
-                    'answers': answers_by_type
-                })
+            # 只有包含完整三个AI模型答案且未评分的问题才进行评分（符合设计要求）
+            # 注意：数据库中实际存储的是 yoyo, doubao, xiaotian
+            required_types = {'yoyo', 'doubao', 'xiaotian'}
+            available_types = set(answers_by_type.keys())
+
+            if required_types.issubset(available_types):  # 必须有完整的三个答案
+                # 检查三个答案是否都未评分
+                all_unscored = all(
+                    not answers_by_type[ai_type]['is_scored']
+                    for ai_type in required_types
+                )
+
+                if all_unscored:
+                    question_groups.append({
+                        'question': question,
+                        'answers': answers_by_type
+                    })
+                    self.logger.info(f"添加问题到评分队列: {question.business_id} (包含{len(required_types)}个AI答案)")
+                else:
+                    self.logger.debug(f"跳过问题 {question.business_id}：已有答案被评分")
+            else:
+                missing_types = required_types - available_types
+                self.logger.info(f"跳过问题 {question.business_id}：缺少答案类型 {missing_types}, 现有类型 {available_types}")
         
         return question_groups
     
@@ -717,7 +782,47 @@ class AIProcessingService:
             query = query.limit(limit)
         
         return query.all()
-    
+
+    def _check_question_scoring_complete(self, question_business_id: str) -> bool:
+        """检查问题的所有答案是否都已完成评分"""
+        try:
+            # 查询该问题的所有答案
+            answers = db.session.query(Answer).filter_by(
+                question_business_id=question_business_id
+            ).all()
+
+            if not answers:
+                self.logger.warning(f"问题 {question_business_id} 没有找到任何答案")
+                return False
+
+            # 检查是否有完整的三个AI模型答案
+            required_types = {'yoyo', 'doubao', 'xiaotian'}
+            answers_by_type = {}
+
+            for answer in answers:
+                if answer.assistant_type in required_types:
+                    answers_by_type[answer.assistant_type] = answer
+
+            # 必须有完整的三个AI模型答案
+            if not required_types.issubset(set(answers_by_type.keys())):
+                missing_types = required_types - set(answers_by_type.keys())
+                self.logger.debug(f"问题 {question_business_id} 缺少答案类型: {missing_types}")
+                return False
+
+            # 检查所有必需的答案是否都已评分
+            for assistant_type in required_types:
+                answer = answers_by_type[assistant_type]
+                if not answer.is_scored:
+                    self.logger.debug(f"问题 {question_business_id} 的 {assistant_type} 答案尚未评分")
+                    return False
+
+            self.logger.debug(f"问题 {question_business_id} 所有答案都已完成评分")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"检查问题 {question_business_id} 评分完成状态时出错: {str(e)}")
+            return False
+
     def _convert_score(self, api_score: float) -> Optional[int]:
         """将API返回的评分（0-100）转换为1-5分"""
         if api_score is None or api_score < 0:

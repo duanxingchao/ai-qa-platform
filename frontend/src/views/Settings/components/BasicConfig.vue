@@ -1,19 +1,17 @@
 <template>
-  <el-card class="basic-config">
-    <template #header>
-      <div class="card-header">
-        <span>⚙️ 基础配置</span>
-        <el-button 
-          type="primary" 
-          size="small" 
-          @click="handleSave"
-          :loading="saving"
-        >
-          保存配置
-        </el-button>
-      </div>
-    </template>
-    
+  <div class="basic-config">
+    <div class="config-header">
+      <h3 class="config-title">⚙️ 基础配置</h3>
+      <el-button
+        type="primary"
+        size="small"
+        @click="handleSave"
+        :loading="saving"
+      >
+        保存配置
+      </el-button>
+    </div>
+
     <el-form :model="config" label-width="140px">
       <!-- 功能开关区域 -->
       <div class="config-section">
@@ -52,49 +50,64 @@
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="工作流间隔">
-              <el-input-number
-                v-model="config.workflowIntervalMinutes"
-                :min="1"
-                :max="60"
-                controls-position="right"
-                style="width: 100%"
-                size="large"
-              />
-              <div class="config-tip">分钟 - 自动执行工作流的间隔时间</div>
+              <div class="input-control-group">
+                <div class="number-input-wrapper">
+                  <el-input-number
+                    v-model="config.workflowIntervalMinutes"
+                    :min="1"
+                    :max="60"
+                    controls-position="right"
+                    size="default"
+                    class="compact-number-input"
+                  />
+                  <span class="input-unit">分钟</span>
+                </div>
+                <div class="config-tip">自动执行工作流的间隔时间</div>
+              </div>
             </el-form-item>
           </el-col>
 
           <el-col :span="8">
             <el-form-item label="批处理大小">
-              <el-input-number
-                v-model="config.batchSize"
-                :min="1"
-                :max="1000"
-                controls-position="right"
-                style="width: 100%"
-                size="large"
-              />
-              <div class="config-tip">条 - 每次处理的数据量</div>
+              <div class="input-control-group">
+                <div class="number-input-wrapper">
+                  <el-input-number
+                    v-model="config.batchSize"
+                    :min="1"
+                    :max="1000"
+                    controls-position="right"
+                    size="default"
+                    class="compact-number-input"
+                  />
+                  <span class="input-unit">条</span>
+                </div>
+                <div class="config-tip">每次处理的数据量</div>
+              </div>
             </el-form-item>
           </el-col>
 
           <el-col :span="8">
             <el-form-item label="最小批处理">
-              <el-input-number
-                v-model="config.minBatchSize"
-                :min="1"
-                :max="100"
-                controls-position="right"
-                style="width: 100%"
-                size="large"
-              />
-              <div class="config-tip">条 - 低于此数量时挂起</div>
+              <div class="input-control-group">
+                <div class="number-input-wrapper">
+                  <el-input-number
+                    v-model="config.minBatchSize"
+                    :min="1"
+                    :max="100"
+                    controls-position="right"
+                    size="default"
+                    class="compact-number-input"
+                  />
+                  <span class="input-unit">条</span>
+                </div>
+                <div class="config-tip">低于此数量时挂起</div>
+              </div>
             </el-form-item>
           </el-col>
         </el-row>
       </div>
     </el-form>
-  </el-card>
+  </div>
 </template>
 
 <script setup>
@@ -125,15 +138,24 @@ const handleSave = async () => {
 
 <style scoped>
 .basic-config {
-  margin-bottom: 16px;
+  padding: 24px;
+  border-bottom: 1px solid #e4e7ed;
 }
 
-.card-header {
+.config-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-weight: 600;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.config-title {
+  margin: 0;
+  color: #303133;
   font-size: 16px;
+  font-weight: 600;
 }
 
 .config-section {
@@ -150,10 +172,11 @@ const handleSave = async () => {
 }
 
 .config-tip {
-  font-size: 13px;
-  color: #606266;
-  margin-top: 6px;
+  font-size: 12px;
+  color: #909399;
   line-height: 1.4;
+  margin: 0;
+  padding-left: 2px; /* 与输入框左边缘对齐 */
 }
 
 .el-form-item {
@@ -171,12 +194,44 @@ const handleSave = async () => {
   font-weight: 500;
 }
 
-:deep(.el-input-number) {
-  width: 100%;
+/* 输入控件组容器 */
+.input-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-:deep(.el-input-number .el-input__inner) {
+/* 数字输入框容器 */
+.number-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px; /* 确保容器高度一致 */
+}
+
+/* 紧凑型数字输入框 */
+.compact-number-input {
+  width: 100px !important;
+  flex-shrink: 0;
+}
+
+/* 单位文字 */
+.input-unit {
   font-size: 14px;
+  color: #606266;
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 32px; /* 与输入框高度对齐 */
+}
+
+:deep(.compact-number-input .el-input__inner) {
+  font-size: 14px;
+  text-align: center;
+}
+
+:deep(.compact-number-input .el-input-number__increase),
+:deep(.compact-number-input .el-input-number__decrease) {
+  width: 28px;
 }
 
 @media (max-width: 1200px) {
@@ -188,6 +243,27 @@ const handleSave = async () => {
 @media (max-width: 768px) {
   .config-section .el-row .el-col {
     margin-bottom: 16px;
+  }
+
+  /* 移动端数字输入框调整 */
+  .compact-number-input {
+    width: 80px !important;
+  }
+
+  .number-input-wrapper {
+    gap: 6px;
+  }
+
+  .input-unit {
+    font-size: 13px;
+  }
+
+  .config-tip {
+    font-size: 11px;
+  }
+
+  .input-control-group {
+    gap: 4px;
   }
 }
 </style>

@@ -52,7 +52,7 @@
                 </el-input>
                 <el-select v-model="assistantFilter" placeholder="筛选AI类型" style="width: 120px;">
                   <el-option label="全部" value=""></el-option>
-                  <el-option label="原始模型" value="our_ai"></el-option>
+                  <el-option label="yoyo模型" value="yoyo"></el-option>
                   <el-option label="豆包模型" value="doubao"></el-option>
                   <el-option label="小天模型" value="xiaotian"></el-option>
                 </el-select>
@@ -349,7 +349,7 @@ export default {
     // 工具函数
     const getModelName = (type) => {
       const names = {
-        'our_ai': '原始模型',
+        'yoyo': 'yoyo模型',
         'doubao': '豆包模型',
         'xiaotian': '小天模型'
       }
@@ -358,7 +358,7 @@ export default {
 
     const getModelTagType = (type) => {
       const types = {
-        'our_ai': '',
+        'yoyo': '',
         'doubao': 'success',
         'xiaotian': 'warning'
       }

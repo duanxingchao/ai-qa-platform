@@ -3,6 +3,7 @@
 """
 from datetime import datetime
 from app.utils.database import db
+from app.utils.datetime_helper import utc_to_beijing_str
 
 class Question(db.Model):
     """问题表模型"""
@@ -27,7 +28,15 @@ class Question(db.Model):
     # 状态管理字段
     is_deleted = db.Column(db.Boolean, default=False)
     processing_status = db.Column(db.String(20), default='pending', index=True)
-    
+
+    # Badcase相关字段
+    is_badcase = db.Column(db.Boolean, default=False, index=True)
+    badcase_detected_at = db.Column(db.DateTime)
+    badcase_review_status = db.Column(db.String(20), default='pending', index=True)
+    badcase_dimensions = db.Column(db.Text)  # JSON格式存储低分维度信息
+    reviewed_at = db.Column(db.DateTime)
+    reviewed_by = db.Column(db.Integer)  # 复核人员ID
+
     # 时间戳
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -47,7 +56,7 @@ class Question(db.Model):
             'pageid': self.pageid,
             'devicetypename': self.devicetypename,
             'query': self.query,
-            'sendmessagetime': self.sendmessagetime.isoformat() if self.sendmessagetime else None,
+            'sendmessagetime': utc_to_beijing_str(self.sendmessagetime) if self.sendmessagetime else None,
             'classification': self.classification,
             'serviceid': self.serviceid,
             'qatype': self.qatype,
@@ -56,8 +65,13 @@ class Question(db.Model):
             'isstopanswer': self.isstopanswer,
             'is_deleted': self.is_deleted,
             'processing_status': self.processing_status,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+            'is_badcase': self.is_badcase,
+            'badcase_detected_at': utc_to_beijing_str(self.badcase_detected_at) if self.badcase_detected_at else None,
+            'badcase_review_status': self.badcase_review_status,
+            'badcase_dimensions': self.badcase_dimensions,
+            'reviewed_at': utc_to_beijing_str(self.reviewed_at) if self.reviewed_at else None,
+            'created_at': utc_to_beijing_str(self.created_at) if self.created_at else None,
+            'updated_at': utc_to_beijing_str(self.updated_at) if self.updated_at else None
         }
     
     def update_status(self, status):

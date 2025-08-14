@@ -370,21 +370,26 @@ class SchedulerService:
                     and_(
                         Question.classification.isnot(None),
                         Question.classification != '',
-                        Question.processing_status.in_(['classified', 'generating'])
+                        Question.processing_status.in_(['classified', 'generating', 'answers_generated'])
                     )
                 ).count()
-                
+
                 if questions_needing_answers >= min_batch_size:
                     self.logger.info(f"🔍 检测到 {questions_needing_answers} 条问题需要生成答案")
                     return True
-                
+
                 # 检查评分阶段：是否有未评分的答案
-                unscored_answers = db.session.query(Answer).filter(
-                    Answer.is_scored == False
+                # 优化：检查有完整答案但未完成评分的问题
+                unscored_questions = db.session.query(Question).filter(
+                    and_(
+                        Question.processing_status.in_(['answers_generated', 'scoring']),
+                        Question.classification.isnot(None),
+                        Question.classification != ''
+                    )
                 ).count()
-                
-                if unscored_answers >= min_batch_size:
-                    self.logger.info(f"🔍 检测到 {unscored_answers} 条答案需要评分")
+
+                if unscored_questions >= min_batch_size:
+                    self.logger.info(f"🔍 检测到 {unscored_questions} 条问题需要评分")
                     return True
                 
                 self.logger.info("🔍 没有检测到足够的待处理数据")
@@ -505,14 +510,56 @@ class SchedulerService:
             return {'success': False, 'message': error_msg}
     
     def _execute_answer_generation_phase(self, app, workflow_id: str) -> Dict[str, Any]:
-        """执行答案生成阶段"""
+        """执行答案生成阶段（支持手动模式和API模式切换）"""
         self.logger.info(f"开始执行答案生成阶段 [workflow: {workflow_id}]")
-        
+
         try:
-            from app.services.ai_processing_service import ai_processing_service
-            result = ai_processing_service.process_answer_generation_batch()
-            return result
-            
+            with app.app_context():
+                from app.services.system_config_service import SystemConfigService
+                from app.services.answer_generation_service import AnswerGenerationService
+
+                # 获取答案生成模式配置
+                config_service = SystemConfigService()
+                answer_generation_mode = config_service.get_config('workflow.answer_generation_mode', 'manual')
+
+                self.logger.info(f"当前答案生成模式: {answer_generation_mode}")
+
+                if answer_generation_mode == 'manual':
+                    # 手动模式：检查是否有待导出的问题
+                    answer_service = AnswerGenerationService()
+                    pending_count = answer_service.get_export_questions_count()
+
+                    if pending_count > 0:
+                        return {
+                            'success': True,
+                            'message': f'手动模式：有{pending_count}个问题待导出Excel进行答案生成',
+                            'pending_count': pending_count,
+                            'mode': 'manual',
+                            'action_required': 'export_excel'
+                        }
+                    else:
+                        return {
+                            'success': True,
+                            'message': '手动模式：无待处理问题',
+                            'pending_count': 0,
+                            'mode': 'manual',
+                            'action_required': 'none'
+                        }
+
+                elif answer_generation_mode == 'api':
+                    # API模式：调用原有的API生成逻辑
+                    from app.services.ai_processing_service import ai_processing_service
+                    result = ai_processing_service.process_answer_generation_batch()
+                    result['mode'] = 'api'
+                    return result
+
+                else:
+                    return {
+                        'success': False,
+                        'message': f'未知的答案生成模式: {answer_generation_mode}',
+                        'mode': answer_generation_mode
+                    }
+
         except Exception as e:
             error_msg = f"答案生成阶段异常: {str(e)}"
             self.logger.error(error_msg)
@@ -796,18 +843,40 @@ class SchedulerService:
         try:
             if self.scheduler is None:
                 return False
-                
+
             self.scheduler.resume_job(job_id)
-            
+
             with self._lock:
                 if job_id in self.tasks_status:
                     self.tasks_status[job_id]['enabled'] = True
-            
+
             self.logger.info(f"恢复定时任务成功: {job_id}")
             return True
-            
+
         except Exception as e:
             self.logger.error(f"恢复定时任务失败: {str(e)}")
+            return False
+
+    def trigger_job(self, job_id: str) -> bool:
+        """立即执行定时任务"""
+        try:
+            if self.scheduler is None:
+                return False
+
+            # 获取任务并立即执行
+            job = self.scheduler.get_job(job_id)
+            if job is None:
+                self.logger.error(f"任务不存在: {job_id}")
+                return False
+
+            # 立即执行任务
+            job.modify(next_run_time=datetime.now())
+
+            self.logger.info(f"立即执行定时任务成功: {job_id}")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"立即执行定时任务失败: {str(e)}")
             return False
     
     def get_scheduler_status(self) -> Dict[str, Any]:

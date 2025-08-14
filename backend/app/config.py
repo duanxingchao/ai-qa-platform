@@ -35,7 +35,7 @@ class Config:
     MAX_PAGE_SIZE = 100
     
     # 外部API配置
-    CLASSIFY_API_URL = os.environ.get('CLASSIFY_API_URL') or 'http://localhost:8001'
+    CLASSIFY_API_URL = os.environ.get('CLASSIFY_API_URL') or 'http://localhost:8005'
     DOUBAO_API_URL = os.environ.get('DOUBAO_API_URL') or 'http://localhost:8002'  # Mock豆包API
     XIAOTIAN_API_URL = os.environ.get('XIAOTIAN_API_URL') or 'http://localhost:8003'  # Mock小天API
     SCORE_API_URL = os.environ.get('SCORE_API_URL') or 'http://localhost:8004'
@@ -57,10 +57,19 @@ class Config:
         'Content-Type': 'application/json',
         'User-Agent': 'AI-QA-Platform/1.0'
     }
+
+    # API模式配置
+    API_MODE = os.environ.get('API_MODE', 'mock')  # 'mock' 或 'external'
+    USE_MOCK_CLASSIFICATION = os.environ.get('USE_MOCK_CLASSIFICATION', 'true').lower() == 'true'
+
+    # 分类服务配置
+    CLASSIFICATION_ENABLED = True
+    CLASSIFICATION_BATCH_SIZE = int(os.environ.get('CLASSIFICATION_BATCH_SIZE', 50))
+    CLASSIFICATION_CONFIDENCE_THRESHOLD = float(os.environ.get('CLASSIFICATION_CONFIDENCE_THRESHOLD', 0.8))
     
     # 自动化工作流配置（统一调度）
     AUTO_PROCESS_ON_STARTUP = False  # 启动时立即处理已有数据 - 已禁用以避免自动处理
-    SCHEDULER_ENABLED = False  # 完全禁用调度器 - 防止自动启动任何任务
+    SCHEDULER_ENABLED = True  # 启用调度器 - 允许定时任务管理
     WORKFLOW_INTERVAL_MINUTES = int(os.environ.get('WORKFLOW_INTERVAL_MINUTES', 3))  # 工作流执行间隔（分钟）
     DATA_CHECK_ENABLED = True  # 是否启用数据检测
     AUTO_SUSPEND_WHEN_NO_DATA = True  # 无数据时自动挂起

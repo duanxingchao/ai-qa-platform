@@ -3,6 +3,7 @@
 """
 from datetime import datetime
 from app.utils.database import db
+from app.utils.datetime_helper import utc_to_beijing_str
 
 class Score(db.Model):
     """评分表模型"""
@@ -64,7 +65,7 @@ class Score(db.Model):
             'dimension_5_name': self.dimension_5_name,
             'average_score': float(self.average_score) if self.average_score else None,
             'comment': self.comment,
-            'rated_at': self.rated_at.isoformat() if self.rated_at else None,
+            'rated_at': utc_to_beijing_str(self.rated_at) if self.rated_at else None,
             'dimensions': self.get_dimensions_detail()
         }
     
@@ -79,13 +80,13 @@ class Score(db.Model):
         }
     
     def calculate_average(self):
-        """计算平均分"""
+        """计算平均分，确保精度正确"""
         scores = [self.score_1, self.score_2, self.score_3, self.score_4, self.score_5]
         valid_scores = [s for s in scores if s is not None]
-        
+
         if valid_scores:
             avg = sum(valid_scores) / len(valid_scores)
-            self.average_score = round(avg, 2)
+            self.average_score = round(avg, 2)  # 确保保留2位小数
         else:
             self.average_score = None
             
@@ -118,9 +119,16 @@ class Score(db.Model):
         dimension_scores = []
         
         for key, value in api_response_item.items():
-            if key not in ['模型名称', '理由'] and isinstance(value, int):
-                dimension_keys.append(key)
-                dimension_scores.append(value)
+            if key not in ['模型名称', '理由']:
+                try:
+                    # 尝试将值转换为整数
+                    score_value = int(value) if isinstance(value, str) else value
+                    if isinstance(score_value, int) and 1 <= score_value <= 5:
+                        dimension_keys.append(key)
+                        dimension_scores.append(score_value)
+                except (ValueError, TypeError):
+                    # 如果转换失败，跳过这个字段
+                    continue
         
         # 按顺序赋值（最多5个维度）
         for i, (dim_name, dim_score) in enumerate(zip(dimension_keys[:5], dimension_scores[:5])):

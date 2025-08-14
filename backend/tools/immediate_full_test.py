@@ -71,16 +71,21 @@ def generate_today_data():
         
         # 生成50条今天的数据
         now = datetime.now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         success_count = 0
-        
+
         for i in range(50):
             # 随机选择问题和答案
             query = random.choice(questions)
             answer = random.choice(answers)
-            
-            # 生成今天内的随机时间
-            random_seconds = random.randint(0, 24*60*60-1)
-            send_time = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(seconds=random_seconds)
+
+            # 生成当天内且不超过当前时间的随机时间
+            total_seconds_today = int((now - today_start).total_seconds())
+            if total_seconds_today > 0:
+                random_seconds = random.randint(0, total_seconds_today)
+                send_time = today_start + timedelta(seconds=random_seconds)
+            else:
+                send_time = now
             
             try:
                 cursor.execute("""

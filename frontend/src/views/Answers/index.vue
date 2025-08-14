@@ -97,7 +97,7 @@
           <template #default="{ row }">
             <div class="answer-status">
               <el-tag 
-                v-if="row.answers?.original" 
+                v-if="row.answers?.yoyo"
                 size="small" 
                 type="primary"
               >原始</el-tag>
@@ -182,27 +182,27 @@
         <el-row :gutter="20" class="answers-comparison">
           <!-- 原始答案 -->
           <el-col :span="8">
-            <el-card class="answer-card original" shadow="hover">
+            <el-card class="answer-card yoyo" shadow="hover">
               <template #header>
                 <div class="answer-header">
                   <span class="answer-title">
                     <el-icon><User /></el-icon>
-                    原始答案
+                    yoyo答案
                   </span>
-                  <el-tag type="primary" size="small">原始AI</el-tag>
+                  <el-tag type="primary" size="small">yoyo</el-tag>
                 </div>
               </template>
               <div class="answer-content">
-                <div class="answer-text" v-if="currentComparison.answers?.original">
-                  {{ currentComparison.answers.original.answer_text }}
+                <div class="answer-text" v-if="currentComparison.answers?.yoyo">
+                  {{ currentComparison.answers.yoyo.answer_text }}
                 </div>
                 <div class="no-answer" v-else>
                   <el-icon><Warning /></el-icon>
                   暂无答案
                 </div>
-                <div class="answer-meta" v-if="currentComparison.answers?.original">
-                  <div>创建时间: {{ formatDateTime(currentComparison.answers.original.created_at) }}</div>
-                  <div v-if="currentComparison.answers.original.is_scored">
+                <div class="answer-meta" v-if="currentComparison.answers?.yoyo">
+                  <div>创建时间: {{ formatDateTime(currentComparison.answers.yoyo.created_at) }}</div>
+                  <div v-if="currentComparison.answers.yoyo.is_scored">
                     <el-tag type="success" size="small">已评分</el-tag>
                   </div>
                 </div>
@@ -281,7 +281,7 @@
             <el-col :span="12">
               <div class="score-details">
                 <div 
-                  v-for="model in ['original', 'doubao', 'xiaotian']" 
+                  v-for="model in ['yoyo', 'doubao', 'xiaotian']"
                   :key="model"
                   class="score-item"
                   v-if="getModelScore(model)"
@@ -328,7 +328,7 @@
       <el-form :model="batchScoreForm" label-width="100px">
         <el-form-item label="选择模型">
           <el-checkbox-group v-model="batchScoreForm.models">
-            <el-checkbox label="original">原始AI</el-checkbox>
+            <el-checkbox label="yoyo">yoyo</el-checkbox>
             <el-checkbox label="doubao">豆包</el-checkbox>
             <el-checkbox label="xiaotian">小天</el-checkbox>
           </el-checkbox-group>
@@ -403,7 +403,7 @@ export default {
     
     // 批量评分表单
     const batchScoreForm = reactive({
-      models: ['original', 'doubao', 'xiaotian'],
+      models: ['yoyo', 'doubao', 'xiaotian'],
       comment: ''
     })
 
@@ -530,7 +530,7 @@ export default {
       }
       
       // 添加各模型数据
-      const models = ['original', 'doubao', 'xiaotian']
+      const models = ['yoyo', 'doubao', 'xiaotian']
       const colors = ['#409EFF', '#67C23A', '#E6A23C']
       
       models.forEach((model, index) => {
@@ -690,7 +690,7 @@ export default {
 
     const getModelDisplayName = (model) => {
       const names = {
-        original: '原始AI',
+        yoyo: 'yoyo',
         doubao: '豆包',
         xiaotian: '小天'
       }
@@ -699,7 +699,7 @@ export default {
 
     const getModelColor = (model) => {
       const colors = {
-        original: '#409EFF',
+        yoyo: '#409EFF',
         doubao: '#67C23A', 
         xiaotian: '#E6A23C'
       }
@@ -910,7 +910,7 @@ export default {
           }
         }
         
-        &.original {
+        &.yoyo {
           border-left: 4px solid #409eff;
         }
         

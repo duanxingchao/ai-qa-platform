@@ -7,7 +7,11 @@ from datetime import datetime, timedelta
 from app.api import question_bp
 from app.models.question import Question
 from app.models.answer import Answer
+from app.models.score import Score
+from app.models.review import ReviewStatus
 from app.utils.database import db
+from app.models.reclassification import QuestionReclassification
+from app.services.classification_service import ClassificationService
 
 @question_bp.route('', methods=['GET'])
 def get_questions():
@@ -155,46 +159,68 @@ def get_question_statistics():
 
 @question_bp.route('/<int:question_id>', methods=['GET'])
 def get_question_detail(question_id):
-    """获取问题详情"""
+    """获取问题详情 - 增强版，返回所有相关信息"""
     try:
-        question = Question.query.get_or_404(question_id)
-        
+        question = db.session.query(Question).filter_by(id=question_id).first()
+        if not question:
+            return jsonify({
+                'success': False,
+                'message': '问题不存在'
+            }), 404
+
         # 获取相关答案
         answers = Answer.query.filter_by(question_business_id=question.business_id).all()
-        
-        # 序列化答案数据
+
+        # 序列化答案数据，包含评分信息
         answers_data = []
         for answer in answers:
-            answers_data.append({
-                'id': answer.id,
-                'question_business_id': answer.question_business_id,
-                'answer_text': answer.answer_text,
-                'assistant_type': answer.assistant_type,
-                'is_scored': answer.is_scored,
-                'answer_time': answer.answer_time.isoformat() if answer.answer_time else None,
-                'created_at': answer.created_at.isoformat() if answer.created_at else None,
-                'updated_at': answer.updated_at.isoformat() if answer.updated_at else None
-            })
+            answer_dict = answer.to_dict(include_score=True)
+
+            # 获取该答案的所有评分历史
+            scores = Score.query.filter_by(answer_id=answer.id).order_by(Score.rated_at.desc()).all()
+            answer_dict['score_history'] = [score.to_dict() for score in scores]
+
+            answers_data.append(answer_dict)
         
-        # 序列化问题数据
-        data = {
-            'id': question.id,
-            'business_id': question.business_id,
-            'pageid': question.pageid,
-            'devicetypename': question.devicetypename,
-            'query': question.query,
-            'sendmessagetime': question.sendmessagetime.isoformat() if question.sendmessagetime else None,
-            'classification': question.classification,
-            'serviceid': question.serviceid,
-            'qatype': question.qatype,
-            'intent': question.intent,
-            'iskeyboardinput': question.iskeyboardinput,
-            'isstopanswer': question.isstopanswer,
-            'processing_status': question.processing_status,
-            'created_at': question.created_at.isoformat() if question.created_at else None,
-            'updated_at': question.updated_at.isoformat() if question.updated_at else None,
-            'answers': answers_data
+        # 获取审核状态信息
+        review_status = ReviewStatus.query.filter_by(question_business_id=question.business_id).first()
+        review_data = None
+        if review_status:
+            review_data = {
+                'id': review_status.id,
+                'is_reviewed': review_status.is_reviewed,
+                'reviewer_id': review_status.reviewer_id,
+                'review_comment': review_status.review_comment,
+                'reviewed_at': review_status.reviewed_at.isoformat() if review_status.reviewed_at else None
+            }
+
+        # 统计信息
+        stats = {
+            'total_answers': len(answers_data),
+            'scored_answers': sum(1 for answer in answers_data if answer['is_scored']),
+            'assistant_types': list(set(answer['assistant_type'] for answer in answers_data)),
+            'avg_scores': {}
         }
+
+        # 计算各AI类型的平均分
+        for assistant_type in stats['assistant_types']:
+            type_scores = []
+            for answer in answers_data:
+                if answer['assistant_type'] == assistant_type and answer.get('score'):
+                    avg_score = answer['score'].get('average_score')
+                    if avg_score:
+                        type_scores.append(float(avg_score))
+
+            if type_scores:
+                stats['avg_scores'][assistant_type] = round(sum(type_scores) / len(type_scores), 2)
+
+        # 序列化问题数据 - 完整版
+        data = question.to_dict()
+        data.update({
+            'answers': answers_data,
+            'review_status': review_data,
+            'statistics': stats
+        })
         
         return jsonify({
             'success': True,
@@ -210,47 +236,27 @@ def get_question_detail(question_id):
 
 @question_bp.route('/categories', methods=['GET'])
 def get_question_categories():
-    """获取问题分类列表"""
+    """获取问题分类列表 - 动态从数据库获取"""
     try:
-        # 从数据库中获取所有不为空的分类
-        categories = db.session.query(Question.classification).filter(
-            and_(
-                Question.classification.isnot(None),
-                Question.classification != ''
-            )
-        ).distinct().all()
-        
+        # 从数据库动态获取分类及数量
+        classifications_with_count = ClassificationService.get_classifications_with_count()
+
         # 转换为前端需要的格式
         data = []
-        for category in categories:
-            if category[0]:  # 确保不为空
-                data.append({
-                    'value': category[0],
-                    'label': category[0]
-                })
-        
-        # 添加一些常见的分类（如果数据库中没有的话）
-        common_categories = [
-            {'value': '技术问题', 'label': '技术问题'},
-            {'value': '产品咨询', 'label': '产品咨询'},
-            {'value': '使用指导', 'label': '使用指导'},
-            {'value': '故障报告', 'label': '故障报告'},
-            {'value': '功能建议', 'label': '功能建议'},
-            {'value': '其他', 'label': '其他'}
-        ]
-        
-        # 去重并合并
-        existing_values = {item['value'] for item in data}
-        for category in common_categories:
-            if category['value'] not in existing_values:
-                data.append(category)
-        
+        for classification_dict in classifications_with_count:
+            data.append({
+                'value': classification_dict['name'],
+                'label': f"{classification_dict['name']} ({classification_dict['count']})",
+                'count': classification_dict['count']
+            })
+
         return jsonify({
             'success': True,
             'data': data,
-            'message': '获取分类列表成功'
+            'total_categories': len(data),
+            'message': f'成功获取{len(data)}个分类'
         })
-        
+
     except Exception as e:
         return jsonify({
             'success': False,
@@ -259,34 +265,56 @@ def get_question_categories():
 
 @question_bp.route('/<int:question_id>/reclassify', methods=['POST'])
 def reclassify_question(question_id):
-    """重新分类问题"""
+    """重新分类问题（支持指定新分类并记录历史）"""
     try:
-        question = Question.query.get_or_404(question_id)
-        
-        # 这里可以调用AI分类API重新分类
-        # 暂时模拟一个简单的重新分类逻辑
-        from app.services.ai_processing_service import AIProcessingService
-        ai_service = AIProcessingService()
-        
-        # 调用分类服务
-        result = ai_service.process_classification_batch(limit=1)
-        
-        if result.get('success'):
-            return jsonify({
-                'success': True,
-                'message': '重新分类成功'
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'message': '重新分类失败'
-            }), 500
-        
+        data = request.get_json() or {}
+        new_classification = data.get('new_classification')
+        reason = data.get('reason')
+        changed_by = data.get('changed_by')
+
+        question = db.session.get(Question, question_id)
+        if not question:
+            return jsonify({'success': False, 'message': '问题不存在'}), 404
+
+        if not new_classification:
+            return jsonify({'success': False, 'message': '新分类不能为空'}), 400
+
+        # 确保历史表存在（首次部署免迁移保护）
+        try:
+            QuestionReclassification.__table__.create(bind=db.engine, checkfirst=True)
+        except Exception:
+            pass
+
+        old_classification = question.classification
+
+        # 先更新问题分类并提交，确保核心业务成功
+        # 注意：重新分类只更改分类字段，不影响处理状态
+        question.classification = new_classification
+        question.updated_at = datetime.utcnow()
+        db.session.commit()
+
+        # 历史记录尽力写入，不影响主流程
+        try:
+            history = QuestionReclassification(
+                question_business_id=question.business_id,
+                old_classification=old_classification,
+                new_classification=new_classification,
+                reason=reason,
+                changed_by=changed_by
+            )
+            db.session.add(history)
+            db.session.commit()
+            history_data = history.to_dict()
+        except Exception as he:
+            db.session.rollback()
+            history_data = None
+
+        return jsonify({'success': True, 'message': '重新分类成功', 'data': history_data})
+
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': f'重新分类失败: {str(e)}'
-        }), 500
+        db.session.rollback()
+        # 返回更详细的错误信息，便于前端提示（开发阶段）
+        return jsonify({'success': False, 'message': f'重新分类失败: {type(e).__name__}: {str(e)}'}), 500
 
 @question_bp.route('/batch', methods=['POST'])
 def batch_update_questions():
@@ -309,21 +337,49 @@ def batch_update_questions():
             }), 400
         
         if action == 'reclassify':
-            # 批量重新分类
-            questions = Question.query.filter(Question.id.in_(ids)).all()
-            
+            # 批量重新分类到指定新分类
+            new_classification = data.get('new_classification')
+            reason = data.get('reason')
+            changed_by = data.get('changed_by')
+
+            if not new_classification:
+                return jsonify({'success': False, 'message': '新分类不能为空'}), 400
+
+            # 确保历史表存在（首次部署免迁移保护）
+            try:
+                QuestionReclassification.__table__.create(bind=db.engine, checkfirst=True)
+            except Exception:
+                pass
+
+            questions = db.session.query(Question).filter(Question.id.in_(ids)).all()
+
+            # 保存旧分类值用于历史记录
+            old_classifications = {}
             for question in questions:
-                # 这里可以调用AI分类API
-                # 暂时标记为待重新分类
-                question.processing_status = 'pending'
+                old_classifications[question.business_id] = question.classification
+                # 注意：重新分类只更改分类字段，不影响处理状态
+                question.classification = new_classification
                 question.updated_at = datetime.utcnow()
-            
+
+            # 先提交主表更新
             db.session.commit()
-            
-            return jsonify({
-                'success': True,
-                'message': f'成功标记 {len(questions)} 个问题进行重新分类'
-            })
+
+            # 历史记录尽力写入
+            try:
+                for question in questions:
+                    history = QuestionReclassification(
+                        question_business_id=question.business_id,
+                        old_classification=old_classifications.get(question.business_id),
+                        new_classification=new_classification,
+                        reason=reason,
+                        changed_by=changed_by
+                    )
+                    db.session.add(history)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+
+            return jsonify({'success': True, 'message': f'成功重新分类 {len(questions)} 个问题'})
         
         else:
             return jsonify({

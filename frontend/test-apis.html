@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .api-test {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .api-test h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .loading {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            max-height: 300px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>API测试页面</h1>
+    <button onclick="testAllApis()">测试所有API</button>
+    
+    <div id="api-tests">
+        <!-- API测试结果将在这里显示 -->
+    </div>
+
+    <script>
+        const APIs = [
+            {
+                name: '大屏仪表板数据',
+                url: '/api/display/dashboard',
+                method: 'GET'
+            },
+            {
+                name: 'AI分类评分数据',
+                url: '/api/display/ai-category-scores',
+                method: 'GET'
+            },
+            {
+                name: '热门问题分类',
+                url: '/api/display/hot-categories',
+                method: 'GET'
+            },
+            {
+                name: '词云数据',
+                url: '/api/analysis/word-cloud?time_range=week&limit=20',
+                method: 'GET'
+            },
+            {
+                name: 'Badcase统计',
+                url: '/api/badcase/statistics',
+                method: 'GET'
+            },
+            {
+                name: '问题分类列表',
+                url: '/api/questions/categories',
+                method: 'GET'
+            },
+            {
+                name: '访问统计',
+                url: '/api/stats/access',
+                method: 'GET'
+            }
+        ];
+
+        async function testApi(api) {
+            const testDiv = document.getElementById(`test-${api.name.replace(/\s+/g, '-')}`);
+            const statusDiv = testDiv.querySelector('.status');
+            const resultDiv = testDiv.querySelector('.result');
+            
+            statusDiv.className = 'status loading';
+            statusDiv.textContent = '测试中...';
+            resultDiv.innerHTML = '';
+            
+            try {
+                const response = await fetch(api.url, {
+                    method: api.method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success !== false) {
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = '✅ 成功';
+                    resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.textContent = '❌ 失败';
+                    resultDiv.innerHTML = `<pre>状态码: ${response.status}\n响应: ${JSON.stringify(data, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = '❌ 错误';
+                resultDiv.innerHTML = `<pre>错误: ${error.message}</pre>`;
+            }
+        }
+
+        function createApiTestDiv(api) {
+            const testId = `test-${api.name.replace(/\s+/g, '-')}`;
+            return `
+                <div class="api-test" id="${testId}">
+                    <h3>${api.name}</h3>
+                    <p><strong>URL:</strong> ${api.url}</p>
+                    <p><strong>方法:</strong> ${api.method}</p>
+                    <div class="status">未测试</div>
+                    <button onclick="testApi(${JSON.stringify(api).replace(/"/g, '&quot;')})">测试此API</button>
+                    <div class="result"></div>
+                </div>
+            `;
+        }
+
+        function initPage() {
+            const container = document.getElementById('api-tests');
+            container.innerHTML = APIs.map(createApiTestDiv).join('');
+        }
+
+        async function testAllApis() {
+            for (const api of APIs) {
+                await testApi(api);
+                // 添加小延迟避免过快请求
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+</body>
+</html>

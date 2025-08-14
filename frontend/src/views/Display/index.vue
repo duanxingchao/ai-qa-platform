@@ -27,7 +27,9 @@
         <div class="metric-icon">{{ metric.icon }}</div>
         <div class="metric-content">
           <div class="metric-value">
-            <span class="number" ref="metricNumbers">{{ metric.value }}</span>
+            <span class="number" ref="metricNumbers">
+              {{ metric.weeklyValue !== null ? `${metric.value}/${metric.weeklyValue}` : metric.value }}
+            </span>
             <span class="unit">{{ metric.unit }}</span>
           </div>
           <div class="metric-label">{{ metric.label }}</div>
@@ -48,15 +50,9 @@
           <div ref="trendChart" class="chart-container compact-chart" style="margin: -5px -10px;"></div>
         </div>
 
-        <!-- 系统健康度 - 改为预留区域 -->
-        <div class="health-card">
-          <h3 class="card-title">💚 系统健康度</h3>
-          <div class="health-circle">
-            <div ref="healthGauge" class="health-gauge"></div>
-          </div>
-          <div class="placeholder-content">
-            <div class="placeholder-text">此区域预留给后续功能</div>
-          </div>
+        <!-- 热词分析 -->
+        <div class="word-cloud-card">
+          <WordCloudChart :time-range="'week'" :auto-refresh="true" />
         </div>
       </section>
 
@@ -173,13 +169,9 @@
 
       <!-- 右侧分析区域 -->
       <section class="right-panel">
-        <!-- 预留空间，等待后续功能 -->
-        <div class="placeholder-card">
-          <h3 class="card-title">📊 数据分析模块</h3>
-          <div class="placeholder-content">
-            <div class="placeholder-icon">📈</div>
-            <div class="placeholder-text">此区域预留给数据分析功能</div>
-          </div>
+        <!-- badcase 分析及优化模块 -->
+        <div class="badcase-analysis-module">
+          <BigScreenBadcase />
         </div>
 
         <!-- 热门问题分类 -->
@@ -245,9 +237,15 @@ import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import { getDisplayDashboard } from '@/api/display'
 import { getAiCategoryScores } from '@/api/display'
+import BigScreenBadcase from '@/components/BigScreenBadcase.vue'
+import WordCloudChart from '@/components/WordCloudChart.vue'
 
 export default {
   name: 'Display',
+  components: {
+    BigScreenBadcase,
+    WordCloudChart
+  },
   setup() {
     // 响应式数据
     const isFullscreen = ref(false)
@@ -379,8 +377,8 @@ export default {
           }
         },
         legend: {
-          data: ['问题数量', '答案数量', '评分数量'],
-          textStyle: { 
+          data: ['同步&清洗数', '分类数量', '评分数量'],
+          textStyle: {
             color: '#8892b0',
             fontSize: isCompact ? 10 : 12
           },
@@ -413,7 +411,7 @@ export default {
         },
         series: [
           {
-            name: '问题数量',
+            name: '同步&清洗数',
             type: 'line',
             smooth: true,
             data: trendWeek.value.map(item => item.questions),
@@ -426,10 +424,10 @@ export default {
             }
           },
           {
-            name: '答案数量',
+            name: '分类数量',
             type: 'line',
             smooth: true,
-            data: trendWeek.value.map(item => item.answers),
+            data: trendWeek.value.map(item => item.classifications),
             lineStyle: { color: '#00ff88', width: isCompact ? 2 : 3 },
             areaStyle: {
               color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -715,21 +713,29 @@ export default {
       const firstRowData = aiCategoryScores.value.slice(0, 8)
       const secondRowData = aiCategoryScores.value.slice(8, 16)
 
+      console.log('更新AI分类评分图表:', {
+        totalCategories: aiCategoryScores.value.length,
+        firstRowCount: firstRowData.length,
+        secondRowCount: secondRowData.length,
+        firstRowCategories: firstRowData.map(item => item.category),
+        secondRowCategories: secondRowData.map(item => item.category)
+      })
+
       const option = {
         backgroundColor: 'transparent',
         grid: [
           {
             left: '5%',
             right: '5%',
-            top: '5%',
-            height: '40%',
+            top: '8%',
+            height: '38%',
             containLabel: true
           },
           {
             left: '5%',
             right: '5%',
-            top: '55%',
-            height: '40%',
+            top: '52%',
+            height: '38%',
             containLabel: true
           }
         ],
@@ -751,7 +757,8 @@ export default {
             axisLabel: {
               color: '#ffffff',
               fontSize: 10,
-              rotate: 45
+              rotate: 45,
+              interval: 0  // 强制显示所有标签
             },
             axisLine: {
               lineStyle: { color: '#444' }
@@ -764,7 +771,8 @@ export default {
             axisLabel: {
               color: '#ffffff',
               fontSize: 10,
-              rotate: 45
+              rotate: 45,
+              interval: 0  // 强制显示所有标签
             },
             axisLine: {
               lineStyle: { color: '#444' }
@@ -812,7 +820,7 @@ export default {
             type: 'bar',
             xAxisIndex: 0,
             yAxisIndex: 0,
-            data: firstRowData.map(item => item.YOYO),
+            data: firstRowData.map(item => item.YOYO || 0),
             itemStyle: {
               color: '#00d4ff'
             },
@@ -824,7 +832,7 @@ export default {
             type: 'bar',
             xAxisIndex: 0,
             yAxisIndex: 0,
-            data: firstRowData.map(item => item.豆包),
+            data: firstRowData.map(item => item.豆包 || 0),
             itemStyle: {
               color: '#00ff88'
             },
@@ -836,47 +844,50 @@ export default {
             type: 'bar',
             xAxisIndex: 0,
             yAxisIndex: 0,
-            data: firstRowData.map(item => item.小天),
+            data: firstRowData.map(item => item.小天 || 0),
             itemStyle: {
               color: '#ff6b6b'
             },
             barWidth: '20%'
           },
-          // 第二排 - YOYO
+          // 第二排 - YOYO (使用不同的名称避免冲突)
           {
-            name: 'YOYO',
+            name: 'YOYO_2',
             type: 'bar',
             xAxisIndex: 1,
             yAxisIndex: 1,
-            data: secondRowData.map(item => item.YOYO),
+            data: secondRowData.map(item => item.YOYO || 0),
             itemStyle: {
               color: '#00d4ff'
             },
-            barWidth: '20%'
+            barWidth: '20%',
+            legendHoverLink: false  // 不与图例交互
           },
-          // 第二排 - 豆包
+          // 第二排 - 豆包 (使用不同的名称避免冲突)
           {
-            name: '豆包',
+            name: '豆包_2',
             type: 'bar',
             xAxisIndex: 1,
             yAxisIndex: 1,
-            data: secondRowData.map(item => item.豆包),
+            data: secondRowData.map(item => item.豆包 || 0),
             itemStyle: {
               color: '#00ff88'
             },
-            barWidth: '20%'
+            barWidth: '20%',
+            legendHoverLink: false  // 不与图例交互
           },
-          // 第二排 - 小天
+          // 第二排 - 小天 (使用不同的名称避免冲突)
           {
-            name: '小天',
+            name: '小天_2',
             type: 'bar',
             xAxisIndex: 1,
             yAxisIndex: 1,
-            data: secondRowData.map(item => item.小天),
+            data: secondRowData.map(item => item.小天 || 0),
             itemStyle: {
               color: '#ff6b6b'
             },
-            barWidth: '20%'
+            barWidth: '20%',
+            legendHoverLink: false  // 不与图例交互
           }
         ],
         tooltip: {
@@ -896,7 +907,14 @@ export default {
         }
       }
 
-      aiCategoryChartInstance.setOption(option)
+      aiCategoryChartInstance.setOption(option, true)  // 第二个参数为true表示不合并，完全替换
+
+      // 强制重新调整图表大小
+      setTimeout(() => {
+        if (aiCategoryChartInstance) {
+          aiCategoryChartInstance.resize()
+        }
+      }, 50)
     }
 
     // 更新图表数据
@@ -906,13 +924,13 @@ export default {
         trendWeek.value = data.trends_24h.map(item => ({
           time: item.time,
           questions: item.questions,
-          answers: item.answers,
+          classifications: item.classifications,
           scores: item.scores
         }))
         const option = trendChartInstance.getOption()
         option.xAxis[0].data = trendWeek.value.map(item => item.time)
         option.series[0].data = trendWeek.value.map(item => item.questions)
-        option.series[1].data = trendWeek.value.map(item => item.answers)
+        option.series[1].data = trendWeek.value.map(item => item.classifications)
         option.series[2].data = trendWeek.value.map(item => item.scores)
         trendChartInstance.setOption(option)
       }
@@ -954,33 +972,37 @@ export default {
         {
           key: 'total_data_count',
           icon: '📊',
-          value: '加载中...',
-          unit: '',
-          label: '总计数据量',
+          value: '加载中',
+          weeklyValue: null, // 累计数据量不需要显示第二个数值
+          unit: '次',
+          label: '累计数据量',
           trend: 'up'
         },
         {
-          key: 'weekly_update_count',
+          key: 'weekly_new_data_count',
           icon: '📈',
-          value: '加载中...',
-          unit: '',
-          label: '周更新数据量',
+          value: '加载中',
+          weeklyValue: null, // 周新增数据量不需要显示第二个数值
+          unit: '次',
+          label: '周新增数据量',
           trend: 'up'
         },
         {
-          key: 'weekly_scored_count',
+          key: 'weekly_classified_count',
           icon: '⚡',
-          value: '加载中...',
-          unit: '',
+          value: '加载中',
+          weeklyValue: null, // 周抽样跑测量只显示本周数据
+          unit: '次',
           label: '周抽样跑测量',
           trend: 'up'
         },
         {
           key: 'platform_visits',
           icon: '👥',
-          value: '加载中...',
-          unit: '',
-          label: '平台访问量',
+          value: '加载中',
+          weeklyValue: '...',
+          unit: '次',
+          label: '平台访问量（累计/本周）',
           trend: 'up'
         }
       ]
@@ -989,8 +1011,8 @@ export default {
       processFlow.value = [
         { name: '同步&清洗', count: 0, rate: 0, icon: '📊' },
         { name: 'AI垂域分类', count: 0, rate: 0, icon: '🏷️' },
-        { name: 'AI竞品跑测', count: 0, rate: 0, icon: '🤖' },
-        { name: 'AI答案评测', count: 0, rate: 0, icon: '⭐' },
+        { name: '竞品跑测', count: 0, rate: 0, icon: '🤖' },
+        { name: 'AI竞品横评', count: 0, rate: 0, icon: '⭐' },
         { name: '人工复核', count: 0, rate: 0, icon: '✅' }
       ]
       
@@ -1016,14 +1038,14 @@ export default {
       splitEventsToRows(realtimeEvents.value)
 
       trendWeek.value = [
-        { time: '一周前', questions: 0, answers: 0, scores: 0 },
-        { time: '6天前', questions: 0, answers: 0, scores: 0 },
-        { time: '5天前', questions: 0, answers: 0, scores: 0 },
-        { time: '4天前', questions: 0, answers: 0, scores: 0 },
-        { time: '3天前', questions: 0, answers: 0, scores: 0 },
-        { time: '2天前', questions: 0, answers: 0, scores: 0 },
-        { time: '昨天', questions: 0, answers: 0, scores: 0 },
-        { time: '今天', questions: 0, answers: 0, scores: 0 }
+        { time: '一周前', questions: 0, classifications: 0, scores: 0 },
+        { time: '6天前', questions: 0, classifications: 0, scores: 0 },
+        { time: '5天前', questions: 0, classifications: 0, scores: 0 },
+        { time: '4天前', questions: 0, classifications: 0, scores: 0 },
+        { time: '3天前', questions: 0, classifications: 0, scores: 0 },
+        { time: '2天前', questions: 0, classifications: 0, scores: 0 },
+        { time: '昨天', questions: 0, classifications: 0, scores: 0 },
+        { time: '今天', questions: 0, classifications: 0, scores: 0 }
       ]
     }
 
@@ -1032,24 +1054,57 @@ export default {
       try {
         const response = await getAiCategoryScores()
         if (response && response.success && response.data) {
-          aiCategoryScores.value = response.data.chart_data || []
+          const realData = response.data.chart_data || []
+          console.log('AI分类评分数据加载成功:', {
+            dataSource: response.data.data_source,
+            timeRange: response.data.time_range,
+            categoriesCount: realData.length,
+            categories: realData.map(item => item.category)
+          })
+
+          if (realData.length > 0) {
+            aiCategoryScores.value = realData
+            console.log('使用真实数据，共', realData.length, '个分类')
+            console.log('分类详情:', realData.map(item => ({
+              category: item.category,
+              YOYO: item.YOYO,
+              豆包: item.豆包,
+              小天: item.小天
+            })))
+          } else {
+            console.warn('API返回空数据，使用模拟数据')
+            aiCategoryScores.value = generateMockAiCategoryData()
+          }
+
           // 更新AI分类评分图表
-          updateAiCategoryChart()
+          setTimeout(() => {
+            updateAiCategoryChart()
+          }, 100)
+        } else {
+          console.warn('API响应格式异常，使用模拟数据')
+          aiCategoryScores.value = generateMockAiCategoryData()
+          setTimeout(() => {
+            updateAiCategoryChart()
+          }, 100)
         }
       } catch (error) {
         console.error('加载AI分类评分数据失败:', error)
+        console.warn('API调用失败，使用模拟数据')
         // 使用模拟数据
         aiCategoryScores.value = generateMockAiCategoryData()
-        updateAiCategoryChart()
+        setTimeout(() => {
+          updateAiCategoryChart()
+        }, 100)
       }
     }
 
-    // 生成模拟AI分类评分数据
+    // 生成模拟AI分类评分数据（与后端16个分类保持一致）
     const generateMockAiCategoryData = () => {
       const categories = [
-        '教育', '医疗健康', '经济金融', '科技技术', '法律',
-        '娱乐', '体育运动', '旅游', '美食餐饮', '购物消费',
-        '交通出行', '房产置业', '工作职场', '情感关系', '生活服务', '其他'
+        '技术问题', '产品使用', '业务咨询', '功能建议', '故障排查',
+        '其他', '工程问题', '科学问题', '教育问题', '经济问题',
+        '账户管理', '系统优化', '安全设置', '数据分析',
+        '用户体验', '性能优化'
       ]
 
       return categories.map(category => ({
@@ -1075,35 +1130,39 @@ export default {
           if (data.core_metrics) {
             coreMetrics.value = [
               {
-                key: 'total_sync_count',
+                key: 'total_data_count',
                 icon: '📊',
-                value: data.core_metrics.total_sync_count || 0,
-                unit: '个',
-                label: '总计数据量',
-                trend: 'up'
-              },
-              {
-                key: 'monthly_sync_count',
-                icon: '📈',
-                value: data.core_metrics.monthly_sync_count || 0,
-                unit: '个',
-                label: '月更新数据量',
-                trend: 'up'
-              },
-              {
-                key: 'daily_sync_count',
-                icon: '⚡',
-                value: data.core_metrics.daily_sync_count || 0,
-                unit: '个',
-                label: '日新增数据量',
-                trend: 'up'
-              },
-              {
-                key: 'daily_visits',
-                icon: '👥',
-                value: data.core_metrics.daily_visits || '暂无数据',
+                value: data.core_metrics.total_data_count || data.core_metrics.total_sync_count || 0,
+                weeklyValue: null, // 累计数据量不需要显示第二个数值
                 unit: '次',
-                label: '平台访问量',
+                label: '累计数据量',
+                trend: 'up'
+              },
+              {
+                key: 'weekly_new_data_count',
+                icon: '📈',
+                value: data.core_metrics.weekly_new_data_count || data.core_metrics.weekly_sync_count || 0,
+                weeklyValue: null, // 周新增数据量不需要显示第二个数值
+                unit: '次',
+                label: '周新增数据量',
+                trend: 'up'
+              },
+              {
+                key: 'weekly_classified_count',
+                icon: '⚡',
+                value: data.core_metrics.weekly_classified_count || data.core_metrics.weekly_scored_count || 0,
+                weeklyValue: null, // 周抽样跑测量只显示本周数据
+                unit: '次',
+                label: '周抽样跑测量',
+                trend: 'up'
+              },
+              {
+                key: 'platform_visits',
+                icon: '👥',
+                value: data.core_metrics.platform_visits || data.core_metrics.total_visits || 0,
+                weeklyValue: data.core_metrics.weekly_visits || 0,
+                unit: '次',
+                label: '平台访问量（累计/本周）',
                 trend: 'up'
               }
             ]
@@ -1127,7 +1186,7 @@ export default {
             trendWeek.value = data.trends_24h.map(item => ({
               time: item.time,
               questions: item.questions,
-              answers: item.answers,
+              classifications: item.classifications,
               scores: item.scores
             }))
           }
@@ -1150,32 +1209,36 @@ export default {
             key: 'total_data_count',
             icon: '📊',
             value: 1024,
-            unit: '个',
-            label: '总计数据量',
+            weeklyValue: null, // 累计数据量不需要显示第二个数值
+            unit: '次',
+            label: '累计数据量',
             trend: 'up'
           },
           {
-            key: 'weekly_update_count',
+            key: 'weekly_new_data_count',
             icon: '📈',
             value: 156,
-            unit: '个',
-            label: '周更新数据量',
+            weeklyValue: null, // 周新增数据量不需要显示第二个数值
+            unit: '次',
+            label: '周新增数据量',
             trend: 'up'
           },
           {
-            key: 'weekly_scored_count',
+            key: 'weekly_classified_count',
             icon: '⚡',
             value: 42,
-            unit: '个',
+            weeklyValue: null, // 周抽样跑测量只显示本周数据
+            unit: '次',
             label: '周抽样跑测量',
             trend: 'up'
           },
           {
             key: 'platform_visits',
             icon: '👥',
-            value: '暂无数据',
+            value: 512,
+            weeklyValue: 67,
             unit: '次',
-            label: '平台访问量',
+            label: '平台访问量（累计/本周）',
             trend: 'up'
           }
         ]
@@ -1183,8 +1246,8 @@ export default {
         processFlow.value = [
           { name: '同步&清洗', count: 573, rate: 100, icon: '📊', status: '异常' },
           { name: 'AI垂域分类', count: 371, rate: 64.7, icon: '🏷️', status: '进行中' },
-          { name: 'AI竞品跑测', count: 1599, rate: 279.1, icon: '🤖', status: '空闲' },
-          { name: 'AI答案评测', count: 990, rate: 61.9, icon: '⭐', status: '进行中' },
+          { name: '竞品跑测', count: 1599, rate: 279.1, icon: '🤖', status: '空闲' },
+          { name: 'AI竞品横评', count: 990, rate: 61.9, icon: '⭐', status: '进行中' },
           { name: '人工复核', count: 0, rate: 0, icon: '✅', status: '进行中' }
         ]
         
@@ -1374,6 +1437,7 @@ export default {
       font-weight: bold;
       background: linear-gradient(45deg, #00d4ff, #00ff88);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
       text-align: center;
       text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
@@ -1455,21 +1519,21 @@ export default {
         display: flex;
         align-items: baseline;
         gap: 4px;
-        
+
         .number {
-          font-size: 36px;
+          font-size: 24px;
           font-weight: bold;
           color: #00d4ff;
         }
-        
+
         .unit {
-          font-size: 16px;
+          font-size: 14px;
           color: #8892b0;
         }
       }
-      
+
       .metric-label {
-        font-size: 14px;
+        font-size: 12px;
         color: #8892b0;
         margin-top: 4px;
       }
@@ -1498,7 +1562,7 @@ export default {
 }
 
 // 卡片通用样式
-.chart-card, .status-card, .health-card, .placeholder-card {
+.chart-card, .status-card, .word-cloud-card, .placeholder-card {
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(0, 212, 255, 0.2);
@@ -1571,7 +1635,7 @@ export default {
   .chart-container {
     height: calc(100% - 50px);  /* 减去标题高度 */
     width: 100%;
-    min-height: 300px;
+    min-height: 400px;  /* 增加最小高度以容纳两排分类 */
   }
 }
 
@@ -1814,50 +1878,12 @@ export default {
   100% { opacity: 0.7; transform: scale(1); }
 }
 
-// 系统健康度卡片
-.health-card {
-  flex: 1;  /* 允许健康度卡片占用可用空间 */
+// 热词分析卡片
+.word-cloud-card {
+  flex: 1;  /* 允许词云卡片占用可用空间 */
   display: flex;
   flex-direction: column;
-  
-  .health-circle {
-    flex: 0;  /* 修改为不伸缩 */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 150px;  /* 设置最小高度 */
-    margin-bottom: 10px;
-    
-    .health-gauge {
-      width: 150px;
-      height: 150px;
-    }
-    
-    .health-score {
-      position: absolute;
-      text-align: center;
-      
-      .score-number {
-        font-size: 36px;
-        font-weight: bold;
-        color: #00d4ff;
-      }
-      
-      .score-unit {
-        font-size: 18px;
-        color: #8892b0;
-      }
-    }
-  }
-  
-  .placeholder-content {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #8892b0;
-    font-style: italic;
-  }
+  min-height: 300px;  /* 设置最小高度 */
 }
 
 // 处理流程图
@@ -2015,8 +2041,22 @@ export default {
 
 // 右侧面板的卡片
 .right-panel {
-  .placeholder-card, .chart-card {
+  .placeholder-card, .chart-card, .badcase-analysis-module {
     flex: 1;  /* 右侧两个卡片平分空间 */
+  }
+
+  // badcase分析模块样式
+  .badcase-analysis-module {
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 12px;
+    padding: 0; // 让内部组件自己控制padding
+    overflow: hidden;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
   }
   
   .placeholder-content {

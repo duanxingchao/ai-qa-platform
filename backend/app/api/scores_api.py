@@ -136,7 +136,7 @@ def get_score_statistics():
         radar_data = []
         for stat in model_stats:
             model_name_map = {
-                'our_ai': '原始模型',
+                'yoyo': '原始模型',
                 'doubao': '豆包模型', 
                 'xiaotian': '小天模型'
             }
