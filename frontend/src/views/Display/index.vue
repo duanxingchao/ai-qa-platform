@@ -7,7 +7,7 @@
         <span class="lab-name">智能实验室</span>
       </div>
       <div class="header-center">
-        <h1>AI自动化测试中心实时监控大屏</h1>
+        <h1>智能问答系统实时监控大屏 - 分支版本</h1>
       </div>
       <div class="header-right">
         <div class="current-time">{{ currentTime }}</div>
