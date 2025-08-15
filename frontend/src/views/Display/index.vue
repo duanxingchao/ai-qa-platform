@@ -1,5 +1,5 @@
 <template>
-  <div class="display-screen" :class="{ 'fullscreen': isFullscreen }">
+  <div class="display-screen bigscreen-responsive" :class="{ 'fullscreen': isFullscreen }">
     <!-- 顶部标题栏 -->
     <header class="display-header">
       <div class="header-left">
@@ -7,7 +7,7 @@
         <span class="lab-name">智能实验室</span>
       </div>
       <div class="header-center">
-        <h1>智能问答系统实时监控大屏 - 分支版本</h1>
+        <h1>AI自动化测试中心实时监控大屏</h1>
       </div>
       <div class="header-right">
         <div class="current-time">{{ currentTime }}</div>
@@ -1372,6 +1372,65 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+// 响应式CSS变量
+:root {
+  --base-font-size: 16px;
+  --header-height: 80px;
+  --card-padding: 20px;
+  --gap-size: 20px;
+  --border-radius: 12px;
+  --metric-icon-size: 32px;
+  --metric-value-size: 24px;
+}
+
+// 大屏幕优化 (1920px+)
+@media (min-width: 1920px) {
+  :root {
+    --base-font-size: 18px;
+    --header-height: 90px;
+    --card-padding: 24px;
+    --gap-size: 24px;
+    --metric-icon-size: 36px;
+    --metric-value-size: 28px;
+  }
+}
+
+// 中等屏幕 (1366px-1919px)
+@media (max-width: 1919px) and (min-width: 1367px) {
+  :root {
+    --base-font-size: 16px;
+    --header-height: 75px;
+    --card-padding: 18px;
+    --gap-size: 18px;
+    --metric-icon-size: 30px;
+    --metric-value-size: 22px;
+  }
+}
+
+// 小屏幕 (1024px-1366px)
+@media (max-width: 1366px) {
+  :root {
+    --base-font-size: 14px;
+    --header-height: 60px;
+    --card-padding: 15px;
+    --gap-size: 15px;
+    --metric-icon-size: 24px;
+    --metric-value-size: 18px;
+  }
+}
+
+// 平板 (768px-1023px)
+@media (max-width: 1023px) {
+  :root {
+    --base-font-size: 12px;
+    --header-height: 50px;
+    --card-padding: 12px;
+    --gap-size: 12px;
+    --metric-icon-size: 20px;
+    --metric-value-size: 16px;
+  }
+}
+
 // 确保没有溢出的CSS重置
 * {
   box-sizing: border-box;
@@ -1382,6 +1441,7 @@ export default {
   max-width: 100vw;
   background: linear-gradient(135deg, #0a1628 0%, #112A43 30%, #1B4A73 100%);
   color: #ffffff;
+  font-size: var(--base-font-size);
   font-family: 'Microsoft YaHei', sans-serif;
   position: relative;
   overflow-x: hidden;
@@ -1403,8 +1463,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 40px;
-  height: 80px;
+  padding: 0 clamp(20px, 4vw, 40px);
+  height: var(--header-height);
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(0, 212, 255, 0.2);
@@ -1412,28 +1472,28 @@ export default {
   .header-left {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: clamp(10px, 2vw, 15px);
     flex: 1;
-    
+
     .logo {
-      font-size: 32px;
+      font-size: clamp(24px, 3vw, 32px);
     }
-    
+
     .lab-name {
-      font-size: 14px;
+      font-size: clamp(12px, 1.5vw, 14px);
       color: #8892b0;
     }
   }
-  
+
   .header-center {
     flex: 2;
     display: flex;
     justify-content: center;
     align-items: center;
-    
+
     h1 {
       margin: 0;
-      font-size: 32px;
+      font-size: clamp(20px, 3.5vw, 32px);
       font-weight: bold;
       background: linear-gradient(45deg, #00d4ff, #00ff88);
       -webkit-background-clip: text;
@@ -1441,19 +1501,19 @@ export default {
       -webkit-text-fill-color: transparent;
       text-align: center;
       text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
-      letter-spacing: 2px;
+      letter-spacing: clamp(1px, 0.2vw, 2px);
     }
   }
-  
+
   .header-right {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 30px;
+    gap: clamp(15px, 3vw, 30px);
     flex: 1;
-    
+
     .current-time {
-      font-size: 18px;
+      font-size: clamp(14px, 2vw, 18px);
       font-weight: bold;
       color: #00d4ff;
     }
@@ -1500,18 +1560,23 @@ export default {
 .metrics-bar {
   display: flex;
   justify-content: space-around;
-  padding: 30px 0;
+  padding: clamp(15px, 3vw, 30px) 0;
   background: rgba(0, 0, 0, 0.2);
-  margin: 20px 40px 0 40px;
-  border-radius: 12px;
-  
+  margin: var(--gap-size) clamp(20px, 4vw, 40px) 0 clamp(20px, 4vw, 40px);
+  border-radius: var(--border-radius);
+  flex-wrap: wrap;
+  gap: var(--gap-size);
+
   .metric-item {
     display: flex;
     align-items: center;
-    gap: 15px;
-    
+    gap: clamp(10px, 2vw, 15px);
+    min-width: 200px;
+    flex: 1;
+    justify-content: center;
+
     .metric-icon {
-      font-size: 32px;
+      font-size: var(--metric-icon-size);
     }
     
     .metric-content {
@@ -1521,27 +1586,27 @@ export default {
         gap: 4px;
 
         .number {
-          font-size: 24px;
+          font-size: var(--metric-value-size);
           font-weight: bold;
           color: #00d4ff;
         }
 
         .unit {
-          font-size: 14px;
+          font-size: clamp(12px, 1.5vw, 14px);
           color: #8892b0;
         }
       }
 
       .metric-label {
-        font-size: 12px;
+        font-size: clamp(10px, 1.2vw, 12px);
         color: #8892b0;
         margin-top: 4px;
       }
     }
-    
+
     .metric-trend {
-      font-size: 20px;
-      
+      font-size: clamp(16px, 2vw, 20px);
+
       &.up { color: #00ff88; }
       &.down { color: #ff4444; }
       &.stable { color: #8892b0; }
@@ -1552,11 +1617,11 @@ export default {
 // 主要内容区域
 .display-main {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;  /* 三等分 */
-  grid-template-rows: minmax(320px, auto) 1fr;  /* 第一行固定高度，第二行填充剩余空间 */
-  gap: 25px;
-  padding: 30px 40px;
-  height: calc(100vh - 350px);
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  grid-template-rows: minmax(300px, auto) 1fr;
+  gap: var(--gap-size);
+  padding: clamp(15px, 3vw, 30px) clamp(20px, 4vw, 40px);
+  height: calc(100vh - clamp(300px, 35vh, 350px));
   max-width: 100vw;
   overflow: hidden;
 }
@@ -1566,21 +1631,21 @@ export default {
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(0, 212, 255, 0.2);
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: var(--border-radius);
+  padding: var(--card-padding);
   overflow: hidden;
   min-width: 0;
-  height: 100%;  /* 确保所有卡片高度一致 */
+  height: 100%;
   display: flex;
   flex-direction: column;
-  
+
   .card-title {
-    margin: 0 0 20px 0;
-    font-size: 18px;
+    margin: 0 0 var(--card-padding) 0;
+    font-size: clamp(14px, 2vw, 18px);
     color: #00d4ff;
     border-bottom: 1px solid rgba(0, 212, 255, 0.2);
     padding-bottom: 10px;
-    flex-shrink: 0;  /* 防止标题被压缩 */
+    flex-shrink: 0;
   }
 }
 

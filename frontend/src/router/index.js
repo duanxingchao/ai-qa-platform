@@ -107,6 +107,12 @@ const routes = [
     name: 'Debug',
     component: () => import('@/views/Debug.vue'),
     meta: { title: 'API调试', requiresAuth: false }
+  },
+  {
+    path: '/responsive-test',
+    name: 'ResponsiveTest',
+    component: () => import('@/views/ResponsiveTest.vue'),
+    meta: { title: '响应式测试', requiresAuth: false }
   }
 ]
 
