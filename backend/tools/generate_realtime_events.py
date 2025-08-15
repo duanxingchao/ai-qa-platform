@@ -50,7 +50,7 @@ def generate_realtime_events():
             model_name = {
                 'doubao': '豆包',
                 'xiaotian': '小天',
-                'original': '原始'
+                'yoyo': 'YOYO'
             }.get(answer.assistant_type, answer.assistant_type)
             
             events.append({

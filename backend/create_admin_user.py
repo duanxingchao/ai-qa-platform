@@ -30,6 +30,7 @@ def create_admin_user():
             # 创建管理员用户
             admin_user = User(
                 username='admin',
+                display_name='系统管理员',
                 role='admin',
                 status='active'
             )

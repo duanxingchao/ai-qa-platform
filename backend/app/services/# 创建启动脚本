@@ -1,0 +1,33 @@
+# 创建启动脚本
+cat > quick_start.sh << 'EOF'
+#!/bin/bash
+echo "🚀 启动AI问答平台..."
+
+# 启动后端
+echo "📡 启动后端服务..."
+cd backend && python run.py &
+BACKEND_PID=$!
+
+# 等待后端启动
+sleep 3
+
+# 启动前端
+echo "🌐 启动前端服务..."
+cd ../frontend && npm run dev &
+FRONTEND_PID=$!
+
+echo "✅ 服务启动完成！"
+echo "前端地址: http://localhost:5173"
+echo "后端地址: http://localhost:8088"
+echo ""
+echo "按 Ctrl+C 停止所有服务"
+
+# 等待用户中断
+wait
+EOF
+
+# 赋予执行权限
+chmod +x quick_start.sh
+
+# 运行
+./quick_start.sh

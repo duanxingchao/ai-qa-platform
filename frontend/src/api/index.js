@@ -1,5 +1,7 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import { getAuthToken } from '@/utils/auth'
+import { clearUserInfo } from '@/stores/user'
 
 // 创建axios实例
 const request = axios.create({
@@ -14,9 +16,9 @@ const request = axios.create({
 request.interceptors.request.use(
   config => {
     // 添加认证token
-    const token = localStorage.getItem('token')
+    const token = getAuthToken()
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`
+      config.headers.Authorization = `Bearer ${token}`
     }
     return config
   },
@@ -55,13 +57,10 @@ request.interceptors.response.use(
           break
         case 401:
           message = '未授权，请重新登录'
-          // 清除token并跳转到登录页
-          localStorage.removeItem('token')
-          localStorage.removeItem('userInfo')
-          // 如果当前不在登录页，则跳转到登录页
-          if (window.location.hash !== '#/login') {
-            window.location.hash = '#/login'
-          }
+          // 清除用户信息并跳转到登录页
+          clearUserInfo()
+          localStorage.removeItem('auth_token')
+          window.location.href = '/login'
           break
         case 403:
           message = '拒绝访问'

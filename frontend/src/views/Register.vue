@@ -16,18 +16,18 @@
         <el-form-item prop="username">
           <el-input
             v-model="registerForm.username"
-            placeholder="请输入用户名"
+            placeholder="请输入登录账号（员工号码）"
             size="large"
             :prefix-icon="User"
           />
         </el-form-item>
-        
-        <el-form-item prop="email">
+
+        <el-form-item prop="display_name">
           <el-input
-            v-model="registerForm.email"
-            placeholder="请输入邮箱"
+            v-model="registerForm.display_name"
+            placeholder="请输入用户名（显示名称）"
             size="large"
-            :prefix-icon="Message"
+            :prefix-icon="User"
           />
         </el-form-item>
         
@@ -53,29 +53,19 @@
           />
         </el-form-item>
         
-        <el-form-item prop="role">
+        <el-form-item prop="apply_role">
           <el-select
-            v-model="registerForm.role"
+            v-model="registerForm.apply_role"
             placeholder="请选择申请角色"
             size="large"
             style="width: 100%"
           >
-            <el-option label="评分员" value="scorer" />
-            <el-option label="审核员" value="reviewer" />
+            <el-option label="普通用户" value="user" />
             <el-option label="管理员" value="admin" />
           </el-select>
         </el-form-item>
         
-        <el-form-item prop="reason">
-          <el-input
-            v-model="registerForm.reason"
-            type="textarea"
-            placeholder="请说明申请理由"
-            :rows="3"
-            maxlength="200"
-            show-word-limit
-          />
-        </el-form-item>
+
         
         <el-form-item>
           <el-button
@@ -102,7 +92,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { User, Lock, Message } from '@element-plus/icons-vue'
+import { User, Lock } from '@element-plus/icons-vue'
 import { register } from '@/api/auth'
 
 const router = useRouter()
@@ -111,11 +101,10 @@ const registerFormRef = ref()
 
 const registerForm = reactive({
   username: '',
-  email: '',
+  display_name: '',
   password: '',
   confirmPassword: '',
-  role: '',
-  reason: ''
+  apply_role: ''
 })
 
 const validateConfirmPassword = (rule, value, callback) => {
@@ -128,12 +117,12 @@ const validateConfirmPassword = (rule, value, callback) => {
 
 const registerRules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度在 3 到 20 个字符', trigger: 'blur' }
+    { required: true, message: '请输入登录账号', trigger: 'blur' },
+    { min: 3, max: 20, message: '登录账号长度在 3 到 20 个字符', trigger: 'blur' }
   ],
-  email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+  display_name: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 2, max: 50, message: '用户名长度在 2 到 50 个字符', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
@@ -143,28 +132,34 @@ const registerRules = {
     { required: true, message: '请确认密码', trigger: 'blur' },
     { validator: validateConfirmPassword, trigger: 'blur' }
   ],
-  role: [
+  apply_role: [
     { required: true, message: '请选择申请角色', trigger: 'change' }
-  ],
-  reason: [
-    { required: true, message: '请说明申请理由', trigger: 'blur' },
-    { min: 10, max: 200, message: '申请理由长度在 10 到 200 个字符', trigger: 'blur' }
   ]
 }
 
 const handleRegister = async () => {
   if (!registerFormRef.value) return
-  
+
   try {
     await registerFormRef.value.validate()
     loading.value = true
-    
-    await register(registerForm)
-    
+
+    const response = await register({
+      username: registerForm.username,
+      display_name: registerForm.display_name,
+      password: registerForm.password,
+      apply_role: registerForm.apply_role
+    })
+
     ElMessage.success('注册申请提交成功，请等待管理员审核')
     router.push('/login')
   } catch (error) {
     console.error('注册失败:', error)
+    if (error.response?.data?.message) {
+      ElMessage.error(error.response.data.message)
+    } else {
+      ElMessage.error('注册申请失败，请稍后重试')
+    }
   } finally {
     loading.value = false
   }

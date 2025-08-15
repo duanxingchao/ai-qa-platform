@@ -71,7 +71,7 @@
             <el-dropdown @command="handleCommand">
               <span class="user-info">
                 <el-icon><User /></el-icon>
-                {{ userInfo?.username || '用户' }}
+                {{ userInfo?.display_name || userInfo?.username || '用户' }}
                 <el-tag v-if="userInfo?.role === 'admin'" type="danger" size="small" style="margin-left: 8px;">
                   管理员
                 </el-tag>

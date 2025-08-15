@@ -9,9 +9,10 @@ from app.utils.datetime_helper import utc_to_beijing_str
 class User(db.Model):
     """用户表模型"""
     __tablename__ = 'users'
-    
+
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(50), unique=True, nullable=False, index=True, comment='员工号码')
+    username = db.Column(db.String(50), unique=True, nullable=False, index=True, comment='员工号码/登录账号')
+    display_name = db.Column(db.String(100), nullable=False, comment='用户显示名称')
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.Enum('admin', 'user', name='user_role'), nullable=False, default='user')
     status = db.Column(db.Enum('active', 'inactive', name='user_status'), nullable=False, default='active')
@@ -36,6 +37,7 @@ class User(db.Model):
         return {
             'id': self.id,
             'username': self.username,
+            'display_name': self.display_name,
             'role': self.role,
             'status': self.status,
             'created_at': utc_to_beijing_str(self.created_at),
@@ -50,12 +52,14 @@ class User(db.Model):
 class UserApplication(db.Model):
     """用户注册申请表模型"""
     __tablename__ = 'user_applications'
-    
+
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(50), nullable=False, comment='申请的员工号码')
+    username = db.Column(db.String(50), nullable=False, comment='申请的员工号码/登录账号')
+    display_name = db.Column(db.String(100), nullable=False, comment='用户显示名称')
     password_hash = db.Column(db.String(255), nullable=False)
     apply_role = db.Column(db.Enum('admin', 'user', name='apply_role'), nullable=False, default='user')
-    status = db.Column(db.Enum('pending', 'approved', 'rejected', name='application_status'), 
+    reason = db.Column(db.Text, comment='申请理由')
+    status = db.Column(db.Enum('pending', 'approved', 'rejected', name='application_status'),
                       nullable=False, default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     reviewed_by = db.Column(db.Integer, db.ForeignKey('users.id'))
@@ -69,7 +73,9 @@ class UserApplication(db.Model):
         return {
             'id': self.id,
             'username': self.username,
+            'display_name': self.display_name,
             'apply_role': self.apply_role,
+            'reason': self.reason,
             'status': self.status,
             'created_at': utc_to_beijing_str(self.created_at),
             'reviewed_at': utc_to_beijing_str(self.reviewed_at),

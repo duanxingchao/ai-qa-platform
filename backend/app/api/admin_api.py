@@ -54,6 +54,7 @@ def get_users():
             data.append({
                 'id': user.id,
                 'username': user.username,
+                'display_name': user.display_name,
                 'role': user.role,
                 'status': user.status,
                 'login_count': user.login_count,
@@ -153,6 +154,7 @@ def get_applications():
             data.append({
                 'id': app.id,
                 'username': app.username,
+                'display_name': app.display_name,
                 'apply_role': app.apply_role,
                 'status': app.status,
                 'created_at': app.created_at.isoformat() if app.created_at else None,
@@ -184,6 +186,7 @@ def approve_application(app_id):
         # 创建新用户
         new_user = User(
             username=application.username,
+            display_name=application.display_name,
             password_hash=application.password_hash,
             role=application.apply_role,
             status='active'

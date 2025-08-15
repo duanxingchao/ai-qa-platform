@@ -42,8 +42,8 @@ def add_sample_scores():
                     base_score = random.uniform(3.5, 4.5)  # 豆包模型 3.5-4.5分
                 elif answer.assistant_type == 'xiaotian':
                     base_score = random.uniform(3.0, 4.0)  # 小天模型 3.0-4.0分
-                elif answer.assistant_type == 'original':
-                    base_score = random.uniform(4.0, 5.0)  # 原始模型 4.0-5.0分
+                elif answer.assistant_type == 'yoyo':
+                    base_score = random.uniform(4.0, 5.0)  # yoyo模型 4.0-5.0分
                 else:
                     base_score = random.uniform(3.0, 4.5)  # 其他模型 3.0-4.5分
                 

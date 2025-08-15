@@ -102,9 +102,15 @@
       >
         <el-table-column type="selection" width="55" />
         
-        <el-table-column prop="username" label="用户名" width="120">
+        <el-table-column prop="username" label="登录账号" width="120">
           <template #default="{ row }">
             <span class="username">{{ row.username }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="display_name" label="用户名" width="150">
+          <template #default="{ row }">
+            <span class="display-name">{{ row.display_name || row.username }}</span>
           </template>
         </el-table-column>
         
@@ -194,8 +200,11 @@
     >
       <div v-if="currentUser" class="user-detail">
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="用户名">
+          <el-descriptions-item label="登录账号">
             {{ currentUser.username || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="用户名">
+            {{ currentUser.display_name || currentUser.username || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="角色">
             <el-tag :type="currentUser.role === 'admin' ? 'danger' : 'primary'">

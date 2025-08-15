@@ -40,7 +40,8 @@ export function verifyToken() {
 /**
  * 用户注册申请
  * @param {Object} data - 注册数据
- * @param {string} data.username - 用户名（员工号码）
+ * @param {string} data.username - 登录账号（员工号码）
+ * @param {string} data.display_name - 用户显示名称
  * @param {string} data.password - 密码
  * @param {string} data.apply_role - 申请角色 (admin/user)
  */

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        button {
+            background: #409eff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #337ecc;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background: #f0f9ff;
+            border: 1px solid #409eff;
+            color: #409eff;
+        }
+        .error {
+            background: #fef0f0;
+            border: 1px solid #f56c6c;
+            color: #f56c6c;
+        }
+        .test-info {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 注册功能测试</h1>
+        
+        <div class="test-info">
+            <h3>测试说明：</h3>
+            <p>1. 填写注册信息（用户名、密码）</p>
+            <p>2. 选择申请角色：普通用户 或 管理员</p>
+            <p>3. 提交后等待管理员审核</p>
+        </div>
+
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="username">用户名 *</label>
+                <input type="text" id="username" name="username" required 
+                       placeholder="请输入用户名（3-20个字符）">
+            </div>
+
+            <div class="form-group">
+                <label for="password">密码 *</label>
+                <input type="password" id="password" name="password" required 
+                       placeholder="请输入密码（6-20个字符）">
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">确认密码 *</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required 
+                       placeholder="请再次输入密码">
+            </div>
+
+            <div class="form-group">
+                <label for="apply_role">申请角色 *</label>
+                <select id="apply_role" name="apply_role" required>
+                    <option value="">请选择申请角色</option>
+                    <option value="user">普通用户</option>
+                    <option value="admin">管理员</option>
+                </select>
+            </div>
+
+
+
+            <button type="submit" id="submitBtn">提交申请</button>
+        </form>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('registerForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const result = document.getElementById('result');
+        const reasonTextarea = document.getElementById('reason');
+        const charCount = document.getElementById('charCount');
+
+
+
+        // 表单提交
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            // 验证
+            if (data.password !== data.confirmPassword) {
+                showResult('两次输入的密码不一致', 'error');
+                return;
+            }
+            
+            if (data.username.length < 3 || data.username.length > 20) {
+                showResult('用户名长度应在3-20个字符之间', 'error');
+                return;
+            }
+            
+            if (data.password.length < 6 || data.password.length > 20) {
+                showResult('密码长度应在6-20个字符之间', 'error');
+                return;
+            }
+            
+
+
+            // 提交数据
+            submitBtn.disabled = true;
+            submitBtn.textContent = '提交中...';
+            
+            try {
+                const response = await fetch('http://localhost:8088/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: data.username,
+                        password: data.password,
+                        apply_role: data.apply_role
+                    })
+                });
+                
+                const responseData = await response.json();
+                
+                if (responseData.success) {
+                    showResult(`✅ ${responseData.message}`, 'success');
+                    form.reset();
+                    charCount.textContent = '0';
+                } else {
+                    showResult(`❌ ${responseData.message}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ 网络错误: ${error.message}`, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '提交申请';
+            }
+        });
+
+        function showResult(message, type) {
+            result.textContent = message;
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+            
+            // 3秒后自动隐藏成功消息
+            if (type === 'success') {
+                setTimeout(() => {
+                    result.style.display = 'none';
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>

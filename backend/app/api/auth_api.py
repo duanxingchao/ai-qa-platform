@@ -140,14 +140,15 @@ def register():
         data = request.get_json()
         if not data:
             return error_response('请求数据不能为空', 400)
-        
+
         username = data.get('username', '').strip()
+        display_name = data.get('display_name', '').strip()
         password = data.get('password', '').strip()
         apply_role = data.get('apply_role', 'user').strip()
-        
-        if not username or not password:
-            return error_response('用户名和密码不能为空', 400)
-        
+
+        if not username or not password or not display_name:
+            return error_response('账号、用户名和密码不能为空', 400)
+
         if apply_role not in ['admin', 'user']:
             return error_response('申请角色无效', 400)
         
@@ -168,6 +169,7 @@ def register():
         from werkzeug.security import generate_password_hash
         application = UserApplication(
             username=username,
+            display_name=display_name,
             password_hash=generate_password_hash(password),
             apply_role=apply_role
         )

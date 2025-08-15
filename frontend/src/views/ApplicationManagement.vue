@@ -99,9 +99,15 @@
       >
         <el-table-column type="selection" width="55" />
         
-        <el-table-column prop="username" label="用户名" width="120">
+        <el-table-column prop="username" label="登录账号" width="120">
           <template #default="{ row }">
             <el-tag type="info">{{ row.username }}</el-tag>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="display_name" label="用户名" width="150">
+          <template #default="{ row }">
+            <span class="display-name">{{ row.display_name || row.username }}</span>
           </template>
         </el-table-column>
         
@@ -192,8 +198,11 @@
     >
       <div v-if="currentApplication" class="application-detail">
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="用户名">
+          <el-descriptions-item label="登录账号">
             {{ currentApplication.username }}
+          </el-descriptions-item>
+          <el-descriptions-item label="用户名">
+            {{ currentApplication.display_name || currentApplication.username }}
           </el-descriptions-item>
           <el-descriptions-item label="申请角色">
             <el-tag :type="currentApplication.apply_role === 'admin' ? 'danger' : 'primary'">
@@ -332,7 +341,7 @@ export default {
     const approveApplication = async (application) => {
       try {
         await ElMessageBox.confirm(
-          `确认批准用户 "${application.username}" 的${application.apply_role === 'admin' ? '管理员' : '普通用户'}申请？`,
+          `确认批准用户 "${application.display_name || application.username}" (${application.username}) 的${application.apply_role === 'admin' ? '管理员' : '普通用户'}申请？`,
           '确认批准',
           {
             confirmButtonText: '确定',
