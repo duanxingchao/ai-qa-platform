@@ -1,5 +1,5 @@
 <template>
-  <div class="display-screen bigscreen-responsive" :class="{ 'fullscreen': isFullscreen }">
+  <div class="display-screen" :class="{ 'fullscreen': isFullscreen }">
     <!-- 顶部标题栏 -->
     <header class="display-header">
       <div class="header-left">
@@ -229,6 +229,40 @@
 
     <!-- 粒子背景 -->
     <div class="particles-bg" ref="particlesBg"></div>
+
+    <!-- 调试信息面板 (开发环境显示) -->
+    <div class="debug-panel" v-if="showDebugInfo">
+      <div class="debug-title">🔧 分辨率调试信息</div>
+      <div class="debug-item">
+        <span>当前分辨率:</span>
+        <span>{{ debugInfo.currentResolution }}</span>
+      </div>
+      <div class="debug-item">
+        <span>基准分辨率:</span>
+        <span>{{ debugInfo.baseResolution }}</span>
+      </div>
+      <div class="debug-item">
+        <span>缩放比例:</span>
+        <span>{{ debugInfo.scale }}</span>
+      </div>
+      <div class="debug-item">
+        <span>分辨率类:</span>
+        <span>{{ debugInfo.resolutionClass }}</span>
+      </div>
+      <div class="debug-shortcuts">
+        <div class="shortcuts-title">快捷键:</div>
+        <div class="shortcut-item">Ctrl+Alt+1: 1920x1080</div>
+        <div class="shortcut-item">Ctrl+Alt+2: 2560x1440</div>
+        <div class="shortcut-item">Ctrl+Alt+3: 3840x2160</div>
+        <div class="shortcut-item">Ctrl+Alt+D: 切换调试</div>
+      </div>
+      <button class="debug-toggle" @click="toggleDebugInfo">隐藏调试</button>
+    </div>
+
+    <!-- 调试切换按钮 (当面板隐藏时显示) -->
+    <button class="debug-toggle-btn" v-if="!showDebugInfo" @click="toggleDebugInfo">
+      🔧 调试
+    </button>
   </div>
 </template>
 
@@ -282,9 +316,18 @@ export default {
     // 分类数据
     const categoryTotalCount = ref(0)
     const categoryTimeRange = ref('近一周')
-    
+
     // 系统状态文本映射
     const systemStatusText = ref('系统正常')
+
+    // 调试信息
+    const showDebugInfo = ref(false)
+    const debugInfo = ref({
+      currentResolution: '',
+      baseResolution: '2560x1440',
+      scale: '1.000',
+      resolutionClass: 'resolution-default'
+    })
     
     // 初始化时间显示
     const updateCurrentTime = () => {
@@ -1287,6 +1330,105 @@ export default {
       // 简化版本暂时省略
     }
     
+    // 切换调试信息显示
+    const toggleDebugInfo = () => {
+      showDebugInfo.value = !showDebugInfo.value
+    }
+
+    // 模拟不同分辨率（用于测试）
+    const simulateResolution = (width, height) => {
+      // 临时修改window尺寸用于测试
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: width
+      })
+      Object.defineProperty(window, 'innerHeight', {
+        writable: true,
+        configurable: true,
+        value: height
+      })
+      applyResolutionScaling()
+    }
+
+    // 键盘快捷键处理
+    const handleKeyPress = (event) => {
+      if (event.ctrlKey && event.altKey) {
+        switch(event.key) {
+          case '1': // Ctrl+Alt+1: 1920x1080
+            simulateResolution(1920, 1080)
+            event.preventDefault()
+            break
+          case '2': // Ctrl+Alt+2: 2560x1440
+            simulateResolution(2560, 1440)
+            event.preventDefault()
+            break
+          case '3': // Ctrl+Alt+3: 3840x2160
+            simulateResolution(3840, 2160)
+            event.preventDefault()
+            break
+          case 'd': // Ctrl+Alt+D: 切换调试面板
+            toggleDebugInfo()
+            event.preventDefault()
+            break
+        }
+      }
+    }
+
+    // 分辨率自适应缩放
+    const applyResolutionScaling = () => {
+      const baseWidth = 2560  // 基准分辨率宽度
+      const baseHeight = 1440 // 基准分辨率高度
+      const currentWidth = window.innerWidth
+      const currentHeight = window.innerHeight
+
+      // 计算缩放比例（保持宽高比，取较小值避免溢出）
+      const scaleX = currentWidth / baseWidth
+      const scaleY = currentHeight / baseHeight
+      const scale = Math.min(scaleX, scaleY)
+
+      // 设置最小和最大缩放限制
+      const minScale = 0.5  // 最小50%
+      const maxScale = 2.0  // 最大200%
+      const finalScale = Math.max(minScale, Math.min(maxScale, scale))
+
+      console.log('分辨率缩放信息:', {
+        currentResolution: `${currentWidth}x${currentHeight}`,
+        baseResolution: `${baseWidth}x${baseHeight}`,
+        scaleX: scaleX.toFixed(3),
+        scaleY: scaleY.toFixed(3),
+        calculatedScale: scale.toFixed(3),
+        finalScale: finalScale.toFixed(3)
+      })
+
+      // 应用缩放到根元素
+      document.documentElement.style.setProperty('--global-scale', finalScale.toString())
+
+      // 为不同分辨率范围设置特殊处理
+      let resolutionClass = 'resolution-default'
+      if (currentWidth <= 1920) {
+        resolutionClass = 'resolution-fhd'
+      } else if (currentWidth <= 2560) {
+        resolutionClass = 'resolution-2k'
+      } else if (currentWidth >= 3840) {
+        resolutionClass = 'resolution-4k'
+      }
+
+      // 移除旧的分辨率类，添加新的
+      document.body.classList.remove('resolution-fhd', 'resolution-2k', 'resolution-4k', 'resolution-default')
+      document.body.classList.add(resolutionClass)
+
+      // 更新调试信息
+      debugInfo.value = {
+        currentResolution: `${currentWidth}x${currentHeight}`,
+        baseResolution: `${baseWidth}x${baseHeight}`,
+        scale: finalScale.toFixed(3),
+        resolutionClass: resolutionClass
+      }
+
+      console.log('应用分辨率类:', resolutionClass)
+    }
+
     // 图表自适应
     const resizeCharts = () => {
       if (trendChartInstance) trendChartInstance.resize()
@@ -1294,18 +1436,30 @@ export default {
       if (categoryChartInstance) categoryChartInstance.resize()
       if (aiCategoryChartInstance) aiCategoryChartInstance.resize()
     }
+
+    // 窗口大小变化处理
+    const handleResize = () => {
+      applyResolutionScaling()
+      // 延迟调整图表大小，确保DOM更新完成
+      setTimeout(() => {
+        resizeCharts()
+      }, 100)
+    }
     
     // 组件挂载
     onMounted(async () => {
       await nextTick()
-      
+
       // 先初始化默认数据，显示"加载中"状态
       initDefaultData()
-      
+
+      // 初始化分辨率缩放
+      applyResolutionScaling()
+
       // 初始化时间
       updateCurrentTime()
       timeTimer = setInterval(updateCurrentTime, 1000)
-      
+
       // 初始化图表
       setTimeout(() => {
         initTrendChart()
@@ -1313,31 +1467,35 @@ export default {
         initCategoryChart()
         initAiCategoryChart()
       }, 100)
-      
+
       // 延迟加载数据，让用户先看到界面
       setTimeout(async () => {
         await loadDashboardData()
         await loadAiCategoryScores()
       }, 500)
-      
+
       // 设置定时更新
       updateTimer = setInterval(() => {
         loadDashboardData()
       }, 30000) // 30秒更新一次
-      
+
       // 初始化粒子背景
       initParticles()
-      
+
       // 监听窗口大小变化
-      window.addEventListener('resize', resizeCharts)
+      window.addEventListener('resize', handleResize)
+
+      // 监听键盘快捷键
+      window.addEventListener('keydown', handleKeyPress)
     })
     
     // 组件卸载
     onUnmounted(() => {
       if (updateTimer) clearInterval(updateTimer)
       if (timeTimer) clearInterval(timeTimer)
-      window.removeEventListener('resize', resizeCharts)
-      
+      window.removeEventListener('resize', handleResize)
+      window.removeEventListener('keydown', handleKeyPress)
+
       if (trendChartInstance) trendChartInstance.dispose()
       if (healthGaugeInstance) healthGaugeInstance.dispose()
       if (categoryChartInstance) categoryChartInstance.dispose()
@@ -1362,73 +1520,27 @@ export default {
       trendChart,
       categoryChart,
       aiCategoryChart,
+      showDebugInfo,
+      debugInfo,
       getTrendIcon,
       getStatusText,
       getStatusClass,
-      toggleFullscreen
+      toggleFullscreen,
+      toggleDebugInfo
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
-// 响应式CSS变量
+// 全局CSS变量定义
 :root {
+  --global-scale: 1; // 默认缩放比例
   --base-font-size: 16px;
-  --header-height: 80px;
-  --card-padding: 20px;
-  --gap-size: 20px;
-  --border-radius: 12px;
-  --metric-icon-size: 32px;
-  --metric-value-size: 24px;
-}
-
-// 大屏幕优化 (1920px+)
-@media (min-width: 1920px) {
-  :root {
-    --base-font-size: 18px;
-    --header-height: 90px;
-    --card-padding: 24px;
-    --gap-size: 24px;
-    --metric-icon-size: 36px;
-    --metric-value-size: 28px;
-  }
-}
-
-// 中等屏幕 (1366px-1919px)
-@media (max-width: 1919px) and (min-width: 1367px) {
-  :root {
-    --base-font-size: 16px;
-    --header-height: 75px;
-    --card-padding: 18px;
-    --gap-size: 18px;
-    --metric-icon-size: 30px;
-    --metric-value-size: 22px;
-  }
-}
-
-// 小屏幕 (1024px-1366px)
-@media (max-width: 1366px) {
-  :root {
-    --base-font-size: 14px;
-    --header-height: 60px;
-    --card-padding: 15px;
-    --gap-size: 15px;
-    --metric-icon-size: 24px;
-    --metric-value-size: 18px;
-  }
-}
-
-// 平板 (768px-1023px)
-@media (max-width: 1023px) {
-  :root {
-    --base-font-size: 12px;
-    --header-height: 50px;
-    --card-padding: 12px;
-    --gap-size: 12px;
-    --metric-icon-size: 20px;
-    --metric-value-size: 16px;
-  }
+  --base-header-height: 80px;
+  --base-padding: 40px;
+  --base-gap: 25px;
+  --base-border-radius: 12px;
 }
 
 // 确保没有溢出的CSS重置
@@ -1441,19 +1553,22 @@ export default {
   max-width: 100vw;
   background: linear-gradient(135deg, #0a1628 0%, #112A43 30%, #1B4A73 100%);
   color: #ffffff;
-  font-size: var(--base-font-size);
   font-family: 'Microsoft YaHei', sans-serif;
   position: relative;
   overflow-x: hidden;
   margin: 0;
   padding: 0;
-  
+
+  // 应用全局缩放
+  transform: scale(var(--global-scale));
+  transform-origin: top left;
+  width: calc(100vw / var(--global-scale));
+  height: calc(100vh / var(--global-scale));
+
   &.fullscreen {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
     z-index: 9999;
   }
 }
@@ -1463,8 +1578,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 clamp(20px, 4vw, 40px);
-  height: var(--header-height);
+  padding: 0 40px;
+  height: 80px;
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(0, 212, 255, 0.2);
@@ -1472,28 +1587,28 @@ export default {
   .header-left {
     display: flex;
     align-items: center;
-    gap: clamp(10px, 2vw, 15px);
+    gap: 15px;
     flex: 1;
-
+    
     .logo {
-      font-size: clamp(24px, 3vw, 32px);
+      font-size: 32px;
     }
-
+    
     .lab-name {
-      font-size: clamp(12px, 1.5vw, 14px);
+      font-size: 14px;
       color: #8892b0;
     }
   }
-
+  
   .header-center {
     flex: 2;
     display: flex;
     justify-content: center;
     align-items: center;
-
+    
     h1 {
       margin: 0;
-      font-size: clamp(20px, 3.5vw, 32px);
+      font-size: 32px;
       font-weight: bold;
       background: linear-gradient(45deg, #00d4ff, #00ff88);
       -webkit-background-clip: text;
@@ -1501,19 +1616,19 @@ export default {
       -webkit-text-fill-color: transparent;
       text-align: center;
       text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
-      letter-spacing: clamp(1px, 0.2vw, 2px);
+      letter-spacing: 2px;
     }
   }
-
+  
   .header-right {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: clamp(15px, 3vw, 30px);
+    gap: 30px;
     flex: 1;
-
+    
     .current-time {
-      font-size: clamp(14px, 2vw, 18px);
+      font-size: 18px;
       font-weight: bold;
       color: #00d4ff;
     }
@@ -1560,23 +1675,18 @@ export default {
 .metrics-bar {
   display: flex;
   justify-content: space-around;
-  padding: clamp(15px, 3vw, 30px) 0;
+  padding: 30px 0;
   background: rgba(0, 0, 0, 0.2);
-  margin: var(--gap-size) clamp(20px, 4vw, 40px) 0 clamp(20px, 4vw, 40px);
-  border-radius: var(--border-radius);
-  flex-wrap: wrap;
-  gap: var(--gap-size);
-
+  margin: 20px 40px 0 40px;
+  border-radius: 12px;
+  
   .metric-item {
     display: flex;
     align-items: center;
-    gap: clamp(10px, 2vw, 15px);
-    min-width: 200px;
-    flex: 1;
-    justify-content: center;
-
+    gap: 15px;
+    
     .metric-icon {
-      font-size: var(--metric-icon-size);
+      font-size: 32px;
     }
     
     .metric-content {
@@ -1586,27 +1696,27 @@ export default {
         gap: 4px;
 
         .number {
-          font-size: var(--metric-value-size);
+          font-size: 24px;
           font-weight: bold;
           color: #00d4ff;
         }
 
         .unit {
-          font-size: clamp(12px, 1.5vw, 14px);
+          font-size: 14px;
           color: #8892b0;
         }
       }
 
       .metric-label {
-        font-size: clamp(10px, 1.2vw, 12px);
+        font-size: 12px;
         color: #8892b0;
         margin-top: 4px;
       }
     }
-
+    
     .metric-trend {
-      font-size: clamp(16px, 2vw, 20px);
-
+      font-size: 20px;
+      
       &.up { color: #00ff88; }
       &.down { color: #ff4444; }
       &.stable { color: #8892b0; }
@@ -1617,11 +1727,11 @@ export default {
 // 主要内容区域
 .display-main {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  grid-template-rows: minmax(300px, auto) 1fr;
-  gap: var(--gap-size);
-  padding: clamp(15px, 3vw, 30px) clamp(20px, 4vw, 40px);
-  height: calc(100vh - clamp(300px, 35vh, 350px));
+  grid-template-columns: 1fr 1fr 1fr;  /* 三等分 */
+  grid-template-rows: minmax(320px, auto) 1fr;  /* 第一行固定高度，第二行填充剩余空间 */
+  gap: 25px;
+  padding: 30px 40px;
+  height: calc(100vh - 350px);
   max-width: 100vw;
   overflow: hidden;
 }
@@ -1631,21 +1741,21 @@ export default {
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(0, 212, 255, 0.2);
-  border-radius: var(--border-radius);
-  padding: var(--card-padding);
+  border-radius: 12px;
+  padding: 20px;
   overflow: hidden;
   min-width: 0;
-  height: 100%;
+  height: 100%;  /* 确保所有卡片高度一致 */
   display: flex;
   flex-direction: column;
-
+  
   .card-title {
-    margin: 0 0 var(--card-padding) 0;
-    font-size: clamp(14px, 2vw, 18px);
+    margin: 0 0 20px 0;
+    font-size: 18px;
     color: #00d4ff;
     border-bottom: 1px solid rgba(0, 212, 255, 0.2);
     padding-bottom: 10px;
-    flex-shrink: 0;
+    flex-shrink: 0;  /* 防止标题被压缩 */
   }
 }
 
@@ -2317,10 +2427,176 @@ export default {
     grid-template-rows: auto auto auto;
     gap: 20px;
   }
-  
+
   .metrics-bar {
     flex-wrap: wrap;
     gap: 20px;
   }
 }
-</style> 
+
+// 分辨率特定样式优化
+// 1920x1080 (FHD) 分辨率优化
+:global(body.resolution-fhd) {
+  .display-screen {
+    // 在小分辨率下确保文字清晰度，使用clamp确保最小字体大小
+    .display-header h1 {
+      font-size: clamp(24px, calc(32px * var(--global-scale)), 48px);
+    }
+
+    .metrics-bar .metric-item .metric-content .metric-value .number {
+      font-size: clamp(18px, calc(24px * var(--global-scale)), 36px);
+    }
+
+    .card-title {
+      font-size: clamp(14px, calc(18px * var(--global-scale)), 24px);
+    }
+
+    // 在小屏幕上优化间距
+    .display-main {
+      gap: calc(20px * var(--global-scale));
+    }
+  }
+}
+
+// 2560x1440 (2K) 分辨率 - 标准样式
+:global(body.resolution-2k) {
+  .display-screen {
+    // 标准分辨率，保持原有样式比例
+    .display-header h1 {
+      font-size: calc(32px * var(--global-scale));
+    }
+
+    .metrics-bar .metric-item .metric-content .metric-value .number {
+      font-size: calc(24px * var(--global-scale));
+    }
+  }
+}
+
+// 3840x2160 (4K) 分辨率优化
+:global(body.resolution-4k) {
+  .display-screen {
+    // 在大分辨率下增强视觉效果
+    .display-header h1 {
+      font-size: calc(32px * var(--global-scale));
+      text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+    }
+
+    .stage-item {
+      border-width: 2px;
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+    }
+
+    .chart-card {
+      border-width: 2px;
+      backdrop-filter: blur(15px);
+    }
+  }
+}
+
+// 通用缩放优化
+.display-screen {
+  // 确保在极端缩放下文字依然可读
+  font-size: calc(var(--base-font-size) * var(--global-scale));
+
+  // 防止过度缩放导致的布局问题
+  @media (max-width: 1280px) {
+    transform: scale(calc(var(--global-scale) * 0.9));
+  }
+
+  @media (min-width: 4096px) {
+    transform: scale(calc(var(--global-scale) * 1.1));
+  }
+}
+
+// 调试面板样式
+.debug-panel {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid #00d4ff;
+  border-radius: 8px;
+  padding: 15px;
+  color: #ffffff;
+  font-size: 12px;
+  z-index: 10000;
+  min-width: 200px;
+  backdrop-filter: blur(10px);
+
+  .debug-title {
+    color: #00d4ff;
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+
+  .debug-item {
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+
+    &:last-of-type {
+      margin-bottom: 10px;
+    }
+  }
+
+  .debug-shortcuts {
+    margin: 10px 0;
+    padding: 8px;
+    background: rgba(0, 212, 255, 0.1);
+    border-radius: 4px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+
+    .shortcuts-title {
+      color: #00d4ff;
+      font-weight: bold;
+      margin-bottom: 5px;
+      font-size: 11px;
+    }
+
+    .shortcut-item {
+      font-size: 10px;
+      color: #8892b0;
+      margin-bottom: 2px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .debug-toggle {
+    background: #00d4ff;
+    color: #000;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    width: 100%;
+
+    &:hover {
+      background: #00b8e6;
+    }
+  }
+}
+
+// 调试面板切换按钮（当面板隐藏时显示）
+.debug-toggle-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 212, 255, 0.8);
+  color: #000;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  z-index: 10000;
+
+  &:hover {
+    background: rgba(0, 212, 255, 1);
+  }
+}
+</style>

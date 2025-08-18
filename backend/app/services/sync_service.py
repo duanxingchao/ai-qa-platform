@@ -151,10 +151,11 @@ class SyncService:
                     serviceid,
                     qatype,
                     intent,
-                    classification,
                     iskeyboardinput,
                     isstopanswer
                 ) = row
+                # classification设为None，因为table1表中没有这个字段
+                classification = None
 
                 # 生成business_id = MD5(pageid + sendmessagetime + query)
                 # 统一使用 Python 端生成，避免不同方言函数差异

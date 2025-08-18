@@ -65,26 +65,99 @@ def get_process_statistics():
 @process_bp.route('/classify', methods=['POST'])
 def classify_data():
     """触发分类"""
-    # TODO: 实现分类逻辑
-    return jsonify({
-        'status': 'success',
-        'message': '分类处理已开始'
-    })
+    try:
+        from app.services.ai_processing_service import ai_processing_service
+
+        # 获取请求参数
+        data = request.get_json() or {}
+        limit = data.get('limit')
+        days_back = data.get('days_back', 1)
+
+        # 调用AI处理服务进行分类
+        result = ai_processing_service.process_classification_batch(
+            limit=limit,
+            days_back=days_back
+        )
+
+        return jsonify({
+            'success': result['success'],
+            'message': result['message'],
+            'data': {
+                'processed_count': result.get('processed_count', 0),
+                'success_count': result.get('success_count', 0),
+                'error_count': result.get('error_count', 0)
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'分类处理失败: {str(e)}'
+        }), 500
 
 @process_bp.route('/generate', methods=['POST'])
 def generate_answers():
     """触发答案生成"""
-    # TODO: 实现答案生成逻辑
-    return jsonify({
-        'status': 'success',
-        'message': '答案生成已开始'
-    })
+    try:
+        from app.services.ai_processing_service import ai_processing_service
+
+        # 获取请求参数
+        data = request.get_json() or {}
+        limit = data.get('limit')
+        days_back = data.get('days_back', 1)
+
+        # 调用AI处理服务进行答案生成
+        result = ai_processing_service.process_answer_generation_batch(
+            limit=limit,
+            days_back=days_back
+        )
+
+        return jsonify({
+            'success': result['success'],
+            'message': result['message'],
+            'data': {
+                'processed_count': result.get('processed_count', 0),
+                'doubao_count': result.get('doubao_count', 0),
+                'xiaotian_count': result.get('xiaotian_count', 0),
+                'error_count': result.get('error_count', 0)
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'答案生成失败: {str(e)}'
+        }), 500
 
 @process_bp.route('/score', methods=['POST'])
 def score_answers():
     """触发评分"""
-    # TODO: 实现评分逻辑
-    return jsonify({
-        'status': 'success',
-        'message': '评分处理已开始'
-    }) 
+    try:
+        from app.services.ai_processing_service import ai_processing_service
+
+        # 获取请求参数
+        data = request.get_json() or {}
+        limit = data.get('limit')
+        days_back = data.get('days_back', 1)
+
+        # 调用AI处理服务进行评分
+        result = ai_processing_service.process_scoring_batch(
+            limit=limit,
+            days_back=days_back
+        )
+
+        return jsonify({
+            'success': result['success'],
+            'message': result['message'],
+            'data': {
+                'processed_count': result.get('processed_count', 0),
+                'success_count': result.get('success_count', 0),
+                'error_count': result.get('error_count', 0)
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'评分处理失败: {str(e)}'
+        }), 500

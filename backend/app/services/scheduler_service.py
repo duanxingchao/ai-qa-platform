@@ -490,20 +490,15 @@ class SchedulerService:
     def _execute_classification_phase(self, app, workflow_id: str) -> Dict[str, Any]:
         """执行分类处理阶段"""
         self.logger.info(f"开始执行分类处理阶段 [workflow: {workflow_id}]")
-        
+
         try:
-            # TODO: 创建AI处理服务后取消注释
-            # from app.services.ai_processing_service import ai_processing_service
-            # result = ai_processing_service.process_classification_batch()
-            
-            # 临时返回成功结果
-            result = {
-                'success': True, 
-                'message': '分类处理阶段完成（待实现具体逻辑）',
-                'processed_count': 0
-            }
+            # 启用AI处理服务的分类功能
+            from app.services.ai_processing_service import ai_processing_service
+            result = ai_processing_service.process_classification_batch()
+
+            self.logger.info(f"分类处理阶段完成: {result.get('message', '')}")
             return result
-            
+
         except Exception as e:
             error_msg = f"分类处理阶段异常: {str(e)}"
             self.logger.error(error_msg)

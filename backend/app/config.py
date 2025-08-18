@@ -35,7 +35,7 @@ class Config:
     MAX_PAGE_SIZE = 100
     
     # 外部API配置
-    CLASSIFY_API_URL = os.environ.get('CLASSIFY_API_URL') or 'http://localhost:8005'
+    CLASSIFY_API_URL = os.environ.get('CLASSIFY_API_URL') or 'http://localhost:8001'
     DOUBAO_API_URL = os.environ.get('DOUBAO_API_URL') or 'http://localhost:8002'  # Mock豆包API
     XIAOTIAN_API_URL = os.environ.get('XIAOTIAN_API_URL') or 'http://localhost:8003'  # Mock小天API
     SCORE_API_URL = os.environ.get('SCORE_API_URL') or 'http://localhost:8004'

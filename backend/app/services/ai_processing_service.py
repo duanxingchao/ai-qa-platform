@@ -645,13 +645,13 @@ class AIProcessingService:
         limit: Optional[int] = None,
         days_back: int = 1
     ) -> List[Question]:
-        """获取未分类的问题 - 查找所有状态为pending或classification_failed的问题"""
-        self.logger.info(f"查找所有待分类问题（不限制时间范围）")
+        """获取未分类的问题 - 查找所有没有分类的问题，不限制处理状态"""
+        self.logger.info(f"查找所有待分类问题（不限制时间范围和处理状态）")
 
         query = db.session.query(Question).filter(
             and_(
                 Question.classification.is_(None) | (Question.classification == ''),
-                Question.processing_status.in_(['pending', 'classification_failed'])
+                Question.is_deleted == False
             )
         ).order_by(Question.created_at.desc())
 

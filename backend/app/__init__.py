@@ -65,6 +65,8 @@ def register_blueprints(app):
     from app.api.config_api import config_bp
     from app.api.classification_api import classification_bp
     from app.api.answer_generation_api import answer_generation_bp
+    from app.api.answer_api import answer_bp
+    from app.api.scores_api import scores_bp as scores_api_bp
 
     # 注释掉缺失的API模块，待后续添加
     from app.api.badcase_api import badcase_bp
@@ -82,9 +84,11 @@ def register_blueprints(app):
     app.register_blueprint(mock_bp, url_prefix='/api/mock')
     app.register_blueprint(display_bp, url_prefix='/api/display')
     app.register_blueprint(badcase_bp)  # badcase API (已在蓝图中定义了url_prefix)
-    app.register_blueprint(config_bp)   # 系统配置API
+    app.register_blueprint(config_bp, url_prefix='/api/config')   # 系统配置API
     app.register_blueprint(classification_bp)  # 分类管理API
     app.register_blueprint(answer_generation_bp)  # 答案生成管理API
+    app.register_blueprint(answer_bp, url_prefix='/api/answers')  # 答案管理API
+    app.register_blueprint(scores_api_bp, url_prefix='/api/scores')  # 评分管理API
 
     # 注册认证API
     app.register_blueprint(auth_bp, url_prefix='/api/auth')

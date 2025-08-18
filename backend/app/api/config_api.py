@@ -9,10 +9,10 @@ from app.utils.response import api_response, error_response
 from datetime import datetime
 
 # 创建蓝图
-config_bp = Blueprint('config', __name__, url_prefix='/api/config')
+config_bp = Blueprint('config', __name__)
 
 
-@config_bp.route('', methods=['GET'])
+@config_bp.route('/', methods=['GET'])
 def get_all_configs():
     """获取所有配置"""
     try:

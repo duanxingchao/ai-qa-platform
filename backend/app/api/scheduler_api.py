@@ -79,6 +79,22 @@ def resume_job(job_id):
         }), 500
 
 
+@scheduler_bp.route('/jobs/<job_id>/trigger', methods=['POST'])
+def trigger_job(job_id):
+    """立即执行定时任务"""
+    try:
+        result = scheduler_service.trigger_job(job_id)
+        return jsonify({
+            'success': result,
+            'message': '任务触发成功' if result else '任务触发失败'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'触发任务失败: {str(e)}'
+        }), 500
+
+
 # ============================================================================
 # 工作流管理API
 # ============================================================================
