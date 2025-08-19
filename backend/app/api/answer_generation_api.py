@@ -50,13 +50,30 @@ def export_questions_for_answer_generation():
         if not file_path or not os.path.exists(file_path):
             return error_response("导出文件生成失败")
         
-        # 返回文件下载
-        return send_file(
-            file_path,
-            as_attachment=True,
-            download_name=filename,
-            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
+        # 返回文件
+        try:
+            with open(file_path, 'rb') as f:
+                file_content = f.read()
+
+            # 清理临时文件
+            os.unlink(file_path)
+
+            # 创建响应
+            from flask import Response
+            response = Response(
+                file_content,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                headers={
+                    'Content-Disposition': f'attachment; filename="{filename}"'
+                }
+            )
+
+            return response
+
+        except Exception as file_error:
+            if os.path.exists(file_path):
+                os.unlink(file_path)
+            raise file_error
         
     except Exception as e:
         current_app.logger.error(f"导出问题Excel时出错: {str(e)}")
