@@ -31,6 +31,51 @@ def get_scheduler_status():
         }), 500
 
 
+@scheduler_bp.route('/workflow/manual-status', methods=['GET'])
+def get_manual_workflow_status():
+    """获取手动模式工作流状态"""
+    try:
+        from flask import current_app
+        from app.services.answer_generation_service import AnswerGenerationService
+
+        # 检查当前答案生成模式
+        answer_generation_mode = current_app.config.get('ANSWER_GENERATION_MODE', 'api')
+
+        if answer_generation_mode == 'manual':
+            answer_service = AnswerGenerationService()
+            pending_count = answer_service.get_export_questions_count()
+
+            return jsonify({
+                'success': True,
+                'data': {
+                    'mode': 'manual',
+                    'is_waiting': pending_count > 0,
+                    'pending_count': pending_count,
+                    'current_phase': 'answer_generation' if pending_count > 0 else 'completed',
+                    'message': f'手动模式：有{pending_count}个问题待处理' if pending_count > 0 else '手动模式：无待处理问题',
+                    'action_required': 'export_excel' if pending_count > 0 else 'none'
+                }
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'data': {
+                    'mode': 'api',
+                    'is_waiting': False,
+                    'pending_count': 0,
+                    'current_phase': 'auto',
+                    'message': 'API自动模式',
+                    'action_required': 'none'
+                }
+            })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'获取手动模式状态失败: {str(e)}'
+        }), 500
+
+
 @scheduler_bp.route('/jobs', methods=['GET'])
 def list_scheduled_jobs():
     """获取所有定时任务列表"""

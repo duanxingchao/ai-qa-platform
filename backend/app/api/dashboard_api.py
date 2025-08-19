@@ -88,16 +88,39 @@ def get_dashboard_data():
         # 基础统计
         total_questions = question_query.count()
         total_answers = answer_query.count()
-        scored_answers = answer_query.filter(Answer.is_scored == True).count()
+
+        # 竞品横评统计：统计已完成横评的问题数（三个AI答案都已评分）
+        # 与大屏展示系统流程保持一致的统计逻辑
+        scored_questions_count = db.session.query(
+            func.count(func.distinct(Answer.question_business_id))
+        ).select_from(Answer).join(
+            Question, Answer.question_business_id == Question.business_id
+        )
+
+        # 应用时间筛选到横评统计
+        if time_filter:
+            scored_questions_count = scored_questions_count.filter(and_(*time_filter))
+
+        scored_questions_count = scored_questions_count.filter(
+            and_(
+                Question.classification.isnot(None),
+                Question.classification != '',
+                Answer.is_scored == True,
+                Answer.assistant_type.in_(['yoyo', 'doubao', 'xiaotian'])
+            )
+        ).group_by(Answer.question_business_id).having(
+            func.count(func.distinct(Answer.assistant_type)) == 3
+        ).count()
+
         total_scores = db.session.query(Score).count()
-        
+
         # 竞品答案统计（豆包和小天）
         doubao_answers = answer_query.filter(Answer.assistant_type == 'doubao').count()
         xiaotian_answers = answer_query.filter(Answer.assistant_type == 'xiaotian').count()
         competitor_answers = doubao_answers + xiaotian_answers
         
         # 计算完成率
-        completion_rate = (scored_answers / total_answers * 100) if total_answers > 0 else 0
+        completion_rate = (scored_questions_count / total_answers * 100) if total_answers > 0 else 0
         
         # 获取同步统计
         sync_stats = sync_service.get_sync_statistics()
@@ -188,7 +211,7 @@ def get_dashboard_data():
             'summary': {
                 'total_questions': total_questions,
                 'total_answers': total_answers,
-                'scored_answers': scored_answers,
+                'scored_answers': scored_questions_count,  # 现在返回已完成横评的问题数
                 'completion_rate': f"{completion_rate:.1f}%",
                 'competitor_answers': {
                     'doubao': doubao_answers,

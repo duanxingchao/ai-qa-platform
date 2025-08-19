@@ -58,6 +58,31 @@
       </div>
     </div>
 
+    <!-- 操作指引 -->
+    <div class="function-section">
+      <h4 class="section-title">📋 操作指引</h4>
+      <div class="operation-guide">
+        <el-steps :active="currentStep" finish-status="success" align-center>
+          <el-step title="导出Excel" description="下载包含问题和分类的文件" />
+          <el-step title="填写答案" description="在Excel中填写豆包和小天答案" />
+          <el-step title="验证文件" description="检查文件格式和内容" />
+          <el-step title="导入答案" description="完成处理，自动进入评分阶段" />
+        </el-steps>
+
+        <div class="guide-details">
+          <el-alert type="info" :closable="false" show-icon>
+            <template #title>重要说明</template>
+            <ul class="guide-list">
+              <li><strong>yoyo答案已存在：</strong>系统中已有原始yoyo答案，无需填写</li>
+              <li><strong>只需填写竞品答案：</strong>在Excel的D列填写豆包答案，E列填写小天答案</li>
+              <li><strong>三个答案完整：</strong>只有yoyo+豆包+小天三个答案都完整时，问题才会进入评分阶段</li>
+              <li><strong>自动流程衔接：</strong>导入完成后，系统会自动检查并触发评分阶段</li>
+            </ul>
+          </el-alert>
+        </div>
+      </div>
+    </div>
+
     <!-- 导入功能区 -->
     <div class="function-section">
       <h4 class="section-title">📥 导入答案</h4>
@@ -167,6 +192,9 @@ const validationResult = ref(null)
 const importResult = ref(null)
 const uploadRef = ref()
 
+// 操作步骤状态
+const currentStep = ref(0)
+
 // 加载待导出问题数量
 const loadExportCount = async () => {
   loadingCount.value = true
@@ -198,26 +226,31 @@ const exportQuestions = async () => {
   exporting.value = true
   try {
     const response = await exportQuestionsForAnswerGeneration(exportForm)
-    
+
+    // 从axios响应中获取blob数据
+    const blob = response.data
+
+    // 生成文件名
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '')
+    const filename = `questions_for_answer_generation_${timestamp}.xlsx`
+
     // 创建下载链接
-    const blob = new Blob([response], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-    })
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    
-    // 生成文件名
-    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '')
-    link.download = `questions_for_answer_generation_${timestamp}.xlsx`
-    
+    link.download = filename
+    link.style.display = 'none'
+
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
-    
-    ElMessage.success('Excel文件导出成功')
-    
+
+    ElMessage.success('Excel文件导出成功，请在Excel中填写豆包和小天答案')
+
+    // 更新步骤状态
+    currentStep.value = 1
+
     // 导出后刷新数量
     setTimeout(() => {
       loadExportCount()
@@ -257,13 +290,16 @@ const validateFile = async () => {
   validating.value = true
   try {
     const response = await validateImportFile(selectedFile.value)
-    validationResult.value = response.data
-    fileValidated.value = response.data.valid
-    
-    if (response.data.valid) {
-      ElMessage.success('文件验证通过')
+    // 响应拦截器已经返回了data部分，所以直接使用response
+    validationResult.value = response.data || response
+    fileValidated.value = (response.data || response).valid
+
+    if ((response.data || response).valid) {
+      ElMessage.success('文件验证通过，可以进行导入')
+      currentStep.value = 2
     } else {
       ElMessage.error('文件验证失败')
+      currentStep.value = 1
     }
   } catch (error) {
     console.error('验证文件失败:', error)
@@ -302,15 +338,27 @@ const importAnswers = async () => {
   importing.value = true
   try {
     const response = await importGeneratedAnswers(selectedFile.value)
-    importResult.value = response.data
-    
-    ElMessage.success(response.message || '答案导入完成')
-    
+    // 响应拦截器已经返回了data部分，所以直接使用response
+    importResult.value = response.data || response
+
+    // 检查是否触发了评分阶段
+    const message = response.message || '答案导入完成'
+    const scoringTriggered = (response.data || response)?.scoring_triggered || false
+
+    ElMessage.success(message)
+
+    // 更新步骤状态
+    currentStep.value = 3
+
+    if (scoringTriggered) {
+      ElMessage.info('系统已自动触发评分阶段', { duration: 3000 })
+    }
+
     // 导入后刷新数量
     setTimeout(() => {
       loadExportCount()
     }, 1000)
-    
+
   } catch (error) {
     console.error('导入答案失败:', error)
     ElMessage.error('导入答案失败')
@@ -360,6 +408,27 @@ onMounted(() => {
   font-size: 16px;
   font-weight: 600;
   color: #409eff;
+}
+
+/* 操作指引样式 */
+.operation-guide {
+  .guide-details {
+    margin-top: 24px;
+  }
+
+  .guide-list {
+    margin: 0;
+    padding-left: 20px;
+
+    li {
+      margin-bottom: 8px;
+      line-height: 1.6;
+
+      strong {
+        color: #409eff;
+      }
+    }
+  }
 }
 
 .export-info {

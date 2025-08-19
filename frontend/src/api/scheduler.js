@@ -44,6 +44,16 @@ export function getWorkflowStatus() {
 }
 
 /**
+ * 获取手动模式工作流状态
+ */
+export function getManualWorkflowStatus() {
+  return request({
+    url: '/scheduler/workflow/manual-status',
+    method: 'get'
+  })
+}
+
+/**
  * 手动执行工作流阶段
  */
 export function executeWorkflowPhase(phase) {

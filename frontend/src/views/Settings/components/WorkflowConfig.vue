@@ -4,6 +4,30 @@
       <h3 class="config-title">🔄 工作流阶段配置</h3>
     </div>
 
+    <!-- 手动模式状态提示 -->
+    <div v-if="manualStatus.is_waiting" class="manual-waiting-alert">
+      <el-alert
+        title="等待手动处理答案生成"
+        type="warning"
+        show-icon
+        :closable="false"
+        class="manual-alert"
+      >
+        <template #default>
+          <p>当前有 <strong>{{ manualStatus.pending_count }}</strong> 个问题需要手动生成豆包和小天答案</p>
+          <p class="alert-description">这些问题已有yoyo答案和分类，需要补充竞品答案</p>
+          <div class="alert-actions">
+            <el-button type="primary" size="small" @click="goToAnswerGeneration">
+              前往处理 →
+            </el-button>
+            <el-button size="small" @click="refreshManualStatus" :loading="loadingManualStatus">
+              刷新状态
+            </el-button>
+          </div>
+        </template>
+      </el-alert>
+    </div>
+
     <el-row :gutter="24" class="workflow-phases">
       <el-col :span="8" v-for="(phase, index) in phases" :key="phase.key">
         <div class="phase-item">
@@ -50,7 +74,10 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { getManualWorkflowStatus } from '@/api/scheduler'
+import { useRouter } from 'vue-router'
 
 const props = defineProps({
   phases: {
@@ -61,6 +88,17 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['execute', 'toggle'])
+const router = useRouter()
+
+// 手动模式状态
+const manualStatus = ref({
+  is_waiting: false,
+  pending_count: 0,
+  mode: 'api',
+  message: '',
+  action_required: 'none'
+})
+const loadingManualStatus = ref(false)
 
 const getStatusType = (status) => {
   switch (status) {
@@ -103,15 +141,52 @@ const executePhase = (phase) => {
     ElMessage.warning('请先启用该阶段')
     return
   }
-  
+
   phase.executing = true
   emit('execute', phase)
-  
+
   // 模拟执行完成后重置状态
   setTimeout(() => {
     phase.executing = false
   }, 2000)
 }
+
+// 加载手动模式状态
+const loadManualStatus = async () => {
+  try {
+    loadingManualStatus.value = true
+    const response = await getManualWorkflowStatus()
+
+    if (response.success && response.data) {
+      manualStatus.value = response.data
+    }
+  } catch (error) {
+    console.error('获取手动模式状态失败:', error)
+  } finally {
+    loadingManualStatus.value = false
+  }
+}
+
+// 刷新手动模式状态
+const refreshManualStatus = () => {
+  loadManualStatus()
+  ElMessage.success('状态已刷新')
+}
+
+// 跳转到答案生成管理页面
+const goToAnswerGeneration = () => {
+  // 滚动到答案生成管理部分
+  const answerGenerationSection = document.querySelector('.config-section:nth-child(4)')
+  if (answerGenerationSection) {
+    answerGenerationSection.scrollIntoView({ behavior: 'smooth' })
+    ElMessage.info('已跳转到答案生成管理部分')
+  }
+}
+
+// 组件挂载时加载状态
+onMounted(() => {
+  loadManualStatus()
+})
 </script>
 
 <style scoped>
@@ -134,6 +209,27 @@ const executePhase = (phase) => {
   color: #303133;
   font-size: 16px;
   font-weight: 600;
+}
+
+/* 手动模式状态提示样式 */
+.manual-waiting-alert {
+  margin-bottom: 24px;
+}
+
+.manual-alert {
+  border-radius: 8px;
+}
+
+.alert-description {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #606266;
+}
+
+.alert-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
 }
 
 .workflow-phases {
