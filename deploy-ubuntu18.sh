@@ -59,10 +59,30 @@ check_system() {
     fi
 }
 
+# 检查代理配置
+check_proxy() {
+    print_step "检查代理配置..."
+
+    if [[ -n "$http_proxy" ]] || [[ -n "$HTTP_PROXY" ]]; then
+        print_message "✅ 检测到代理配置: ${http_proxy:-$HTTP_PROXY}"
+        PROXY_ENABLED=true
+
+        # 测试代理连接
+        if curl -s --connect-timeout 10 --proxy "${http_proxy:-$HTTP_PROXY}" https://www.google.com > /dev/null; then
+            print_message "✅ 代理连接测试成功"
+        else
+            print_warning "⚠️ 代理连接测试失败，请检查代理配置"
+        fi
+    else
+        print_message "未检测到代理配置，使用直连"
+        PROXY_ENABLED=false
+    fi
+}
+
 # 检查网络连接
 check_network() {
     print_step "检查网络连接..."
-    
+
     # 检查DNS解析
     if nslookup google.com > /dev/null 2>&1; then
         print_message "✅ DNS解析正常"
@@ -70,20 +90,37 @@ check_network() {
         print_error "❌ DNS解析失败，请检查网络配置"
         exit 1
     fi
-    
-    # 检查外网连接
-    if curl -s --connect-timeout 5 https://www.google.com > /dev/null; then
-        print_message "✅ 外网连接正常"
+
+    # 根据代理配置检查外网连接
+    if [[ "$PROXY_ENABLED" == true ]]; then
+        if curl -s --connect-timeout 10 --proxy "${http_proxy:-$HTTP_PROXY}" https://www.google.com > /dev/null; then
+            print_message "✅ 通过代理的外网连接正常"
+        else
+            print_warning "⚠️ 通过代理的外网连接异常"
+        fi
+
+        # 检查Docker Hub连接
+        if curl -s --connect-timeout 10 --proxy "${http_proxy:-$HTTP_PROXY}" https://hub.docker.com > /dev/null; then
+            print_message "✅ 通过代理的Docker Hub连接正常"
+        else
+            print_warning "⚠️ 通过代理的Docker Hub连接异常，将使用国内镜像源"
+            USE_MIRROR=true
+        fi
     else
-        print_warning "⚠️ 外网连接异常，可能影响Docker镜像下载"
-    fi
-    
-    # 检查Docker Hub连接
-    if curl -s --connect-timeout 5 https://hub.docker.com > /dev/null; then
-        print_message "✅ Docker Hub连接正常"
-    else
-        print_warning "⚠️ Docker Hub连接异常，将使用国内镜像源"
-        USE_MIRROR=true
+        # 检查外网连接
+        if curl -s --connect-timeout 5 https://www.google.com > /dev/null; then
+            print_message "✅ 外网连接正常"
+        else
+            print_warning "⚠️ 外网连接异常，可能影响Docker镜像下载"
+        fi
+
+        # 检查Docker Hub连接
+        if curl -s --connect-timeout 5 https://hub.docker.com > /dev/null; then
+            print_message "✅ Docker Hub连接正常"
+        else
+            print_warning "⚠️ Docker Hub连接异常，将使用国内镜像源"
+            USE_MIRROR=true
+        fi
     fi
 }
 
@@ -149,20 +186,50 @@ install_docker() {
     sudo systemctl start docker
     sudo systemctl enable docker
     
-    # 配置Docker镜像源 (如果需要)
-    if [[ "$USE_MIRROR" == true ]]; then
-        configure_docker_mirror
-    fi
+    # 配置Docker代理和镜像源
+    configure_docker_proxy
     
     print_message "✅ Docker安装完成"
 }
 
-# 配置Docker镜像源
-configure_docker_mirror() {
-    print_step "配置Docker镜像源..."
-    
+# 配置Docker代理和镜像源
+configure_docker_proxy() {
+    print_step "配置Docker代理和镜像源..."
+
     sudo mkdir -p /etc/docker
-    sudo tee /etc/docker/daemon.json <<-'EOF'
+
+    if [[ "$PROXY_ENABLED" == true ]]; then
+        # 配置Docker daemon代理
+        sudo tee /etc/docker/daemon.json <<EOF
+{
+  "registry-mirrors": [
+    "https://docker.mirrors.ustc.edu.cn",
+    "https://hub-mirror.c.163.com",
+    "https://mirror.baidubce.com"
+  ],
+  "proxies": {
+    "default": {
+      "httpProxy": "${http_proxy:-$HTTP_PROXY}",
+      "httpsProxy": "${https_proxy:-$HTTPS_PROXY}",
+      "noProxy": "localhost,127.0.0.1,::1"
+    }
+  }
+}
+EOF
+
+        # 配置Docker客户端代理
+        sudo mkdir -p /etc/systemd/system/docker.service.d
+        sudo tee /etc/systemd/system/docker.service.d/http-proxy.conf <<EOF
+[Service]
+Environment="HTTP_PROXY=${http_proxy:-$HTTP_PROXY}"
+Environment="HTTPS_PROXY=${https_proxy:-$HTTPS_PROXY}"
+Environment="NO_PROXY=localhost,127.0.0.1,::1"
+EOF
+
+        print_message "✅ Docker代理配置完成"
+    else
+        # 仅配置镜像源
+        sudo tee /etc/docker/daemon.json <<-'EOF'
 {
   "registry-mirrors": [
     "https://docker.mirrors.ustc.edu.cn",
@@ -171,11 +238,11 @@ configure_docker_mirror() {
   ]
 }
 EOF
-    
+        print_message "✅ Docker镜像源配置完成"
+    fi
+
     sudo systemctl daemon-reload
     sudo systemctl restart docker
-    
-    print_message "✅ Docker镜像源配置完成"
 }
 
 # 安装Docker Compose
@@ -289,6 +356,7 @@ main() {
     fi
     
     check_system
+    check_proxy
     check_network
     check_resources
     check_ports

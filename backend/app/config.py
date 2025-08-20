@@ -24,7 +24,7 @@ class Config:
     API_DESCRIPTION = '提供数据同步、处理、分析和评估等功能的RESTful API'
     
     # CORS配置
-    CORS_ORIGINS = ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5173', 'http://127.0.0.1:3000', 'http://localhost:5174', 'http://127.0.0.1:5174']
+    CORS_ORIGINS = ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5173', 'http://127.0.0.1:3000', 'http://localhost:5174', 'http://127.0.0.1:5174', 'http://localhost:18080', 'http://127.0.0.1:18080']
     
     # JWT配置
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'jwt-secret-key-change-in-production'

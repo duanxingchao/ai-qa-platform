@@ -7,6 +7,18 @@ LABEL maintainer="AI QA Platform Team"
 LABEL version="1.0"
 LABEL description="Backend service optimized for Ubuntu 18.04"
 
+# 代理参数
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG NO_PROXY
+
+# 设置代理环境变量（构建时使用）
+ENV http_proxy=$HTTP_PROXY
+ENV https_proxy=$HTTPS_PROXY
+ENV HTTP_PROXY=$HTTP_PROXY
+ENV HTTPS_PROXY=$HTTPS_PROXY
+ENV NO_PROXY=$NO_PROXY
+
 # 设置工作目录
 WORKDIR /app
 
