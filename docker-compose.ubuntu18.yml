@@ -1,0 +1,148 @@
+version: '3.7'  # Ubuntu 18.04兼容的Docker Compose版本
+
+services:
+  # 后端服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.ubuntu18
+    container_name: qa-platform-backend
+    restart: unless-stopped
+    ports:
+      - "8088:8088"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - CLASSIFICATION_API_URL=${CLASSIFICATION_API_URL}
+      - AI_API_URL=${AI_API_URL}
+      - SCORING_API_URL=${SCORING_API_URL}
+      - CLASSIFICATION_API_KEY=${CLASSIFICATION_API_KEY}
+      - AI_API_KEY=${AI_API_KEY}
+      - SCORING_API_KEY=${SCORING_API_KEY}
+    volumes:
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+    networks:
+      - qa-platform-network
+    depends_on:
+      - redis
+    # Ubuntu 18.04优化配置
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    sysctls:
+      - net.core.somaxconn=1024
+    # 内存限制 (适应Ubuntu 18.04)
+    mem_limit: 1g
+    memswap_limit: 1g
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.ubuntu18
+    container_name: qa-platform-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - qa-platform-network
+    depends_on:
+      - backend
+    # 内存限制
+    mem_limit: 512m
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Redis缓存服务 (Ubuntu 18.04优化版本)
+  redis:
+    image: redis:6-alpine  # 使用稳定版本
+    container_name: qa-platform-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - qa-platform-network
+    # Redis配置优化
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    # 内存限制
+    mem_limit: 512m
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 监控服务 (轻量级版本)
+  prometheus:
+    image: prom/prometheus:v2.30.3  # 稳定版本
+    container_name: qa-platform-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - qa-platform-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'  # 减少存储时间
+      - '--web.enable-lifecycle'
+    # 内存限制
+    mem_limit: 512m
+
+  # 日志收集服务 (可选)
+  fluentd:
+    image: fluent/fluentd:v1.14-debian-1
+    container_name: qa-platform-fluentd
+    restart: unless-stopped
+    volumes:
+      - ./logs:/fluentd/log
+      - ./fluentd/fluent.conf:/fluentd/etc/fluent.conf:ro
+    networks:
+      - qa-platform-network
+    # 内存限制
+    mem_limit: 256m
+    # 仅在需要时启用
+    profiles:
+      - logging
+
+volumes:
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+
+networks:
+  qa-platform-network:
+    driver: bridge
+    # Ubuntu 18.04网络优化
+    driver_opts:
+      com.docker.network.bridge.name: qa-platform-br
+      com.docker.network.driver.mtu: 1500

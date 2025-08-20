@@ -1,0 +1,109 @@
+# Ubuntu 18.04优化的前端Dockerfile
+
+# 构建阶段
+FROM node:16-alpine as build-stage
+
+# 设置标签
+LABEL maintainer="AI QA Platform Team"
+LABEL version="1.0"
+LABEL description="Frontend service optimized for Ubuntu 18.04"
+
+# 设置工作目录
+WORKDIR /app
+
+# 设置npm镜像源 (提升下载速度)
+RUN npm config set registry https://registry.npmmirror.com
+
+# 复制package文件
+COPY package*.json ./
+
+# 安装依赖 (优化缓存)
+RUN npm ci --only=production --silent
+
+# 复制源代码
+COPY . .
+
+# 构建生产版本
+RUN npm run build
+
+# 生产阶段 - 使用nginx alpine版本 (轻量级)
+FROM nginx:1.20-alpine as production-stage
+
+# 安装必要工具
+RUN apk add --no-cache \
+    curl \
+    bash \
+    tzdata
+
+# 设置时区
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# 复制构建结果
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+
+# 复制nginx配置
+COPY nginx.ubuntu18.conf /etc/nginx/nginx.conf
+
+# 创建必要目录
+RUN mkdir -p /etc/nginx/ssl \
+    && mkdir -p /var/log/nginx \
+    && mkdir -p /var/cache/nginx
+
+# 创建nginx用户 (如果不存在)
+RUN addgroup -g 101 -S nginx || true \
+    && adduser -S -D -H -u 101 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx || true
+
+# 设置权限
+RUN chown -R nginx:nginx /usr/share/nginx/html \
+    && chown -R nginx:nginx /var/log/nginx \
+    && chown -R nginx:nginx /var/cache/nginx \
+    && chmod -R 755 /usr/share/nginx/html
+
+# 创建启动脚本
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+echo "Starting QA Platform Frontend..."\n\
+echo "Nginx version: $(nginx -v 2>&1)"\n\
+echo "Time zone: $(date)"\n\
+\n\
+# 检查配置文件\n\
+echo "Testing nginx configuration..."\n\
+nginx -t\n\
+\n\
+# 创建PID文件目录\n\
+mkdir -p /var/run\n\
+\n\
+# 启动nginx\n\
+echo "Starting nginx..."\n\
+exec nginx -g "daemon off;"' > /docker-entrypoint.sh \
+    && chmod +x /docker-entrypoint.sh
+
+# 健康检查脚本
+RUN echo '#!/bin/bash\n\
+# 检查nginx进程\n\
+if ! pgrep nginx > /dev/null; then\n\
+    echo "Nginx process not found"\n\
+    exit 1\n\
+fi\n\
+\n\
+# 检查HTTP响应\n\
+if ! curl -f http://localhost/health > /dev/null 2>&1; then\n\
+    echo "Health check endpoint failed"\n\
+    exit 1\n\
+fi\n\
+\n\
+echo "Health check passed"\n\
+exit 0' > /health-check.sh \
+    && chmod +x /health-check.sh
+
+# 暴露端口
+EXPOSE 80 443
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD /health-check.sh
+
+# 启动命令
+CMD ["/docker-entrypoint.sh"]

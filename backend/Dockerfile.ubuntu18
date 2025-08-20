@@ -1,0 +1,140 @@
+# Ubuntu 18.04优化的后端Dockerfile
+# 使用Python 3.9官方镜像 (基于Debian，与Ubuntu 18.04兼容性好)
+FROM python:3.9-slim-bullseye
+
+# 设置标签
+LABEL maintainer="AI QA Platform Team"
+LABEL version="1.0"
+LABEL description="Backend service optimized for Ubuntu 18.04"
+
+# 设置工作目录
+WORKDIR /app
+
+# 设置环境变量
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV FLASK_ENV=production
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 设置时区 (与Ubuntu 18.04保持一致)
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# 更新包列表并安装系统依赖
+RUN apt-get update && apt-get install -y \
+    # 编译工具
+    gcc \
+    g++ \
+    make \
+    # PostgreSQL客户端库
+    libpq-dev \
+    # 网络工具
+    curl \
+    wget \
+    # 其他必要工具
+    git \
+    vim \
+    # 清理缓存
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# 升级pip到最新版本
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# 复制requirements文件
+COPY requirements.txt .
+
+# 安装Python依赖 (Ubuntu 18.04优化)
+RUN pip install --no-cache-dir -r requirements.txt \
+    # 安装额外的生产环境依赖
+    && pip install --no-cache-dir \
+        gunicorn==20.1.0 \
+        gevent==21.12.0 \
+        psycopg2-binary==2.9.3
+
+# 复制应用代码
+COPY . .
+
+# 创建必要的目录
+RUN mkdir -p logs uploads temp
+
+# 创建非root用户 (安全最佳实践)
+RUN groupadd -r appgroup && useradd -r -g appgroup -d /app -s /bin/bash appuser
+
+# 设置文件权限
+RUN chown -R appuser:appgroup /app \
+    && chmod +x run.py
+
+# 切换到非root用户
+USER appuser
+
+# 创建启动脚本
+RUN echo '#!/bin/bash\n\
+set -e\n\
+echo "Starting QA Platform Backend..."\n\
+echo "Python version: $(python --version)"\n\
+echo "Working directory: $(pwd)"\n\
+echo "Environment: $FLASK_ENV"\n\
+\n\
+# 等待数据库连接\n\
+echo "Waiting for database connection..."\n\
+python -c "\n\
+import time\n\
+import sys\n\
+from sqlalchemy import create_engine\n\
+import os\n\
+\n\
+db_url = os.getenv(\"DATABASE_URL\")\n\
+if db_url:\n\
+    for i in range(30):\n\
+        try:\n\
+            engine = create_engine(db_url)\n\
+            engine.execute(\"SELECT 1\")\n\
+            print(\"Database connection successful\")\n\
+            break\n\
+        except Exception as e:\n\
+            print(f\"Database connection attempt {i+1}/30 failed: {e}\")\n\
+            time.sleep(2)\n\
+    else:\n\
+        print(\"Database connection failed after 30 attempts\")\n\
+        sys.exit(1)\n\
+else:\n\
+    print(\"DATABASE_URL not set, skipping database check\")\n\
+"\n\
+\n\
+# 启动应用\n\
+if [ "$FLASK_ENV" = "production" ]; then\n\
+    echo "Starting with Gunicorn..."\n\
+    exec gunicorn --bind 0.0.0.0:8088 \\\n\
+                  --workers 4 \\\n\
+                  --worker-class gevent \\\n\
+                  --worker-connections 1000 \\\n\
+                  --timeout 30 \\\n\
+                  --keepalive 2 \\\n\
+                  --max-requests 1000 \\\n\
+                  --max-requests-jitter 50 \\\n\
+                  --preload \\\n\
+                  --access-logfile - \\\n\
+                  --error-logfile - \\\n\
+                  --log-level info \\\n\
+                  "run:app"\n\
+else\n\
+    echo "Starting with Flask development server..."\n\
+    exec python run.py\n\
+fi' > /app/start.sh \
+    && chmod +x /app/start.sh
+
+# 健康检查脚本
+RUN echo '#!/bin/bash\n\
+curl -f http://localhost:8088/api/health || exit 1' > /app/health-check.sh \
+    && chmod +x /app/health-check.sh
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD /app/health-check.sh
+
+# 暴露端口
+EXPOSE 8088
+
+# 启动命令
+CMD ["/app/start.sh"]
