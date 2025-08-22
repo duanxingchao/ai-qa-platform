@@ -72,13 +72,20 @@ get_user_input() {
     
     # 数据库配置
     echo
-    echo -n "请输入高斯数据库连接字符串 (格式: postgresql://user:pass@host:port/dbname): "
-    read DATABASE_URL
-    
-    if [[ -z "$DATABASE_URL" ]]; then
-        print_error "数据库连接字符串不能为空"
+    echo -n "请输入数据库主机地址: "
+    read DB_HOST
+
+    echo -n "请输入数据库密码: "
+    read -s DB_PASSWORD
+    echo
+
+    if [[ -z "$DB_HOST" ]] || [[ -z "$DB_PASSWORD" ]]; then
+        print_error "数据库主机地址和密码不能为空"
         exit 1
     fi
+
+    # 构建数据库连接字符串
+    DATABASE_URL="postgresql://dmp_rnd_xa:${DB_PASSWORD}@${DB_HOST}:8000/datalake"
     
     # API配置（可选）
     echo
@@ -200,6 +207,8 @@ configure_project() {
     cat > .env << EOF
 # 数据库配置
 DATABASE_URL=$DATABASE_URL
+DATABASE_SCHEMA=dm_rnd_xa_export
+SOURCE_TABLE_NAME=mid_pc_yoyo_qa_641000052
 
 # 安全密钥
 SECRET_KEY=$SECRET_KEY

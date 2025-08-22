@@ -4,6 +4,7 @@
 
 from datetime import datetime
 from app.utils.database import db
+from app.config import Config
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from typing import Optional, Any
 import json
@@ -11,8 +12,9 @@ import json
 
 class SystemConfig(db.Model):
     """系统配置模型"""
-    
+
     __tablename__ = 'system_config'
+    __table_args__ = {'schema': Config.DATABASE_SCHEMA}
     
     id = Column(Integer, primary_key=True)
     config_key = Column(String(100), unique=True, nullable=False, comment='配置键名')

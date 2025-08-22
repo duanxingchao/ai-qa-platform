@@ -12,6 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.utils.database import db
 from app.models.question import Question
 from app.models.answer import Answer
+from app.config import Config
 
 class SyncService:
     """数据同步服务类"""
@@ -86,22 +87,22 @@ class SyncService:
             # 构建查询SQL - 适配不同方言，避免使用 Postgres 专有函数
             dialect_name = db.session.bind.dialect.name if db.session.bind else ""
             if dialect_name == 'sqlite':
-                base_sql = """
+                base_sql = f"""
                     SELECT
                         t1.pageid,
                         t1.devicetypename,
                         t1.sendmessagetime,
-                        t1.query,
+                        t1.query1,
                         t1.answer,
                         t1.serviceid,
                         t1.qatype,
                         t1.intent,
                         t1.iskeyboardinput,
                         t1.isstopanswer
-                    FROM table1 t1
-                    WHERE t1.query IS NOT NULL
-                    AND t1.query != ''
-                    AND TRIM(t1.query) != ''
+                    FROM {Config.DATABASE_SCHEMA}.{Config.SOURCE_TABLE_NAME} t1
+                    WHERE t1.query1 IS NOT NULL
+                    AND t1.query1 != ''
+                    AND TRIM(t1.query1) != ''
                     AND datetime(t1.sendmessagetime) >= datetime(:week_start)
                     ORDER BY t1.sendmessagetime ASC
                 """
@@ -109,29 +110,29 @@ class SyncService:
                 result = db.session.execute(sql, {'week_start': week_start})
             else:
                 # Postgres 版本：保留去重避免重复同步到 questions（基于 business_id）
-                base_sql = """
+                base_sql = f"""
                     SELECT
                         t1.pageid,
                         t1.devicetypename,
                         t1.sendmessagetime,
-                        t1.query,
+                        t1.query1,
                         t1.answer,
                         t1.serviceid,
                         t1.qatype,
                         t1.intent,
                         t1.iskeyboardinput,
                         t1.isstopanswer
-                    FROM table1 t1
-                    WHERE t1.query IS NOT NULL
-                    AND t1.query != ''
-                    AND TRIM(t1.query) != ''
+                    FROM {Config.DATABASE_SCHEMA}.{Config.SOURCE_TABLE_NAME} t1
+                    WHERE t1.query1 IS NOT NULL
+                    AND t1.query1 != ''
+                    AND TRIM(t1.query1) != ''
                     AND t1.sendmessagetime >= :week_start
                     AND NOT EXISTS (
-                        SELECT 1 FROM questions q
+                        SELECT 1 FROM {Config.DATABASE_SCHEMA}.questions q
                         WHERE q.business_id = MD5(CONCAT(
                             t1.pageid,
                             COALESCE(to_char(t1.sendmessagetime, 'YYYY-MM-DD"T"HH24:MI:SS.US'), ''),
-                            t1.query
+                            t1.query1
                         ))
                     )
                     ORDER BY t1.sendmessagetime ASC
@@ -146,7 +147,7 @@ class SyncService:
                     pageid,
                     devicetypename,
                     send_time,
-                    query_text,
+                    query1_text,
                     answer_text,
                     serviceid,
                     qatype,
@@ -159,14 +160,14 @@ class SyncService:
 
                 # 生成business_id = MD5(pageid + sendmessagetime + query)
                 # 统一使用 Python 端生成，避免不同方言函数差异
-                raw_str = f"{pageid}{send_time.isoformat() if send_time else ''}{query_text}"
+                raw_str = f"{pageid}{send_time.isoformat() if send_time else ''}{query1_text}"
                 business_id = hashlib.md5(raw_str.encode('utf-8')).hexdigest()
 
                 data.append({
                     'business_id': business_id,
                     'pageid': pageid,
                     'devicetypename': devicetypename,
-                    'query': query_text,
+                    'query': query1_text,
                     'answer': answer_text,
                     'sendmessagetime': send_time,
                     'classification': classification,
@@ -348,11 +349,11 @@ class SyncService:
             answers_count = db.session.query(func.count(Answer.id)).scalar()
             yoyo_answers_count = db.session.query(func.count(Answer.id)).filter_by(assistant_type='yoyo').scalar()
             
-            # 获取table1表统计
-            table1_total_query = text("SELECT COUNT(*) FROM table1")
+            # 获取源表统计
+            table1_total_query = text(f"SELECT COUNT(*) FROM {Config.DATABASE_SCHEMA}.{Config.SOURCE_TABLE_NAME}")
             table1_total_count = db.session.execute(table1_total_query).scalar()
-            
-            table1_with_answer_query = text("SELECT COUNT(*) FROM table1 WHERE answer IS NOT NULL AND answer != '' AND TRIM(answer) != ''")
+
+            table1_with_answer_query = text(f"SELECT COUNT(*) FROM {Config.DATABASE_SCHEMA}.{Config.SOURCE_TABLE_NAME} WHERE answer IS NOT NULL AND answer != '' AND TRIM(answer) != ''")
             table1_with_answer_count = db.session.execute(table1_with_answer_query).scalar()
             
             # 获取最新记录时间
@@ -360,7 +361,7 @@ class SyncService:
                 Question.sendmessagetime.desc()
             ).first()
             
-            latest_table1_query = text("SELECT MAX(sendmessagetime) FROM table1")
+            latest_table1_query = text(f"SELECT MAX(sendmessagetime) FROM {Config.DATABASE_SCHEMA}.{Config.SOURCE_TABLE_NAME}")
             latest_table1_time = db.session.execute(latest_table1_query).scalar()
             
             return {

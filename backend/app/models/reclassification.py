@@ -3,11 +3,13 @@
 """
 from datetime import datetime
 from app.utils.database import db
+from app.config import Config
 
 
 class QuestionReclassification(db.Model):
     """问题重新分类历史记录"""
     __tablename__ = 'question_reclassifications'
+    __table_args__ = {'schema': Config.DATABASE_SCHEMA}
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     # 采用业务主键以便跨表关联

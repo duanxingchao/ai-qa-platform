@@ -3,11 +3,13 @@
 """
 from datetime import datetime
 from app.utils.database import db
+from app.config import Config
 from app.utils.datetime_helper import utc_to_beijing_str
 
 class Score(db.Model):
     """评分表模型"""
     __tablename__ = 'scores'
+    __table_args__ = {'schema': Config.DATABASE_SCHEMA}
     
     # 主键
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

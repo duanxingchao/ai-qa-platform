@@ -3,10 +3,12 @@
 """
 from datetime import datetime
 from app.utils.database import db
+from app.config import Config
 
 class ReviewStatus(db.Model):
     """审核状态表模型"""
     __tablename__ = 'review_status'
+    __table_args__ = {'schema': Config.DATABASE_SCHEMA}
     
     # 主键
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

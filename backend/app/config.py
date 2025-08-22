@@ -13,10 +13,16 @@ class Config:
     TESTING = False
     
     # 数据库配置
-    DATABASE_URL = os.environ.get('DATABASE_URL') or 'postgresql://postgres:l69jjd9n@test-huiliu-postgresql.ns-q8rah3y5.svc:5432/ai_qa_platform'
+    DATABASE_URL = os.environ.get('DATABASE_URL') or 'postgresql://dmp_rnd_xa:password@localhost:8000/datalake'
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False
+
+    # Schema配置 (企业级数据库支持)
+    DATABASE_SCHEMA = os.environ.get('DATABASE_SCHEMA') or 'dm_rnd_xa_export'
+
+    # 源表配置
+    SOURCE_TABLE_NAME = os.environ.get('SOURCE_TABLE_NAME') or 'mid_pc_yoyo_qa_641000052'
     
     # API配置
     API_TITLE = 'AI问答回流数据处理平台 API'

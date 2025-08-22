@@ -3,12 +3,23 @@
 提供数据库连接、初始化等功能
 """
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, event
 from sqlalchemy.orm import sessionmaker
 import logging
 
 # 创建全局数据库实例
 db = SQLAlchemy()
+
+def init_database_schema(app):
+    """初始化数据库Schema设置"""
+    from app.config import Config
+
+    @event.listens_for(db.engine, "connect")
+    def set_search_path(dbapi_connection, connection_record):
+        """设置默认Schema搜索路径"""
+        with dbapi_connection.cursor() as cursor:
+            cursor.execute(f"SET search_path TO {Config.DATABASE_SCHEMA}")
+            dbapi_connection.commit()
 
 logger = logging.getLogger(__name__)
 

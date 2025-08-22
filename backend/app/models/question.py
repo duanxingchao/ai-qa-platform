@@ -3,27 +3,29 @@
 """
 from datetime import datetime
 from app.utils.database import db
+from app.config import Config
 from app.utils.datetime_helper import utc_to_beijing_str
 
 class Question(db.Model):
     """问题表模型"""
     __tablename__ = 'questions'
+    __table_args__ = {'schema': Config.DATABASE_SCHEMA}
     
     # 主键和业务主键
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     business_id = db.Column(db.String(64), unique=True, nullable=False, index=True)
     
-    # 基础字段
-    pageid = db.Column(db.String(100))
-    devicetypename = db.Column(db.String(50))
-    query = db.Column(db.Text, nullable=False)
-    sendmessagetime = db.Column(db.DateTime, index=True)
-    classification = db.Column(db.String(50), index=True)  # API分类结果
-    serviceid = db.Column(db.String(50))
-    qatype = db.Column(db.String(50))
-    intent = db.Column(db.String(100))
-    iskeyboardinput = db.Column(db.Boolean, default=False)
-    isstopanswer = db.Column(db.Boolean, default=False)
+    # 基础字段 (所有字段类型为VARCHAR以匹配源表)
+    pageid = db.Column(db.String(255))
+    devicetypename = db.Column(db.String(255))
+    query = db.Column(db.String(4000), nullable=False)
+    sendmessagetime = db.Column(db.String(255), index=True)
+    classification = db.Column(db.String(255), index=True)  # API分类结果
+    serviceid = db.Column(db.String(255))
+    qatype = db.Column(db.String(255))
+    intent = db.Column(db.String(255))
+    iskeyboardinput = db.Column(db.String(255), default='false')
+    isstopanswer = db.Column(db.String(255), default='false')
     
     # 状态管理字段
     is_deleted = db.Column(db.Boolean, default=False)

@@ -4,11 +4,13 @@
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.utils.database import db
+from app.config import Config
 from app.utils.datetime_helper import utc_to_beijing_str
 
 class User(db.Model):
     """用户表模型"""
     __tablename__ = 'users'
+    __table_args__ = {'schema': Config.DATABASE_SCHEMA}
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(50), unique=True, nullable=False, index=True, comment='员工号码/登录账号')
@@ -52,6 +54,7 @@ class User(db.Model):
 class UserApplication(db.Model):
     """用户注册申请表模型"""
     __tablename__ = 'user_applications'
+    __table_args__ = {'schema': Config.DATABASE_SCHEMA}
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(50), nullable=False, comment='申请的员工号码/登录账号')

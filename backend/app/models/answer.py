@@ -3,6 +3,7 @@
 """
 from datetime import datetime
 from app.utils.database import db
+from app.config import Config
 from app.utils.datetime_helper import utc_to_beijing_str
 
 class Answer(db.Model):
@@ -11,6 +12,7 @@ class Answer(db.Model):
     __table_args__ = (
         # 同一问题+助手类型应当唯一，避免重复生成相同助手的答案
         db.UniqueConstraint('question_business_id', 'assistant_type', name='uq_answers_question_assistant'),
+        {'schema': Config.DATABASE_SCHEMA}
     )
     
     # 主键
@@ -19,15 +21,15 @@ class Answer(db.Model):
     # 外键
     question_business_id = db.Column(db.String(64), db.ForeignKey('questions.business_id'), nullable=False, index=True)
     
-    # 答案内容
-    answer_text = db.Column(db.Text)
-    assistant_type = db.Column(db.String(50), nullable=False, index=True)  # yoyo/doubao/xiaotian
-    
+    # 答案内容 (所有字段类型为VARCHAR以匹配源表)
+    answer_text = db.Column(db.String(4000))
+    assistant_type = db.Column(db.String(255), nullable=False, index=True)  # yoyo/doubao/xiaotian
+
     # 状态字段
-    is_scored = db.Column(db.Boolean, default=False)
-    
+    is_scored = db.Column(db.String(255), default='false')
+
     # 时间戳
-    answer_time = db.Column(db.DateTime)
+    answer_time = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
