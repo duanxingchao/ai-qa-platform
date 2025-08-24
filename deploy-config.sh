@@ -34,8 +34,9 @@ FRONTEND_PORT="18080"
 BACKEND_PORT="8088"
 REDIS_PORT="6379"
 
-# Docker镜像源配置
-USE_ALIYUN_MIRROR="y"  # y/n 是否使用阿里云镜像源
+# 镜像源配置
+USE_COMPANY_MIRROR="y"  # y/n 是否使用公司内部镜像源
+USE_ALIYUN_MIRROR="n"   # y/n 是否使用阿里云镜像源（备用）
 
 # ===========================================
 # 配置验证函数
@@ -91,6 +92,7 @@ export_config() {
     export DB_USER
     export DB_PASSWORD
     export USE_GLORY_API
+    export USE_COMPANY_MIRROR
     export USE_ALIYUN_MIRROR
     export FRONTEND_PORT
     export BACKEND_PORT

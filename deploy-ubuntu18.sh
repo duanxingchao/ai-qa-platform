@@ -131,10 +131,24 @@ check_network() {
 update_system() {
     print_step "更新系统包..."
     
-    # 配置阿里云APT源（替换公司镜像源）
-    print_step "配置阿里云APT源..."
+    # 配置APT源
+    print_step "配置APT源..."
     sudo cp /etc/apt/sources.list /etc/apt/sources.list.backup
-    sudo tee /etc/apt/sources.list > /dev/null <<EOF
+    
+    if [[ "$USE_COMPANY_MIRROR" == "y" ]]; then
+        print_message "使用公司内部镜像源..."
+        sudo tee /etc/apt/sources.list > /dev/null <<EOF
+# 公司内部Ubuntu 18.04 LTS源
+deb http://mirrors.chinatelecom.hihonor.io/ubuntu bionic main restricted universe multiverse
+deb http://mirrors.chinatelecom.hihonor.io/ubuntu bionic-security main restricted universe multiverse
+deb http://mirrors.chinatelecom.hihonor.io/ubuntu bionic-updates main restricted universe multiverse
+deb http://mirrors.chinatelecom.hihonor.io/ubuntu bionic-proposed main restricted universe multiverse
+deb http://mirrors.chinatelecom.hihonor.io/ubuntu bionic-backports main restricted universe multiverse
+EOF
+        print_message "✅ 已配置公司内部APT源"
+    elif [[ "$USE_ALIYUN_MIRROR" == "y" ]]; then
+        print_message "使用阿里云镜像源..."
+        sudo tee /etc/apt/sources.list > /dev/null <<EOF
 # 阿里云Ubuntu 18.04 LTS源
 deb http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse
 deb http://mirrors.aliyun.com/ubuntu/ bionic-security main restricted universe multiverse
@@ -142,7 +156,10 @@ deb http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted universe mu
 deb http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted universe multiverse
 deb http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse
 EOF
-    print_message "✅ 已配置阿里云APT源"
+        print_message "✅ 已配置阿里云APT源"
+    else
+        print_message "使用系统默认APT源"
+    fi
     
     # 更新包列表
     sudo apt-get update
@@ -177,14 +194,22 @@ install_docker() {
         # 移除旧版本
         sudo apt-get remove -y docker docker-engine docker.io containerd runc || true
         
-        # 使用阿里云Docker源
-        curl -fsSL https://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | sudo apt-key add -
-        
-        # 添加阿里云Docker仓库
-        sudo add-apt-repository \
-           "deb [arch=amd64] https://mirrors.aliyun.com/docker-ce/linux/ubuntu \
-           $(lsb_release -cs) \
-           stable"
+        # 根据配置选择Docker源
+        if [[ "$USE_COMPANY_MIRROR" == "y" ]]; then
+            print_message "使用公司内部Docker源..."
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+            sudo add-apt-repository \
+               "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+               $(lsb_release -cs) \
+               stable"
+        else
+            print_message "使用阿里云Docker源..."
+            curl -fsSL https://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | sudo apt-key add -
+            sudo add-apt-repository \
+               "deb [arch=amd64] https://mirrors.aliyun.com/docker-ce/linux/ubuntu \
+               $(lsb_release -cs) \
+               stable"
+        fi
         
         # 更新包索引
         sudo apt-get update
