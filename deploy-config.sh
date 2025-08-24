@@ -5,10 +5,10 @@
 # ===========================================
 # 代理配置
 # ===========================================
-HTTP_PROXY="http://proxyssx.his.hihonor.com:8080"
-HTTPS_PROXY="http://proxyssx.his.hihonor.com:8080"
-FTP_PROXY="http://proxyssx.his.hihonor.com:8080"
-NO_PROXY="localhost,127.0.0.1,w3.hihonor.com,mgf-tm.ipd.hihonor.com,mirrors.chinatelecom.hihonor.io"
+HTTP_PROXY="http://proxysysx.his.hihonor.com:8080"
+HTTPS_PROXY="http://proxysysx.his.hihonor.com:8080"
+FTP_PROXY="http://proxysysx.his.hihonor.com:8080"
+NO_PROXY="localhost,127.0.0.1,w3.hihonor.com,mgit-tm.ipd.hihonor.com,mirrors.chinatelecom.hihonor.io"
 PROXY_AUTH_REQUIRED="n"  # y/n
 PROXY_USERNAME=""        # 如果需要认证
 PROXY_PASSWORD=""        # 如果需要认证
