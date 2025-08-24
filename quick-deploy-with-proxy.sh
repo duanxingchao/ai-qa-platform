@@ -240,6 +240,24 @@ install_docker_environment() {
         chmod +x deploy-ubuntu18.sh
         ./deploy-ubuntu18.sh
         
+        # 配置阿里云Docker镜像源
+        if [[ "$USE_ALIYUN_MIRROR" == "y" ]]; then
+            print_step "配置阿里云Docker镜像源..."
+            sudo mkdir -p /etc/docker
+            sudo tee /etc/docker/daemon.json > /dev/null <<EOF
+{
+  "registry-mirrors": [
+    "https://registry.cn-hangzhou.aliyuncs.com",
+    "https://hub-mirror.c.163.com",
+    "https://mirror.baidubce.com"
+  ]
+}
+EOF
+            sudo systemctl daemon-reload
+            sudo systemctl restart docker
+            print_message "✅ 阿里云Docker镜像源配置完成"
+        fi
+        
         # 重新加载用户组权限
         newgrp docker << EONG
         print_message "✅ Docker权限配置完成"
