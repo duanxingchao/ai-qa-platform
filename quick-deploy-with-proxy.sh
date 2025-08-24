@@ -91,16 +91,29 @@ get_user_input() {
     echo
     echo -n "是否配置外部API? (y/n): "
     read configure_api
-    
+
     if [[ "$configure_api" == "y" ]] || [[ "$configure_api" == "Y" ]]; then
-        echo -n "请输入分类API地址: "
-        read CLASSIFICATION_API_URL
-        echo -n "请输入分类API密钥: "
-        read CLASSIFICATION_API_KEY
-        echo -n "请输入AI生成API地址: "
-        read AI_API_URL
-        echo -n "请输入AI生成API密钥: "
-        read AI_API_KEY
+        echo -n "是否使用荣耀生产API? (y/n): "
+        read use_honor_api
+
+        if [[ "$use_honor_api" == "y" ]] || [[ "$use_honor_api" == "Y" ]]; then
+            # 使用荣耀API配置
+            CLASSIFY_API_URL="http://aipipeline.ipd.hihonor.com/v1/workflows/run"
+            CLASSIFY_API_KEY="app-mw]Eht3zDaKUЗLAa6T9XKwu"
+            SCORE_API_URL="http://aipipeline.ipd.hihonor.com/v1/workflows/run"
+            SCORE_API_KEY="app-SXgaGHIf25NtJXEFmc9ecRSc"
+            print_message "✅ 已配置荣耀生产API"
+        else
+            # 手动输入API配置
+            echo -n "请输入分类API地址: "
+            read CLASSIFY_API_URL
+            echo -n "请输入分类API密钥: "
+            read CLASSIFY_API_KEY
+            echo -n "请输入评分API地址: "
+            read SCORE_API_URL
+            echo -n "请输入评分API密钥: "
+            read SCORE_API_KEY
+        fi
     fi
     
     print_message "配置收集完成！"
@@ -225,14 +238,14 @@ DEBUG=False
 EOF
 
     # 添加API配置（如果有）
-    if [[ -n "$CLASSIFICATION_API_URL" ]]; then
+    if [[ -n "$CLASSIFY_API_URL" ]]; then
         cat >> .env << EOF
 
-# 外部API配置
-CLASSIFICATION_API_URL=$CLASSIFICATION_API_URL
-CLASSIFICATION_API_KEY=$CLASSIFICATION_API_KEY
-AI_API_URL=$AI_API_URL
-AI_API_KEY=$AI_API_KEY
+# 荣耀API配置
+CLASSIFY_API_URL=$CLASSIFY_API_URL
+CLASSIFY_API_KEY=$CLASSIFY_API_KEY
+SCORE_API_URL=$SCORE_API_URL
+SCORE_API_KEY=$SCORE_API_KEY
 EOF
     fi
 

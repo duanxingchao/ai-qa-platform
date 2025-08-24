@@ -139,6 +139,7 @@ def main():
     """主测试函数"""
     print("🚀 开始荣耀API集成测试")
     print(f"分类API URL: {Config.CLASSIFY_API_URL}")
+    print(f"分类API Key: {Config.CLASSIFY_API_KEY}")
     print(f"评分API URL: {Config.SCORE_API_URL}")
     print(f"评分API Key: {Config.SCORE_API_KEY}")
     print("=" * 60)

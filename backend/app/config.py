@@ -47,7 +47,7 @@ class Config:
     SCORE_API_URL = os.environ.get('SCORE_API_URL') or 'http://localhost:8004/v1/workflows/run'
 
     # API密钥配置 - 荣耀API格式
-    CLASSIFY_API_KEY = os.environ.get('CLASSIFY_API_KEY') or None  # 分类API不需要认证
+    CLASSIFY_API_KEY = os.environ.get('CLASSIFY_API_KEY') or 'app-mw]Eht3zDaKUЗLAa6T9XKwu'  # 分类API密钥
     DOUBAO_API_KEY = os.environ.get('DOUBAO_API_KEY') or 'doubao-dev-key'
     XIAOTIAN_API_KEY = os.environ.get('XIAOTIAN_API_KEY') or 'xiaotian-dev-key'
     SCORE_API_KEY = os.environ.get('SCORE_API_KEY') or 'app-SXgaGHIf25NtJXEFmc9ecRSc'

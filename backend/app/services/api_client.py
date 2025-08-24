@@ -425,10 +425,13 @@ class ClassificationAPIClient(BaseAPIClient):
         )
     
     def _get_auth_headers(self) -> Dict[str, str]:
-        """获取分类API认证头 - 分类API不需要认证"""
-        return {
+        """获取分类API认证头 - 分类API需要Bearer认证"""
+        headers = {
             'Content-Type': 'application/json'
         }
+        if self.api_key:
+            headers['Authorization'] = f'Bearer {self.api_key}'
+        return headers
     
     def classify_question(
         self, 
