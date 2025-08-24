@@ -131,6 +131,19 @@ check_network() {
 update_system() {
     print_step "更新系统包..."
     
+    # 配置阿里云APT源（替换公司镜像源）
+    print_step "配置阿里云APT源..."
+    sudo cp /etc/apt/sources.list /etc/apt/sources.list.backup
+    sudo tee /etc/apt/sources.list > /dev/null <<EOF
+# 阿里云Ubuntu 18.04 LTS源
+deb http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu/ bionic-security main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse
+EOF
+    print_message "✅ 已配置阿里云APT源"
+    
     # 更新包列表
     sudo apt-get update
     
@@ -164,12 +177,12 @@ install_docker() {
         # 移除旧版本
         sudo apt-get remove -y docker docker-engine docker.io containerd runc || true
         
-        # 添加Docker官方GPG密钥
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+        # 使用阿里云Docker源
+        curl -fsSL https://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | sudo apt-key add -
         
-        # 添加Docker仓库
+        # 添加阿里云Docker仓库
         sudo add-apt-repository \
-           "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+           "deb [arch=amd64] https://mirrors.aliyun.com/docker-ce/linux/ubuntu \
            $(lsb_release -cs) \
            stable"
         
