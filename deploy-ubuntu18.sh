@@ -83,12 +83,15 @@ check_proxy() {
 check_network() {
     print_step "检查网络连接..."
 
-    # 检查DNS解析
-    if nslookup google.com > /dev/null 2>&1; then
+    # 检查DNS解析 - 使用多个域名测试，提高成功率
+    if nslookup www.baidu.com > /dev/null 2>&1 || \
+       nslookup registry.cn-hangzhou.aliyuncs.com > /dev/null 2>&1 || \
+       nslookup hub-mirror.c.163.com > /dev/null 2>&1; then
         print_message "✅ DNS解析正常"
     else
-        print_error "❌ DNS解析失败，请检查网络配置"
-        exit 1
+        print_warning "⚠️ DNS解析测试失败，但继续部署（企业网络可能限制外网DNS）"
+        print_message "如果后续出现网络问题，请检查DNS配置"
+        # 不退出，继续部署
     fi
 
     # 根据代理配置检查外网连接
