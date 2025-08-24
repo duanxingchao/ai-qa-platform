@@ -9,6 +9,7 @@ from sqlalchemy import func
 
 from app import db
 from app.models.question import Question
+from app.models.answer import Answer
 from app.services.api_client import APIClientFactory
 from app.config import Config
 
@@ -84,18 +85,28 @@ class ClassificationService:
                     'intent': question.intent
                 }
             
-            # 调用分类API
+            # 获取yoyo答案作为分类依据
+            yoyo_answer = None
+            answers = db.session.query(Answer).filter_by(
+                question_business_id=question.business_id,
+                assistant_type='yoyo'
+            ).first()
+            if answers:
+                yoyo_answer = answers.answer_text
+
+            # 调用分类API - 荣耀API格式
             classification_data = classification_client.classify_question(
                 question=question.query,
-                context=request_data.get('context')
+                answer=yoyo_answer,  # 使用yoyo答案
+                user_id="00031559"
             )
             
-            # 更新问题分类信息
-            question.classification = classification_data.get('category')
-            question.classification_confidence = classification_data.get('confidence', 0.0)
-            question.classification_subcategory = classification_data.get('subcategory')
-            question.classification_tags = ','.join(classification_data.get('tags', []))
-            question.classification_reasoning = classification_data.get('reasoning', '')
+            # 更新问题分类信息 - 荣耀API返回纯文本分类结果
+            question.classification = classification_data  # 直接是分类文本
+            question.classification_confidence = 0.9  # 荣耀API没有置信度，设置默认值
+            question.classification_subcategory = None  # 荣耀API没有子分类
+            question.classification_tags = ''  # 荣耀API没有标签
+            question.classification_reasoning = f'通过荣耀API分类为: {classification_data}'
             question.classification_api_used = 'mock' if self._is_using_mock_api() else 'external'
             question.classified_at = datetime.utcnow()
             

@@ -346,7 +346,7 @@ const basicConfig = reactive({
   autoProcessOnStartup: false,
   autoSuspendWhenNoData: true,
   dataCheckEnabled: true,
-  workflowIntervalMinutes: 3,
+  workflowIntervalMinutes: 120,
   batchSize: 100,
   minBatchSize: 1
 })

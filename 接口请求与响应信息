@@ -1,0 +1,49 @@
+1.分类API：
+HTTP方法：POST
+请求地址：  http://aipipeline.ipd.hihonor.com/v1/workflows/run
+请求体：
+{
+    "inputs": {
+        "QUERY": query,    //来自数据库中questions表的query字段
+        "ANSWER": answer_text    //来自数据库中answers表的answer_text字段
+    },
+    "response_mode": "blocking",
+    "user": "00031559"
+}
+响应体：
+{
+    "success": true,
+    "data": {
+        "outputs": {
+            "text": "接口处理后的结果文本"
+        }
+    }
+}
+2.打分API
+HTTP方法：POST
+请求地址：  http://aipipeline.ipd.hihonor.com/v1/workflows/run
+请求头：{
+    'Content-Type': 'application/json',
+    'Authorization': f'Bearer app-SXgaGHIf25NtJXEFmc9ecRSc'
+}
+请求体：
+{
+    "inputs": {
+        "QUERY": query,    //来自数据库中questions表的query字段
+        "ANSWER": answer_text    //yoyo的答案
+        "ANSWER_DOUBAO": answer_text    //豆包的答案
+        "ANSWER_XIAOTIAN": answer_text    //小天的答案
+        "RESORT": classification   //问题的分类结果
+    },
+    "response_mode": "blocking",
+    "user": "user"
+}
+响应体：
+{
+    "success": true,
+    "data": {
+        "outputs": {
+            "text": "接口处理后的结果文本"//这个文本就和目前项目中的一样
+        }
+    }
+}

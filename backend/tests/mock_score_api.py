@@ -188,9 +188,9 @@ def health_check():
         'scoring_dimensions': list(CLASSIFICATION_DIMENSIONS.values()) # Changed to CLASSIFICATION_DIMENSIONS
     })
 
-@app.route('/score', methods=['POST'])
+@app.route('/v1/workflows/run', methods=['POST'])
 def score_answers():
-    """多模型答案评分接口 - 按照用户指定的格式"""
+    """多模型答案评分接口 - 荣耀内部API格式"""
     try:
         # 模拟API延迟
         time.sleep(random.uniform(0.8, 2.0))
@@ -208,23 +208,23 @@ def score_answers():
                 'error': 'Missing required field: inputs'
             }), 400
         
-        # 检查必需的输入字段
-        question = inputs.get('question')
-        our_answer = inputs.get('our_answer', '')
-        doubao_answer = inputs.get('doubao_answer', '')
-        xiaotian_answer = inputs.get('xiaotian_answer', '')
-        classification = inputs.get('classification', '')
-        
+        # 检查必需的输入字段 - 荣耀API格式
+        question = inputs.get('QUERY')
+        our_answer = inputs.get('ANSWER', '')
+        doubao_answer = inputs.get('ANSWER_DOUBAO', '')
+        xiaotian_answer = inputs.get('ANSWER_XIAOTIAN', '')
+        classification = inputs.get('RESORT', '')
+
         if not question:
             return jsonify({
-                'error': 'Missing required field: inputs.question'
+                'error': 'Missing required field: inputs.QUERY'
             }), 400
         
-        # 验证API密钥
-        api_key = request.headers.get('X-API-Key', '')
-        if not api_key:
+        # 验证Bearer认证 - 荣耀API格式
+        auth_header = request.headers.get('Authorization', '')
+        if not auth_header or not auth_header.startswith('Bearer '):
             return jsonify({
-                'error': 'Missing API key'
+                'error': 'Missing or invalid Authorization header'
             }), 401
         
         # 模拟偶尔的服务错误（5%概率）
@@ -245,8 +245,9 @@ def score_answers():
             question, our_answer, doubao_answer, xiaotian_answer, classification
         )
         
-        # 按照用户指定的格式返回
+        # 按照荣耀API格式返回
         response_data = {
+            "success": True,
             "data": {
                 "outputs": {
                     "text": json.dumps(score_results, ensure_ascii=False, indent=2)
@@ -350,21 +351,23 @@ def main():
     print("🤖 启动Mock评分API服务器...")
     print(f"📍 地址: http://localhost:{port}")
     print(f"🔗 健康检查: http://localhost:{port}/health")
-    print(f"🔗 评分接口: POST http://localhost:{port}/score")
+    print(f"🔗 评分接口: POST http://localhost:{port}/v1/workflows/run")
     print(f"📊 统计接口: http://localhost:{port}/stats")
     print(f"🧪 测试接口: POST http://localhost:{port}/test")
     print("-" * 60)
-    print("📝 POST数据格式（按照您的需求）:")
+    print("📝 荣耀API格式 POST数据:")
     print("""   {
        "inputs": {
-           "question": "用户问题文本",
-           "our_answer": "原始模型答案",
-           "doubao_answer": "豆包模型答案", 
-           "xiaotian_answer": "小天模型答案",
-           "classification": "问题分类"
-       }
+           "QUERY": "用户问题文本",
+           "ANSWER": "yoyo模型答案",
+           "ANSWER_DOUBAO": "豆包模型答案",
+           "ANSWER_XIAOTIAN": "小天模型答案",
+           "RESORT": "问题分类"
+       },
+       "response_mode": "blocking",
+       "user": "user"
    }""")
-    print("🔑 认证: X-API-Key: your-api-key")
+    print("🔑 认证: Authorization: Bearer app-SXgaGHIf25NtJXEFmc9ecRSc")
     print("-" * 60)
     print("📋 支持的模型:")
     for key, name in MODEL_NAMES.items():

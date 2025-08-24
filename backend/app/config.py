@@ -40,17 +40,17 @@ class Config:
     DEFAULT_PAGE_SIZE = 20
     MAX_PAGE_SIZE = 100
     
-    # 外部API配置
-    CLASSIFY_API_URL = os.environ.get('CLASSIFY_API_URL') or 'http://localhost:8001'
+    # 外部API配置 - 荣耀API格式
+    CLASSIFY_API_URL = os.environ.get('CLASSIFY_API_URL') or 'http://localhost:8001/v1/workflows/run'
     DOUBAO_API_URL = os.environ.get('DOUBAO_API_URL') or 'http://localhost:8002'  # Mock豆包API
     XIAOTIAN_API_URL = os.environ.get('XIAOTIAN_API_URL') or 'http://localhost:8003'  # Mock小天API
-    SCORE_API_URL = os.environ.get('SCORE_API_URL') or 'http://localhost:8004'
+    SCORE_API_URL = os.environ.get('SCORE_API_URL') or 'http://localhost:8004/v1/workflows/run'
 
-    # API密钥配置
-    CLASSIFY_API_KEY = os.environ.get('CLASSIFY_API_KEY') or 'classify-dev-key'
+    # API密钥配置 - 荣耀API格式
+    CLASSIFY_API_KEY = os.environ.get('CLASSIFY_API_KEY') or None  # 分类API不需要认证
     DOUBAO_API_KEY = os.environ.get('DOUBAO_API_KEY') or 'doubao-dev-key'
     XIAOTIAN_API_KEY = os.environ.get('XIAOTIAN_API_KEY') or 'xiaotian-dev-key'
-    SCORE_API_KEY = os.environ.get('SCORE_API_KEY') or 'score-dev-key'
+    SCORE_API_KEY = os.environ.get('SCORE_API_KEY') or 'app-SXgaGHIf25NtJXEFmc9ecRSc'
 
     # API超时配置（秒）
     API_TIMEOUT = 30
@@ -76,7 +76,7 @@ class Config:
     # 自动化工作流配置（统一调度）
     AUTO_PROCESS_ON_STARTUP = False  # 启动时立即处理已有数据 - 已禁用以避免自动处理
     SCHEDULER_ENABLED = True  # 启用调度器 - 允许定时任务管理
-    WORKFLOW_INTERVAL_MINUTES = int(os.environ.get('WORKFLOW_INTERVAL_MINUTES', 3))  # 工作流执行间隔（分钟）
+    WORKFLOW_INTERVAL_MINUTES = int(os.environ.get('WORKFLOW_INTERVAL_MINUTES', 120))  # 工作流执行间隔（分钟）- 改为2小时避免重复执行
     DATA_CHECK_ENABLED = True  # 是否启用数据检测
     AUTO_SUSPEND_WHEN_NO_DATA = True  # 无数据时自动挂起
     MIN_BATCH_SIZE = 1  # 最小批处理大小，小于此数量时挂起

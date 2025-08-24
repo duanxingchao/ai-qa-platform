@@ -55,7 +55,7 @@
                   <el-input-number
                     v-model="config.workflowIntervalMinutes"
                     :min="1"
-                    :max="60"
+                    :max="720"
                     controls-position="right"
                     size="default"
                     class="compact-number-input"

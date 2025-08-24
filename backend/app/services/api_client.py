@@ -425,10 +425,9 @@ class ClassificationAPIClient(BaseAPIClient):
         )
     
     def _get_auth_headers(self) -> Dict[str, str]:
-        """获取分类API认证头"""
+        """获取分类API认证头 - 分类API不需要认证"""
         return {
-            'X-API-Key': self.api_key,
-            'Authorization': f'Bearer {self.api_key}'
+            'Content-Type': 'application/json'
         }
     
     def classify_question(
@@ -502,9 +501,9 @@ class ClassificationAPIClient(BaseAPIClient):
         start_time = time.time()
         
         try:
-            # 完全按照用户的方式调用
+            # 调用荣耀API格式的接口
             response = requests.post(
-                f"{self.base_url}/classify",
+                self.base_url,  # 直接使用base_url，因为已经包含完整路径
                 json=body,
                 headers=headers,
                 timeout=15
@@ -697,9 +696,9 @@ class ScoreAPIClient(BaseAPIClient):
         )
     
     def _get_auth_headers(self) -> Dict[str, str]:
-        """获取评分API认证头"""
+        """获取评分API认证头 - 荣耀API使用Bearer认证"""
         return {
-            'X-API-Key': self.api_key,
+            'Authorization': f'Bearer {self.api_key}',
             'Content-Type': 'application/json'
         }
     
@@ -736,13 +735,13 @@ class ScoreAPIClient(BaseAPIClient):
                 ...
             ]
         """
-        # 按照用户的API格式构建请求体
+        # 按照荣耀API格式构建请求体
         inputs = {
-            'question': question,
-            'our_answer': our_answer,
-            'doubao_answer': doubao_answer,
-            'xiaotian_answer': xiaotian_answer,
-            'classification': classification
+            'QUERY': question,
+            'ANSWER': our_answer,
+            'ANSWER_DOUBAO': doubao_answer,
+            'ANSWER_XIAOTIAN': xiaotian_answer,
+            'RESORT': classification
         }
         
         self.logger.info(f"开始多模型答案评分: {question[:50]}...")
@@ -778,9 +777,11 @@ class ScoreAPIClient(BaseAPIClient):
         """
         request_id = self._generate_request_id()
         
-        # 构建请求体
+        # 构建请求体 - 荣耀API格式
         body = {
-            'inputs': inputs
+            'inputs': inputs,
+            'response_mode': 'blocking',
+            'user': 'user'
         }
         
         # 构建请求头
@@ -799,9 +800,9 @@ class ScoreAPIClient(BaseAPIClient):
         start_time = time.time()
         
         try:
-            # 完全按照用户的方式调用
+            # 调用荣耀API格式的接口
             response = requests.post(
-                f"{self.base_url}/score",
+                self.base_url,  # 直接使用base_url，因为已经包含完整路径
                 json=body,
                 headers=headers,
                 timeout=30

@@ -76,9 +76,9 @@ def health_check():
         'supported_categories': len(CATEGORIES)
     })
 
-@app.route('/classify', methods=['POST'])
+@app.route('/v1/workflows/run', methods=['POST'])
 def classify():
-    """问题分类接口 - 符合用户的API格式"""
+    """问题分类接口 - 荣耀内部API格式"""
     try:
         # 模拟API延迟
         time.sleep(random.uniform(0.1, 0.5))
@@ -114,14 +114,15 @@ def classify():
                 'error': 'Only blocking response mode is supported'
             }), 400
         
-        # 验证API密钥
-        auth_header = request.headers.get('Authorization', '')
-        api_key_header = request.headers.get('X-API-Key', '')
-        
-        if not auth_header and not api_key_header:
-            return jsonify({
-                'error': 'Missing authentication'
-            }), 401
+        # 分类API不需要认证（根据生产环境配置）
+        # 注释掉认证检查
+        # auth_header = request.headers.get('Authorization', '')
+        # api_key_header = request.headers.get('X-API-Key', '')
+        #
+        # if not auth_header and not api_key_header:
+        #     return jsonify({
+        #         'error': 'Missing authentication'
+        #     }), 401
         
         # 模拟偶尔的服务器错误（5%概率）
         if random.random() < 0.05:
@@ -140,8 +141,9 @@ def classify():
         classification_result = classify_question_and_answer(question, answer)
         processing_time = (time.time() - start_time) * 1000
         
-        # 按照用户的API响应格式返回
+        # 按照荣耀API响应格式返回
         response_data = {
+            "success": True,
             "data": {
                 "outputs": {
                     "text": classification_result['category']  # 只返回分类名称
@@ -249,11 +251,11 @@ if __name__ == '__main__':
     print("🤖 启动Mock分类API服务器...")
     print(f"📍 地址: http://localhost:{port}")
     print(f"🔗 健康检查: http://localhost:{port}/health")
-    print(f"🔗 分类接口: POST http://localhost:{port}/classify")
+    print(f"🔗 分类接口: POST http://localhost:{port}/v1/workflows/run")
     print(f"📊 统计接口: http://localhost:{port}/stats")
     print(f"📋 分类列表: http://localhost:{port}/categories")
     print("-" * 50)
-    print("📝 按照您的API格式 POST数据:")
+    print("📝 荣耀API格式 POST数据:")
     print("""   {
        "inputs": {
            "QUERY": "用户问题文本",
