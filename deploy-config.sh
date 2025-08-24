@@ -91,6 +91,7 @@ export_config() {
     export DB_USER
     export DB_PASSWORD
     export USE_GLORY_API
+    export USE_ALIYUN_MIRROR
     export FRONTEND_PORT
     export BACKEND_PORT
     export REDIS_PORT
