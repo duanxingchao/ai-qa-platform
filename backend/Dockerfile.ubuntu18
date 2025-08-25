@@ -104,24 +104,58 @@ RUN echo "升级pip和基础工具..." && \
 # 复制requirements文件
 COPY requirements.txt ./
 
-# 分阶段安装Python依赖
-RUN echo "安装核心依赖..." && \
-    pip install --no-cache-dir --timeout=120 --retries=5 \
-    -i https://pypi.tuna.tsinghua.edu.cn/simple \
-    Flask==2.3.2 werkzeug==2.3.7 SQLAlchemy==2.0.19 && \
-    echo "安装数据库依赖..." && \
-    pip install --no-cache-dir --timeout=120 --retries=5 \
-    -i https://pypi.tuna.tsinghua.edu.cn/simple \
-    psycopg2-binary==2.9.7 Flask-SQLAlchemy==3.0.5 && \
-    echo "安装其余依赖..." && \
-    pip install --no-cache-dir --timeout=120 --retries=5 \
-    -i https://pypi.tuna.tsinghua.edu.cn/simple \
-    -r requirements.txt && \
-    echo "安装生产环境依赖..." && \
-    pip install --no-cache-dir --timeout=120 --retries=5 \
-    -i https://pypi.tuna.tsinghua.edu.cn/simple \
-    gunicorn==21.2.0 && \
-    echo "✅ 所有Python依赖安装完成"
+# 创建智能pip安装脚本
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+# 定义镜像源列表\n\
+MIRRORS=(\n\
+    "https://pypi.tuna.tsinghua.edu.cn/simple"\n\
+    "https://mirrors.aliyun.com/pypi/simple/"\n\
+    "https://pypi.mirrors.ustc.edu.cn/simple/"\n\
+    "https://pypi.douban.com/simple/"\n\
+)\n\
+\n\
+# 智能安装函数\n\
+smart_pip_install() {\n\
+    local packages="$1"\n\
+    local description="$2"\n\
+    \n\
+    echo "正在安装 $description: $packages"\n\
+    \n\
+    for mirror in "${MIRRORS[@]}"; do\n\
+        echo "尝试镜像源: $mirror"\n\
+        if pip install --no-cache-dir --timeout=60 --retries=3 -i "$mirror" $packages; then\n\
+            echo "✅ $description 安装成功 (使用镜像源: $mirror)"\n\
+            return 0\n\
+        else\n\
+            echo "⚠️ 镜像源 $mirror 失败，尝试下一个..."\n\
+        fi\n\
+    done\n\
+    \n\
+    echo "❌ 所有镜像源都失败了，安装 $description 失败"\n\
+    return 1\n\
+}\n\
+\n\
+# 测试网络连通性\n\
+echo "测试网络连通性..."\n\
+for mirror in "${MIRRORS[@]}"; do\n\
+    if curl -I --connect-timeout 10 --max-time 20 "$mirror" >/dev/null 2>&1; then\n\
+        echo "✅ $mirror 连接正常"\n\
+    else\n\
+        echo "⚠️ $mirror 连接异常"\n\
+    fi\n\
+done\n\
+\n\
+# 分阶段安装\n\
+smart_pip_install "Flask==2.3.2 werkzeug==2.3.7 SQLAlchemy==2.0.19" "核心依赖"\n\
+smart_pip_install "psycopg2-binary==2.9.7 Flask-SQLAlchemy==3.0.5" "数据库依赖"\n\
+smart_pip_install "-r requirements.txt" "其余依赖"\n\
+smart_pip_install "gunicorn==21.2.0" "生产环境依赖"\n\
+\n\
+echo "✅ 所有Python依赖安装完成"' > /tmp/smart_install.sh && \
+    chmod +x /tmp/smart_install.sh && \
+    /tmp/smart_install.sh
 
 # 验证关键依赖
 RUN echo "验证依赖安装..." && \
