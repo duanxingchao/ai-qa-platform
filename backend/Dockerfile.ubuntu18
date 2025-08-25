@@ -74,12 +74,61 @@ RUN echo "更新软件包列表..." && \
     apt-get clean && \
     echo "✅ 系统依赖安装完成"
 
-# 复制pip优化脚本和requirements文件
-COPY optimize-pip-install.sh requirements.txt ./
+# 配置pip镜像源和环境变量
+RUN mkdir -p /root/.pip && \
+    echo "[global]" > /root/.pip/pip.conf && \
+    echo "index-url = https://pypi.tuna.tsinghua.edu.cn/simple" >> /root/.pip/pip.conf && \
+    echo "extra-index-url = https://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf && \
+    echo "                  https://pypi.mirrors.ustc.edu.cn/simple/" >> /root/.pip/pip.conf && \
+    echo "                  https://pypi.douban.com/simple/" >> /root/.pip/pip.conf && \
+    echo "trusted-host = pypi.tuna.tsinghua.edu.cn" >> /root/.pip/pip.conf && \
+    echo "               mirrors.aliyun.com" >> /root/.pip/pip.conf && \
+    echo "               pypi.mirrors.ustc.edu.cn" >> /root/.pip/pip.conf && \
+    echo "               pypi.douban.com" >> /root/.pip/pip.conf && \
+    echo "timeout = 120" >> /root/.pip/pip.conf && \
+    echo "retries = 5" >> /root/.pip/pip.conf
 
-# 给脚本执行权限并运行pip优化安装
-RUN chmod +x optimize-pip-install.sh && \
-    ./optimize-pip-install.sh
+# 设置pip环境变量
+ENV PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple \
+    PIP_TRUSTED_HOST="pypi.tuna.tsinghua.edu.cn mirrors.aliyun.com pypi.mirrors.ustc.edu.cn pypi.douban.com" \
+    PIP_TIMEOUT=120 \
+    PIP_RETRIES=5
+
+# 升级pip和基础工具
+RUN echo "升级pip和基础工具..." && \
+    pip install --no-cache-dir --timeout=120 --retries=5 \
+    -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    --upgrade pip setuptools wheel && \
+    echo "✅ pip升级完成"
+
+# 复制requirements文件
+COPY requirements.txt ./
+
+# 分阶段安装Python依赖
+RUN echo "安装核心依赖..." && \
+    pip install --no-cache-dir --timeout=120 --retries=5 \
+    -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    Flask==2.3.2 werkzeug==2.3.7 SQLAlchemy==2.0.19 && \
+    echo "安装数据库依赖..." && \
+    pip install --no-cache-dir --timeout=120 --retries=5 \
+    -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    psycopg2-binary==2.9.7 Flask-SQLAlchemy==3.0.5 && \
+    echo "安装其余依赖..." && \
+    pip install --no-cache-dir --timeout=120 --retries=5 \
+    -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    -r requirements.txt && \
+    echo "安装生产环境依赖..." && \
+    pip install --no-cache-dir --timeout=120 --retries=5 \
+    -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    gunicorn==21.2.0 && \
+    echo "✅ 所有Python依赖安装完成"
+
+# 验证关键依赖
+RUN echo "验证依赖安装..." && \
+    python -c "import flask; print(f'✅ Flask: {flask.__version__}')" && \
+    python -c "import psycopg2; print('✅ psycopg2: OK')" && \
+    python -c "import gunicorn; print('✅ gunicorn: OK')" && \
+    echo "✅ 依赖验证完成"
 
 # 复制应用代码
 COPY . .

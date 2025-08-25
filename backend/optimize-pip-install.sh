@@ -99,12 +99,19 @@ test_network_connectivity() {
 # 优化DNS设置
 optimize_dns() {
     print_step "优化DNS设置..."
-    
-    # 备份原始DNS配置
-    cp /etc/resolv.conf /etc/resolv.conf.backup
-    
-    # 添加国内DNS服务器
-    cat > /etc/resolv.conf << 'EOF'
+
+    # 在Docker构建环境中，/etc/resolv.conf通常是只读的
+    # 我们通过其他方式优化DNS解析
+
+    # 检查是否可以修改resolv.conf
+    if [ -w /etc/resolv.conf ]; then
+        print_message "DNS配置文件可写，进行优化..."
+
+        # 备份原始DNS配置
+        cp /etc/resolv.conf /etc/resolv.conf.backup
+
+        # 添加国内DNS服务器
+        cat > /etc/resolv.conf << 'EOF'
 # 阿里云DNS
 nameserver 223.5.5.5
 nameserver 223.6.6.6
@@ -117,8 +124,12 @@ nameserver 180.76.76.76
 nameserver 8.8.8.8
 nameserver 8.8.4.4
 EOF
-    
-    print_message "✅ DNS配置已优化"
+        print_message "✅ DNS配置已优化"
+    else
+        print_warning "DNS配置文件只读，跳过DNS优化"
+        print_message "当前DNS配置："
+        cat /etc/resolv.conf || true
+    fi
 }
 
 # 安装基础依赖
