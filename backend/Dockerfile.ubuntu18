@@ -55,6 +55,9 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # 复制requirements文件
 COPY requirements.txt .
+ 
+# 使用清华 PyPI 镜像以加速依赖安装
+RUN python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 安装Python依赖 (Ubuntu 18.04优化)
 RUN pip install --no-cache-dir -r requirements.txt \

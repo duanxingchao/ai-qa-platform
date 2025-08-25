@@ -407,7 +407,7 @@ main() {
     configure_docker_permissions
     
     print_message "✅ 环境准备完成！"
-    print_message "下一步请运行: ./deploy.sh"
+    print_message "Docker环境已安装完成，可以继续部署服务"
 }
 
 # 错误处理
