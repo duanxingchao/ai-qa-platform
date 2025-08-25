@@ -50,24 +50,12 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-# 升级pip到最新版本
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+# 复制pip优化脚本和requirements文件
+COPY optimize-pip-install.sh requirements.txt ./
 
-# 复制requirements文件
-COPY requirements.txt .
- 
-# 使用清华 PyPI 镜像以加速依赖安装（多重保障：全局配置 + 环境变量）
-RUN printf "[global]\nindex-url = https://pypi.tuna.tsinghua.edu.cn/simple\ntrusted-host = pypi.tuna.tsinghua.edu.cn\n" > /etc/pip.conf
-ENV PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple \
-    PIP_TRUSTED_HOST=pypi.tuna.tsinghua.edu.cn
-
-# 安装Python依赖 (Ubuntu 18.04优化)
-RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt \
-    # 安装额外的生产环境依赖
-    && pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
-        gunicorn==20.1.0 \
-        gevent==21.12.0 \
-        psycopg2-binary==2.9.3
+# 给脚本执行权限并运行pip优化安装
+RUN chmod +x optimize-pip-install.sh && \
+    ./optimize-pip-install.sh
 
 # 复制应用代码
 COPY . .
