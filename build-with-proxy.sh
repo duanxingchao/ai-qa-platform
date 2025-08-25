@@ -1,7 +1,11 @@
 #!/bin/bash
 
 # Docker代理环境构建脚本
-# 专门解决在公司代理环境下Docker构建pip安装超时的问题
+# 专门解决在公司代理环境下Docker构建的各种网络问题：
+# - apt-get update访问Debian官方源速度慢
+# - apk update访问Alpine官方源速度慢
+# - pip安装超时问题
+# - npm安装超时问题
 
 set -e
 
@@ -265,6 +269,14 @@ verify_build() {
 show_usage() {
     print_message "=== 构建完成！使用说明 ==="
     echo
+    print_message "本次构建已优化以下问题："
+    echo "  ✅ 替换Debian apt源为阿里云镜像源"
+    echo "  ✅ 替换Alpine apk源为国内镜像源"
+    echo "  ✅ 配置pip使用多个国内镜像源"
+    echo "  ✅ 配置npm使用国内镜像源"
+    echo "  ✅ 增加超时和重试机制"
+    echo "  ✅ 支持公司代理环境"
+    echo
     echo "1. 启动所有服务："
     echo "   docker-compose -f docker-compose.ubuntu18.yml up -d"
     echo
@@ -280,6 +292,11 @@ show_usage() {
     echo "5. 访问服务："
     echo "   前端: http://localhost:18080"
     echo "   后端: http://localhost:18088"
+    echo
+    print_message "如果仍有构建问题，请检查："
+    echo "  - 代理服务器是否正常工作"
+    echo "  - 网络连接是否稳定"
+    echo "  - Docker daemon是否正确配置代理"
     echo
 }
 

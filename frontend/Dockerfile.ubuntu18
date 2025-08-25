@@ -20,11 +20,30 @@ LABEL maintainer="AI QA Platform Team"
 LABEL version="1.0"
 LABEL description="Frontend service optimized for Ubuntu 18.04"
 
+# 替换Alpine镜像源为国内镜像源
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    echo "https://mirrors.aliyun.com/alpine/v3.16/main" > /etc/apk/repositories && \
+    echo "https://mirrors.aliyun.com/alpine/v3.16/community" >> /etc/apk/repositories && \
+    echo "https://mirrors.ustc.edu.cn/alpine/v3.16/main" >> /etc/apk/repositories && \
+    echo "https://mirrors.ustc.edu.cn/alpine/v3.16/community" >> /etc/apk/repositories
+
+# 更新apk包索引
+RUN apk update
+
 # 设置工作目录
 WORKDIR /app
 
 # 设置npm镜像源和代理 (提升下载速度)
 RUN npm config set registry https://registry.npmmirror.com && \
+    npm config set disturl https://npmmirror.com/dist && \
+    npm config set sass_binary_site https://npmmirror.com/mirrors/node-sass && \
+    npm config set electron_mirror https://npmmirror.com/mirrors/electron/ && \
+    npm config set puppeteer_download_host https://npmmirror.com/mirrors && \
+    npm config set chromedriver_cdnurl https://npmmirror.com/mirrors/chromedriver && \
+    npm config set operadriver_cdnurl https://npmmirror.com/mirrors/operadriver && \
+    npm config set phantomjs_cdnurl https://npmmirror.com/mirrors/phantomjs && \
+    npm config set selenium_cdnurl https://npmmirror.com/mirrors/selenium && \
+    npm config set node_inspector_cdnurl https://npmmirror.com/mirrors/node-inspector && \
     if [ -n "$HTTP_PROXY" ]; then npm config set proxy $HTTP_PROXY; fi && \
     if [ -n "$HTTPS_PROXY" ]; then npm config set https-proxy $HTTPS_PROXY; fi
 
@@ -43,8 +62,15 @@ RUN npm run build
 # 生产阶段 - 使用nginx alpine版本 (轻量级)
 FROM nginx:1.20-alpine as production-stage
 
-# 安装必要工具
-RUN apk add --no-cache \
+# 替换Alpine镜像源为国内镜像源
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    echo "https://mirrors.aliyun.com/alpine/v3.14/main" > /etc/apk/repositories && \
+    echo "https://mirrors.aliyun.com/alpine/v3.14/community" >> /etc/apk/repositories && \
+    echo "https://mirrors.ustc.edu.cn/alpine/v3.14/main" >> /etc/apk/repositories && \
+    echo "https://mirrors.ustc.edu.cn/alpine/v3.14/community" >> /etc/apk/repositories
+
+# 更新apk包索引并安装必要工具
+RUN apk update && apk add --no-cache \
     curl \
     bash \
     tzdata
