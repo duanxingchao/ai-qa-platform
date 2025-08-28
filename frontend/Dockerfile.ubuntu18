@@ -31,13 +31,8 @@ RUN apk update --no-cache || apk update --no-cache || apk update --no-cache
 # 设置工作目录
 WORKDIR /app
 
-# 设置npm镜像源和代理（简化配置，避免过时选项）
-RUN npm config set registry https://registry.npmmirror.com && \
-    npm config set sass_binary_site https://npmmirror.com/mirrors/node-sass && \
-    npm config set electron_mirror https://npmmirror.com/mirrors/electron/ && \
-    npm config set puppeteer_download_host https://npmmirror.com/mirrors && \
-    if [ -n "$HTTP_PROXY" ]; then npm config set proxy $HTTP_PROXY; fi && \
-    if [ -n "$HTTPS_PROXY" ]; then npm config set https-proxy $HTTPS_PROXY; fi
+# 设置npm镜像源
+RUN npm config set registry https://registry.npmmirror.com
 
 # 复制package文件
 COPY package*.json ./
