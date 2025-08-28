@@ -1,7 +1,7 @@
 # Ubuntu 18.04优化的前端Dockerfile
 
-# 构建阶段 - 升级到Node 20以支持最新npm版本
-FROM node:20-alpine as build-stage
+# 构建阶段 - 使用最新的Node LTS版本
+FROM node:22-alpine as build-stage
 
 # 代理参数
 ARG HTTP_PROXY
@@ -20,10 +20,10 @@ LABEL maintainer="AI QA Platform Team"
 LABEL version="1.0"
 LABEL description="Frontend service optimized for Ubuntu 18.04"
 
-# 替换Alpine镜像源为国内镜像源（匹配Node 20的Alpine版本）
+# 替换Alpine镜像源为国内镜像源（匹配Node 22的Alpine版本）
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
-    echo "https://mirrors.aliyun.com/alpine/v3.19/main" > /etc/apk/repositories && \
-    echo "https://mirrors.aliyun.com/alpine/v3.19/community" >> /etc/apk/repositories
+    echo "https://mirrors.aliyun.com/alpine/v3.20/main" > /etc/apk/repositories && \
+    echo "https://mirrors.aliyun.com/alpine/v3.20/community" >> /etc/apk/repositories
 
 # 更新apk包索引（添加超时和重试）
 RUN apk update --no-cache || apk update --no-cache || apk update --no-cache
@@ -31,8 +31,11 @@ RUN apk update --no-cache || apk update --no-cache || apk update --no-cache
 # 设置工作目录
 WORKDIR /app
 
-# 设置npm镜像源
-RUN npm config set registry https://registry.npmmirror.com
+# 检查并锁定npm版本，设置镜像源
+RUN echo "Node version: $(node --version)" && \
+    echo "npm version: $(npm --version)" && \
+    npm install -g npm@^10.0.0 && \
+    npm config set registry https://registry.npmmirror.com
 
 # 复制package文件
 COPY package*.json ./
