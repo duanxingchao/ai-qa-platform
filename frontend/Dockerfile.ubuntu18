@@ -31,18 +31,11 @@ RUN apk update --no-cache || apk update --no-cache || apk update --no-cache
 # 设置工作目录
 WORKDIR /app
 
-# 升级npm到兼容版本并设置镜像源和代理
-RUN npm install -g npm@10.8.2 && \
-    npm config set registry https://registry.npmmirror.com && \
-    npm config set disturl https://npmmirror.com/dist && \
+# 设置npm镜像源和代理（简化配置，避免过时选项）
+RUN npm config set registry https://registry.npmmirror.com && \
     npm config set sass_binary_site https://npmmirror.com/mirrors/node-sass && \
     npm config set electron_mirror https://npmmirror.com/mirrors/electron/ && \
     npm config set puppeteer_download_host https://npmmirror.com/mirrors && \
-    npm config set chromedriver_cdnurl https://npmmirror.com/mirrors/chromedriver && \
-    npm config set operadriver_cdnurl https://npmmirror.com/mirrors/operadriver && \
-    npm config set phantomjs_cdnurl https://npmmirror.com/mirrors/phantomjs && \
-    npm config set selenium_cdnurl https://npmmirror.com/mirrors/selenium && \
-    npm config set node_inspector_cdnurl https://npmmirror.com/mirrors/node-inspector && \
     if [ -n "$HTTP_PROXY" ]; then npm config set proxy $HTTP_PROXY; fi && \
     if [ -n "$HTTPS_PROXY" ]; then npm config set https-proxy $HTTPS_PROXY; fi
 
