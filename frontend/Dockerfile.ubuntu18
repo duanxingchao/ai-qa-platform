@@ -1,7 +1,7 @@
 # Ubuntu 18.04优化的前端Dockerfile
 
-# 构建阶段
-FROM node:16-alpine as build-stage
+# 构建阶段 - 升级到Node 18以获得更新的npm版本
+FROM node:18-alpine as build-stage
 
 # 代理参数
 ARG HTTP_PROXY
@@ -33,8 +33,9 @@ RUN apk update
 # 设置工作目录
 WORKDIR /app
 
-# 设置npm镜像源和代理 (提升下载速度)
-RUN npm config set registry https://registry.npmmirror.com && \
+# 升级npm到最新版本并设置镜像源和代理
+RUN npm install -g npm@latest && \
+    npm config set registry https://registry.npmmirror.com && \
     npm config set disturl https://npmmirror.com/dist && \
     npm config set sass_binary_site https://npmmirror.com/mirrors/node-sass && \
     npm config set electron_mirror https://npmmirror.com/mirrors/electron/ && \
@@ -50,8 +51,8 @@ RUN npm config set registry https://registry.npmmirror.com && \
 # 复制package文件
 COPY package*.json ./
 
-# 安装依赖 (优化缓存)
-RUN npm ci --only=production --silent
+# 安装依赖 (优化缓存) - 先安装所有依赖再构建
+RUN npm ci --silent
 
 # 复制源代码
 COPY . .
