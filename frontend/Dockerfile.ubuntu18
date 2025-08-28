@@ -37,10 +37,11 @@ RUN echo "Node version: $(node --version)" && \
     npm install -g npm@^10.0.0 && \
     npm config set registry https://registry.npmmirror.com
 
-# 复制package文件
+# 复制package文件和lock文件
 COPY package*.json ./
+COPY package-lock.json ./
 
-# 安装依赖 (优化缓存) - 先安装所有依赖再构建
+# 安装依赖 (使用npm ci，确保版本一致性)
 RUN npm ci --silent
 
 # 复制源代码
