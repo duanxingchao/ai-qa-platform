@@ -55,7 +55,7 @@ def init_db(app):
                     );
                     """
                 )
-                db.session.execute(sqlite_sql)
+                db.session.execute(text(sqlite_sql))
                 db.session.commit()
                 logger.info("SQLite 方言下已确保创建 table1 表")
             else:

@@ -198,13 +198,13 @@ class EnhancedProjectTestSuite:
                 start_time = time.time()
                 
                 # 1. 连接测试
-                db.session.execute(db.text("SELECT 1")).fetchone()
+                db.session.execute("SELECT 1").fetchone()
                 
                 # 2. 表结构测试（兼容多方言）
                 expected_tables = ['questions', 'answers', 'scores', 'review_status', 'table1']
                 dialect_name = db.session.bind.dialect.name if db.session.bind else ''
                 if dialect_name == 'sqlite':
-                    rows = db.session.execute(db.text("SELECT name FROM sqlite_master WHERE type='table'"))
+                    rows = db.session.execute("SELECT name FROM sqlite_master WHERE type='table'")
                     actual_table_names = [r[0] for r in rows.fetchall()]
                 else:
                     actual_table_names = inspect(db.engine).get_table_names()
@@ -214,7 +214,7 @@ class EnhancedProjectTestSuite:
                 stats = {}
                 for table in ['questions', 'answers', 'scores', 'review_status']:
                     if table in actual_table_names:
-                        count = db.session.execute(db.text(f"SELECT COUNT(*) FROM {table}")).fetchone()[0]
+                        count = db.session.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
                         stats[f"{table}_count"] = count
                 
                 # 4. 模型测试
@@ -703,7 +703,7 @@ class EnhancedProjectTestSuite:
                 
                 # 数据库查询性能
                 start_time = time.time()
-                result = db.session.execute(db.text("SELECT COUNT(*) FROM questions")).fetchone()
+                result = db.session.execute("SELECT COUNT(*) FROM questions").fetchone()
                 query_time = (time.time() - start_time) * 1000
                 
                 self.performance_metrics['db_query_time_ms'] = query_time
