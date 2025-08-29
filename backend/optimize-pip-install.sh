@@ -170,12 +170,12 @@ install_requirements_batch() {
     local core_deps=(
         "Flask==2.3.2"
         "werkzeug==2.3.7"
-        "SQLAlchemy==2.0.19"
+        "SQLAlchemy==1.4.53"
     )
     
     local db_deps=(
         "psycopg2-binary==2.9.7"
-        "Flask-SQLAlchemy==3.0.5"
+        "Flask-SQLAlchemy==2.5.1"
     )
     
     local web_deps=(
