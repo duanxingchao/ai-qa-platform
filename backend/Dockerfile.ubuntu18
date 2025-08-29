@@ -147,10 +147,11 @@ for mirror in "${MIRRORS[@]}"; do\n\
     fi\n\
 done\n\
 \n\
-# 分阶段安装\n\
-smart_pip_install "Flask==2.3.2 werkzeug==2.3.7 SQLAlchemy==1.4.53" "核心依赖"\n\
-smart_pip_install "psycopg2-binary==2.9.7 Flask-SQLAlchemy==2.5.1" "数据库依赖"\n\
-smart_pip_install "-r requirements.txt" "其余依赖"\n\
+# 清理pip缓存，避免版本冲突\n\
+pip cache purge || true\n\
+\n\
+# 直接安装所有依赖，避免版本冲突\n\
+smart_pip_install "-r requirements.txt" "所有依赖"\n\
 smart_pip_install "gunicorn==21.2.0" "生产环境依赖"\n\
 \n\
 echo "✅ 所有Python依赖安装完成"' > /tmp/smart_install.sh && \
