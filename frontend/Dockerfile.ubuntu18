@@ -90,42 +90,44 @@ RUN chown -R nginx:nginx /usr/share/nginx/html \
     && chmod -R 755 /usr/share/nginx/html
 
 # 创建启动脚本
-RUN echo '#!/bin/bash\n\
-set -e\n\
-\n\
-echo "Starting QA Platform Frontend..."\n\
-echo "Nginx version: $(nginx -v 2>&1)"\n\
-echo "Time zone: $(date)"\n\
-\n\
-# 检查配置文件\n\
-echo "Testing nginx configuration..."\n\
-nginx -t\n\
-\n\
-# 创建PID文件目录\n\
-mkdir -p /var/run\n\
-\n\
-# 启动nginx\n\
-echo "Starting nginx..."\n\
-exec nginx -g "daemon off;"' > /docker-entrypoint.sh \
-    && chmod +x /docker-entrypoint.sh
+RUN cat > /docker-entrypoint.sh << 'EOF' && chmod +x /docker-entrypoint.sh
+#!/bin/bash
+set -e
+
+echo "Starting QA Platform Frontend..."
+echo "Nginx version: $(nginx -v 2>&1)"
+echo "Time zone: $(date)"
+
+# 检查配置文件
+echo "Testing nginx configuration..."
+nginx -t
+
+# 创建PID文件目录
+mkdir -p /var/run
+
+# 启动nginx
+echo "Starting nginx..."
+exec nginx -g "daemon off;"
+EOF
 
 # 健康检查脚本
-RUN echo '#!/bin/bash\n\
-# 检查nginx进程\n\
-if ! pgrep nginx > /dev/null; then\n\
-    echo "Nginx process not found"\n\
-    exit 1\n\
-fi\n\
-\n\
-# 检查HTTP响应\n\
-if ! curl -f http://localhost/health > /dev/null 2>&1; then\n\
-    echo "Health check endpoint failed"\n\
-    exit 1\n\
-fi\n\
-\n\
-echo "Health check passed"\n\
-exit 0' > /health-check.sh \
-    && chmod +x /health-check.sh
+RUN cat > /health-check.sh << 'EOF' && chmod +x /health-check.sh
+#!/bin/bash
+# 检查nginx进程
+if ! pgrep nginx > /dev/null; then
+    echo "Nginx process not found"
+    exit 1
+fi
+
+# 检查HTTP响应
+if ! curl -f http://localhost/ > /dev/null 2>&1; then
+    echo "Nginx not responding"
+    exit 1
+fi
+
+echo "Health check passed"
+exit 0
+EOF
 
 # 暴露端口
 EXPOSE 80 443
